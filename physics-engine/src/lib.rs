@@ -46,4 +46,7 @@ pub mod ecs;
 /// Numerical integration methods
 pub mod integration;
 
+/// Plugin system for extensibility
+pub mod plugins;
+
 pub use ecs::{World, Entity};
