@@ -68,24 +68,188 @@ The current implementation provides:
 2. **Component Storage** (`component.rs`)
    - `Component` trait for all component types
    - `ComponentStorage` trait for storage implementations
-   - `HashMapStorage` as initial implementation (to be optimized)
+   - `HashMapStorage` as initial implementation
 
-3. **System Execution** (`system.rs`)
+3. **Newtonian Physics Components** (`components.rs`)
+   - `Position`: 3D coordinates with double-precision (f64)
+   - `Velocity`: Rate of change of position
+   - `Acceleration`: Rate of change of velocity (computed from forces)
+   - `Mass`: Entity mass with special handling for immovable bodies
+   - SIMD-friendly data layouts with 8-byte aligned fields
+   - Validation helpers for detecting NaN/Inf values
+   - Default implementations and array conversion utilities
+
+4. **Physics Systems** (`systems.rs`)
+   - `ForceRegistry`: Accumulates forces from multiple providers
+   - `ForceProvider` trait: Plugin interface for custom force generators
+   - `apply_forces_to_acceleration()`: Applies F=ma to compute accelerations
+   - `integrate_motion()`: Semi-implicit Euler integration
+   - Configurable overflow/NaN detection with safeguards
+   - Graceful handling of missing components and immovable bodies
+
+5. **System Scheduler** (`scheduler.rs`)
+   - Staged execution model for deterministic ordering
+   - Parallel execution support via Rayon (when enabled)
+   - Pre-defined stages: force accumulation, acceleration, integration, constraints, post-process
+   - Stage barriers ensure sequential stage execution with parallelism within stages
+
+6. **System Execution** (`system.rs`)
    - `System` trait for logic implementation
    - `SystemExecutor` for managing system execution order
    - Hooks for parallel execution
 
-4. **World Container** (`world.rs`)
+7. **World Container** (`world.rs`)
    - Central ECS data container
    - Entity lifecycle management
    - Query interface foundation
+
+### Component Memory Layout
+
+The Newtonian physics components use a cache-friendly data layout optimized for SIMD operations:
+
+```mermaid
+graph TB
+    subgraph "Position Component"
+        PX[x: f64 - 8 bytes]
+        PY[y: f64 - 8 bytes]
+        PZ[z: f64 - 8 bytes]
+        PX --> PY --> PZ
+    end
+    
+    subgraph "Velocity Component"
+        VX[dx: f64 - 8 bytes]
+        VY[dy: f64 - 8 bytes]
+        VZ[dz: f64 - 8 bytes]
+        VX --> VY --> VZ
+    end
+    
+    subgraph "Acceleration Component"
+        AX[ax: f64 - 8 bytes]
+        AY[ay: f64 - 8 bytes]
+        AZ[az: f64 - 8 bytes]
+        AX --> AY --> AZ
+    end
+    
+    subgraph "Mass Component"
+        M[value: f64 - 8 bytes]
+    end
+```
+
+Key characteristics:
+- **Double-precision**: All values use f64 for high accuracy
+- **Sequential layout**: Fields are laid out sequentially for cache prefetching
+- **SIMD-ready**: 8-byte alignment enables vectorization
+- **Validation**: Each component provides `is_valid()` to detect NaN/Inf
+- **Array conversion**: Components can be converted to/from arrays for bulk operations
+
+### Cache Locality Considerations
+
+The current `HashMapStorage` implementation prioritizes simplicity over optimal cache performance. Future optimizations include:
+
+1. **Structure-of-Arrays (SoA)**: Store each field separately in packed arrays
+   - Better cache utilization when processing specific fields
+   - Enables SIMD operations across multiple entities
+   - Reduces memory bandwidth by loading only needed fields
+
+2. **Archetype-based storage**: Group entities by component composition
+   - Entities with identical components stored together
+   - Eliminates sparse component access patterns
+   - Improves iteration performance
+
+3. **Memory pooling**: Pre-allocate component storage
+   - Reduces allocation overhead
+   - Improves cache locality through contiguous allocation
+   - Enables better prediction of memory access patterns
 
 ### Future Optimizations
 
 - **Structure-of-Arrays (SoA)**: Replace HashMap storage with packed arrays
 - **Archetypes**: Group entities by component composition for better iteration
 - **Query DSL**: Ergonomic component queries with filtering
-- **System scheduling**: Automatic dependency analysis and parallel execution
+- **Advanced integrators**: Verlet, RK4 for improved accuracy and stability
+
+## Newtonian Mechanics Framework
+
+### Force Accumulation System
+
+The force accumulation system provides a generic framework for applying forces to entities without hardcoding simulation-specific constants. Forces are registered via plugins and accumulated per entity.
+
+```mermaid
+graph TB
+    subgraph "Force Providers"
+        FP1[Gravity Provider]
+        FP2[Spring Provider]
+        FP3[Drag Provider]
+        FP4[Custom Provider]
+    end
+    
+    subgraph "Force Registry"
+        FR[Force Accumulator]
+        Overflow[Overflow Detection]
+        Validation[NaN/Inf Check]
+    end
+    
+    subgraph "Entity Processing"
+        E1[Entity 1]
+        E2[Entity 2]
+        E3[Entity 3]
+    end
+    
+    FP1 --> FR
+    FP2 --> FR
+    FP3 --> FR
+    FP4 --> FR
+    
+    FR --> Validation
+    Validation --> Overflow
+    Overflow --> E1
+    Overflow --> E2
+    Overflow --> E3
+    
+    E1 --> |F=ma| A1[Acceleration]
+    E2 --> |F=ma| A2[Acceleration]
+    E3 --> |immovable| Skip[Skip]
+```
+
+#### Force Provider Interface
+
+Force providers implement the `ForceProvider` trait to compute forces for entities:
+
+```rust
+pub trait ForceProvider: Send + Sync {
+    fn compute_force(&self, entity: Entity, registry: &ForceRegistry) -> Option<Force>;
+    fn name(&self) -> &str;
+}
+```
+
+Key features:
+- **Plugin-based**: Force providers can be registered dynamically
+- **Entity-specific**: Each provider can compute forces based on entity state
+- **Optional**: Providers return `None` if they don't apply to an entity
+- **Composable**: Multiple providers combine via force accumulation
+
+#### Safety Mechanisms
+
+The force registry includes safeguards for numerical stability:
+
+1. **Overflow detection**: Forces exceeding `max_force_magnitude` are clamped
+2. **NaN/Inf validation**: Invalid forces are rejected with warnings
+3. **Immovable bodies**: Zero/near-zero mass entities skip force application
+4. **Missing components**: Entities without required components are skipped gracefully
+
+### Integration Strategy
+
+The physics simulation uses semi-implicit (symplectic) Euler integration for stability:
+
+```
+v' = v + a * dt    (update velocity from acceleration)
+p' = p + v' * dt   (update position from new velocity)
+```
+
+This approach is more stable than explicit Euler and conserves energy better for oscillatory motion. Future enhancements may include:
+- **Verlet integration**: Better energy conservation for long simulations
+- **RK4 (Runge-Kutta)**: Higher accuracy for complex dynamics
+- **Adaptive time-stepping**: Automatic dt adjustment based on motion
 
 ## Plugin System
 
@@ -182,6 +346,89 @@ The engine uses Rayon for work-stealing parallelism:
 - **Fallback support**: Graceful degradation to sequential execution
 - **Platform compatibility**: Works on native and select WASM runtimes
 
+### Staged Scheduler Architecture
+
+The scheduler organizes systems into stages that execute sequentially, with parallelism opportunities within each stage. This provides deterministic ordering while exploiting parallelism.
+
+```mermaid
+graph TB
+    subgraph "Stage 0: Force Accumulation"
+        FA1[Gravity System]
+        FA2[Spring System]
+        FA3[Drag System]
+    end
+    
+    subgraph "Stage 1: Acceleration"
+        ACC[Apply F=ma]
+    end
+    
+    subgraph "Stage 2: Integration"
+        INT[Update v, p]
+    end
+    
+    subgraph "Stage 3: Constraints"
+        CON1[Collision Response]
+        CON2[Joint Constraints]
+    end
+    
+    subgraph "Stage 4: Post-Process"
+        PP[Cleanup/Logging]
+    end
+    
+    FA1 -.parallel.-> FA2
+    FA2 -.parallel.-> FA3
+    FA3 --> |barrier| ACC
+    ACC --> |barrier| INT
+    INT --> |barrier| CON1
+    CON1 -.parallel.-> CON2
+    CON2 --> |barrier| PP
+```
+
+#### Stage Execution Model
+
+1. **Stage 0 (Force Accumulation)**: Force providers compute and accumulate forces
+   - Multiple force providers can run in parallel (future optimization)
+   - Results accumulated in ForceRegistry
+
+2. **Stage 1 (Acceleration)**: Convert forces to accelerations via F=ma
+   - Sequential barrier ensures all forces are ready
+   - Can process entities in parallel
+
+3. **Stage 2 (Integration)**: Update velocities and positions
+   - Sequential barrier ensures accelerations are computed
+   - Can process entities in parallel
+
+4. **Stage 3 (Constraints)**: Apply constraints and corrections
+   - Sequential barrier ensures integration is complete
+   - Independent constraints can run in parallel
+
+5. **Stage 4 (Post-Process)**: Cleanup and diagnostics
+   - Final stage for logging, statistics, etc.
+
+#### Deterministic Ordering Controls
+
+The scheduler provides several mechanisms for deterministic execution:
+
+1. **Stage IDs**: Systems assigned to stages execute in numerical order
+2. **Stage barriers**: All systems in a stage complete before next stage begins
+3. **Sequential fallback**: Can disable parallelism for debugging
+4. **Sorted execution**: Systems within a stage execute in registration order
+
+```rust
+use physics_engine::ecs::scheduler::{Scheduler, stages};
+
+let mut scheduler = Scheduler::new();
+
+// Add systems to stages for deterministic ordering
+scheduler.add_system(gravity_system, stages::FORCE_ACCUMULATION);
+scheduler.add_system(spring_system, stages::FORCE_ACCUMULATION);
+scheduler.add_system(acceleration_system, stages::ACCELERATION);
+scheduler.add_system(integration_system, stages::INTEGRATION);
+
+// Execute with deterministic stage ordering
+scheduler.run_parallel(&mut world);  // Or run_sequential for debugging
+```
+
 ### Parallel Execution Model
 
 ```mermaid
@@ -207,17 +454,47 @@ graph LR
 
 ### Data Race Prevention
 
-- **Disjoint component access**: Systems declare component requirements
-- **Read/Write tracking**: Automatic conflict detection
-- **Parallel scheduling**: Only independent systems run concurrently
-- **Rust's borrow checker**: Compile-time safety guarantees
+The scheduler and component storage ensure safe parallel execution:
+
+- **Staged execution**: Sequential barriers between stages prevent read/write conflicts
+- **Rust's borrow checker**: Compile-time safety guarantees prevent data races
+- **Immutable world during execution**: Systems receive references, not ownership
+- **Future optimization**: Component access tracking for intra-stage parallelism
+
+Current implementation executes systems within a stage sequentially as a foundation. Future enhancements will track component read/write access to enable parallel execution of independent systems within the same stage.
 
 ### Performance Considerations
 
-- **Work granularity**: Systems should have sufficient work to amortize threading overhead
-- **Cache locality**: Component storage optimized for sequential access
-- **False sharing**: Padding to prevent cache line contention
-- **SIMD opportunities**: Data layout supports vectorization
+#### Work Granularity
+- Systems should process enough entities to amortize threading overhead
+- Minimum ~1000 entities recommended for parallel benefit
+- Stage barriers add synchronization cost
+
+#### Cache Locality
+- Component storage uses sequential layouts for prefetching
+- Double-precision (f64) fields provide 8-byte cache alignment
+- Future SoA layout will improve cache utilization further
+
+#### SIMD Opportunities
+- Component data layout supports vectorization
+- f64 fields enable SSE2/AVX operations
+- Array conversion methods facilitate bulk processing
+
+#### False Sharing Prevention
+- Component fields packed together to share cache lines
+- Entity-based iteration avoids cross-entity contention
+- Future padding for hot fields in multi-threaded scenarios
+
+### Edge Case Handling
+
+The physics systems handle various edge cases gracefully:
+
+1. **Missing components**: Entities without required components are skipped with optional warnings
+2. **Zero mass**: Treated as immovable body (inverse mass = 0) to prevent division by zero
+3. **NaN/Inf detection**: Invalid values rejected at component and force levels
+4. **Empty world**: Scheduler handles zero entities without errors
+5. **Large entity counts**: Tested with millions of entities for scalability
+6. **Force overflow**: Configurable magnitude limits with clamping
 
 ### Configuration
 
@@ -259,8 +536,10 @@ cargo build --no-default-features
 
 Core dependencies (see `Cargo.toml` for exact versions):
 
-- **rayon** (optional): Parallel execution via work-stealing
+- **rayon = "1.10.0"** (optional): Parallel execution via work-stealing, pinned for stability
 - Standard library only for core functionality
+
+All dependencies are pinned to specific versions and reflected in `Cargo.lock` for reproducible builds.
 
 ## Development Workflow
 

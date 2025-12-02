@@ -14,9 +14,11 @@ This physics engine provides a flexible and efficient foundation for simulating 
 ## Features
 
 - ✨ **Entity Component System**: Clean separation of data and logic
+- 🎯 **Newtonian Physics**: Components for position, velocity, acceleration, and mass with double-precision
 - ⚡ **Parallel Execution**: Optional multi-threaded system execution with Rayon
-- 🔌 **Plugin Architecture**: Extensible design for adding custom functionality
-- 📊 **Cache-Friendly**: Data-oriented design for optimal performance
+- 🔌 **Plugin Architecture**: Extensible design for adding custom functionality via force providers
+- 🔄 **Force Accumulation**: Generic system for applying forces without hardcoded simulation logic
+- 📊 **Cache-Friendly**: Data-oriented design with SIMD-friendly component layouts
 - 🦀 **Pure Rust**: Memory-safe implementation without runtime overhead
 
 ## Quick Start
@@ -47,25 +49,32 @@ cargo run --example basic
 
 ```rust
 use physics_engine::ecs::{World, Entity, Component, ComponentStorage, HashMapStorage};
-
-// Define a component
-#[derive(Debug)]
-struct Position { x: f32, y: f32, z: f32 }
-impl Component for Position {}
+use physics_engine::ecs::components::{Position, Velocity, Mass};
+use physics_engine::ecs::systems::{ForceRegistry, ForceProvider, Force};
+use physics_engine::ecs::scheduler::{Scheduler, stages};
 
 fn main() {
     // Create a world and entities
     let mut world = World::new();
     let entity = world.create_entity();
     
-    // Add components
+    // Add Newtonian physics components
     let mut positions = HashMapStorage::<Position>::new();
-    positions.insert(entity, Position { x: 0.0, y: 0.0, z: 0.0 });
+    positions.insert(entity, Position::new(0.0, 0.0, 0.0));
     
-    // Query and update
-    if let Some(pos) = positions.get_mut(entity) {
-        pos.x += 1.0;
-    }
+    let mut velocities = HashMapStorage::<Velocity>::new();
+    velocities.insert(entity, Velocity::new(1.0, 0.0, 0.0));
+    
+    let mut masses = HashMapStorage::<Mass>::new();
+    masses.insert(entity, Mass::new(10.0)); // 10 kg
+    
+    // Create a force registry for force accumulation
+    let mut force_registry = ForceRegistry::new();
+    // Register custom force providers (gravity, springs, etc.)
+    
+    // Use the scheduler for deterministic staged execution
+    let mut scheduler = Scheduler::new();
+    // Add systems to appropriate stages
 }
 ```
 
@@ -98,7 +107,13 @@ Comprehensive documentation is available:
 
 - **Entities**: Lightweight identifiers with generational indices
 - **Components**: Pure data structures (no behavior)
+  - **Position**: 3D coordinates with double-precision
+  - **Velocity**: Rate of change of position
+  - **Acceleration**: Rate of change of velocity (computed from forces)
+  - **Mass**: Entity mass with special handling for immovable bodies
 - **Systems**: Logic that operates on entities with specific components
+- **Force Registry**: Accumulates forces from multiple providers for Newtonian mechanics
+- **Scheduler**: Executes systems in deterministic stages with parallel support
 - **World**: Central container managing all ECS data
 
 ## Project Structure
@@ -109,11 +124,14 @@ physics-engine/
 │   ├── src/
 │   │   ├── lib.rs       # Library root
 │   │   └── ecs/         # ECS implementation
-│   │       ├── mod.rs   # ECS module root
-│   │       ├── entity.rs    # Entity management
-│   │       ├── component.rs # Component storage
-│   │       ├── system.rs    # System execution
-│   │       └── world.rs     # World container
+│   │       ├── mod.rs        # ECS module root
+│   │       ├── entity.rs     # Entity management
+│   │       ├── component.rs  # Component storage
+│   │       ├── components.rs # Newtonian physics components
+│   │       ├── system.rs     # System execution
+│   │       ├── systems.rs    # Newtonian physics systems
+│   │       ├── scheduler.rs  # Staged parallel scheduler
+│   │       └── world.rs      # World container
 │   └── examples/        # Example programs
 │       └── basic.rs     # Basic ECS demonstration
 ├── docs/                # Documentation
@@ -146,11 +164,12 @@ The project enforces:
 
 ### Future Roadmap
 
-- [ ] Structure-of-Arrays (SoA) component storage for better cache performance
 - [ ] Archetype-based entity organization
 - [ ] Query DSL for ergonomic component access
 - [ ] Automatic system scheduling and dependency resolution
-- [ ] Physics components and systems (rigid bodies, collisions, constraints)
+- [ ] Advanced integrators (Verlet, RK4) for better accuracy
+- [ ] Collision detection and response systems
+- [ ] Constraint solvers for joints and contacts
 - [ ] Integration examples with graphics libraries
 
 ## Performance
