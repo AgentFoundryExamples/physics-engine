@@ -47,6 +47,10 @@
         {
           "type": "file",
           "name": "integration.md"
+        },
+        {
+          "type": "file",
+          "name": "plugins.md"
         }
       ]
     },
@@ -135,6 +139,24 @@
               ]
             },
             {
+              "type": "directory",
+              "name": "plugins",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "api.rs"
+                },
+                {
+                  "type": "file",
+                  "name": "mod.rs"
+                },
+                {
+                  "type": "file",
+                  "name": "registry.rs"
+                }
+              ]
+            },
+            {
               "type": "file",
               "name": "lib.rs"
             }
@@ -181,6 +203,10 @@
           "name": "tree.md"
         }
       ]
+    },
+    {
+      "type": "file",
+      "name": ".env.example"
     },
     {
       "type": "file",

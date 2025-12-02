@@ -9,7 +9,8 @@
     └── af_maintenance.yml
 ├── docs
   ├── architecture.md
-  └── integration.md
+  ├── integration.md
+  └── plugins.md
 ├── physics-engine
   ├── benches
     └── integration.rs
@@ -29,6 +30,10 @@
       ├── mod.rs
       ├── rk4.rs
       └── verlet.rs
+    ├── plugins
+      ├── api.rs
+      ├── mod.rs
+      └── registry.rs
     └── lib.rs
   ├── tests
     └── conservation.rs
@@ -39,6 +44,7 @@
   ├── SUMMARY.md
   ├── tree.json
   └── tree.md
+├── .env.example
 ├── .gitignore
 ├── Cargo.lock
 ├── Cargo.toml
