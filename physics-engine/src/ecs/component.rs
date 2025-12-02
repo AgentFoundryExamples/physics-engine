@@ -48,7 +48,9 @@ pub trait ComponentStorage: Send + Sync {
 
 /// Simple HashMap-based component storage
 ///
-/// TODO: Replace with more cache-friendly SoA-based storage for production use
+/// Note: This implementation prioritizes simplicity for the initial release.
+/// Future versions will optimize with Structure-of-Arrays (SoA) layouts for
+/// improved cache performance and SIMD opportunities.
 pub struct HashMapStorage<T: Component> {
     components: HashMap<Entity, T>,
 }

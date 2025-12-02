@@ -52,12 +52,15 @@ impl SystemExecutor {
 
     /// Run all systems with parallelization support
     ///
-    /// This method attempts to run independent systems in parallel when the
-    /// `parallel` feature is enabled. Falls back to sequential execution otherwise.
+    /// When the `parallel` feature is enabled, this method is available to support
+    /// future parallel execution of independent systems. Currently, it performs
+    /// sequential execution as a foundation. Parallel scheduling will be implemented
+    /// once system dependency analysis is added.
+    ///
+    /// Falls back to sequential execution when the `parallel` feature is disabled.
     #[cfg(feature = "parallel")]
     pub fn run_parallel(&mut self, world: &mut World) {
-        // TODO: Implement dependency analysis and parallel scheduling
-        // For now, fall back to sequential execution
+        // Foundation for parallel execution - dependency analysis coming in future releases
         self.run_sequential(world);
     }
 
