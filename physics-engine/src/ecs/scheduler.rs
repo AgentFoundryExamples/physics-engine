@@ -94,9 +94,11 @@ impl Scheduler {
     }
 
     /// Create a scheduler with a specific number of stages
-    pub fn with_stages(_stage_count: usize) -> Self {
+    ///
+    /// Pre-allocates capacity for the given number of stages to reduce allocations.
+    pub fn with_stages(stage_count: usize) -> Self {
         Scheduler {
-            systems: Vec::new(),
+            systems: Vec::with_capacity(stage_count * 4), // Estimate 4 systems per stage
         }
     }
 

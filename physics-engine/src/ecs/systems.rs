@@ -81,6 +81,11 @@ pub trait ForceProvider: Send + Sync {
 /// The force registry allows plugins to register arbitrary force providers
 /// that will be applied to entities during physics updates. Forces are
 /// accumulated per entity and can be used to compute accelerations.
+///
+/// # Logging
+///
+/// Currently uses `eprintln!` for warnings. Future versions will integrate with
+/// the `log` crate to allow configurable logging handlers.
 pub struct ForceRegistry {
     providers: Vec<Box<dyn ForceProvider>>,
     accumulated_forces: HashMap<Entity, Force>,

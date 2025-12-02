@@ -313,10 +313,23 @@ impl Mass {
     ///
     /// # Panics
     ///
-    /// Panics if the mass is negative or NaN.
+    /// Panics if the mass is negative or NaN. This is appropriate for programming
+    /// errors where invalid data should not be constructed. For fallible construction,
+    /// use `try_new`.
     pub fn new(value: f64) -> Self {
         assert!(value >= 0.0 && value.is_finite(), "Mass must be non-negative and finite");
         Mass { value }
+    }
+
+    /// Try to create a new mass with the given value in kilograms
+    ///
+    /// Returns `None` if the value is negative or NaN.
+    pub fn try_new(value: f64) -> Option<Self> {
+        if value >= 0.0 && value.is_finite() {
+            Some(Mass { value })
+        } else {
+            None
+        }
     }
 
     /// Create an immovable mass (treated as infinite mass)
@@ -458,6 +471,22 @@ mod tests {
         let mass = Mass::new(10.5);
         assert_eq!(mass.value(), 10.5);
         assert!(mass.is_valid());
+    }
+
+    #[test]
+    fn test_mass_try_new() {
+        let valid = Mass::try_new(10.5);
+        assert!(valid.is_some());
+        assert_eq!(valid.unwrap().value(), 10.5);
+
+        let negative = Mass::try_new(-1.0);
+        assert!(negative.is_none());
+
+        let nan = Mass::try_new(f64::NAN);
+        assert!(nan.is_none());
+
+        let inf = Mass::try_new(f64::INFINITY);
+        assert!(inf.is_none());
     }
 
     #[test]
