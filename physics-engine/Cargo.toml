@@ -13,6 +13,7 @@ parallel = ["dep:rayon"]
 
 [dependencies]
 rayon = { workspace = true, optional = true }
+semver = { workspace = true }
 
 [dev-dependencies]
 criterion = "0.5.1"

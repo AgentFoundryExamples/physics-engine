@@ -11,3 +11,4 @@ license = "Apache-2.0"
 
 [workspace.dependencies]
 rayon = "1.10.0"
+semver = "1.0.23"

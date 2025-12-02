@@ -28,6 +28,7 @@
 
 use crate::plugins::api::{Plugin, PLUGIN_API_VERSION};
 use std::collections::{HashMap, VecDeque};
+use semver::Version;
 
 /// Plugin registry for managing and executing plugins
 ///
@@ -202,7 +203,7 @@ impl PluginRegistry {
         self.load_order = topological_sort(&dependencies)?;
 
         // Initialize plugins in dependency order
-        for name in &self.load_order.clone() {
+        for name in &self.load_order {
             if let Some(plugin) = self.plugins.get_mut(name) {
                 plugin.initialize(context).map_err(|e| {
                     format!("Failed to initialize plugin '{}': {}", name, e)
@@ -233,7 +234,7 @@ impl PluginRegistry {
             return Err("Registry not initialized".to_string());
         }
 
-        for name in &self.load_order.clone() {
+        for name in &self.load_order {
             if let Some(plugin) = self.plugins.get_mut(name) {
                 plugin.update(context).map_err(|e| {
                     format!("Failed to update plugin '{}': {}", name, e)
@@ -307,34 +308,32 @@ impl Default for PluginRegistry {
 ///
 /// Uses semantic versioning rules:
 /// - Major version must match
-/// - Minor version can be less than or equal
+/// - For major version 0.x.y, minor versions must match (breaking changes)
+/// - For major version >= 1, minor version can be less than or equal
 /// - Patch version is ignored
 fn is_version_compatible(plugin_version: &str, engine_version: &str) -> bool {
-    let parse_version = |v: &str| -> Option<(u32, u32, u32)> {
-        let parts: Vec<&str> = v.split('.').collect();
-        if parts.len() != 3 {
-            return None;
-        }
-        Some((
-            parts[0].parse().ok()?,
-            parts[1].parse().ok()?,
-            parts[2].parse().ok()?,
-        ))
+    let plugin_ver = match Version::parse(plugin_version) {
+        Ok(v) => v,
+        Err(_) => return false,
+    };
+    let engine_ver = match Version::parse(engine_version) {
+        Ok(v) => v,
+        Err(_) => return false,
     };
 
-    let plugin_ver = parse_version(plugin_version);
-    let engine_ver = parse_version(engine_version);
+    // Major version must match
+    if plugin_ver.major != engine_ver.major {
+        return false;
+    }
 
-    match (plugin_ver, engine_ver) {
-        (Some((p_major, p_minor, _)), Some((e_major, e_minor, _))) => {
-            // Major version must match
-            if p_major != e_major {
-                return false;
-            }
-            // Plugin minor version must be <= engine minor version
-            p_minor <= e_minor
-        }
-        _ => false, // Invalid version format
+    // Plugin minor version must be <= engine minor version
+    // This check is only relevant if major versions are the same (and non-zero).
+    if plugin_ver.major != 0 {
+        plugin_ver.minor <= engine_ver.minor
+    } else {
+        // For 0.x.y versions, treat minor versions as breaking changes.
+        // A plugin for 0.1.x is not compatible with engine 0.2.x.
+        plugin_ver.minor == engine_ver.minor
     }
 }
 
@@ -478,23 +477,6 @@ mod tests {
         }
     }
 
-    fn create_test_context() -> PluginContext<'static> {
-        // Note: Using Box::leak creates a memory leak, but is acceptable for tests
-        // as test processes are short-lived. In production code, use proper lifetime
-        // management or pass contexts with appropriate lifetimes.
-        let world = Box::leak(Box::new(World::new()));
-        let integrator_name = Box::leak(Box::new("test".to_string()));
-
-        #[cfg(feature = "parallel")]
-        {
-            PluginContext::new(world, integrator_name, 0.016, None)
-        }
-        #[cfg(not(feature = "parallel"))]
-        {
-            PluginContext::new(world, integrator_name, 0.016)
-        }
-    }
-
     #[test]
     fn test_registry_creation() {
         let registry = PluginRegistry::new();
@@ -530,7 +512,13 @@ mod tests {
             .register(Box::new(TestPlugin::new("test", vec![])))
             .unwrap();
 
-        let context = create_test_context();
+        let world = World::new();
+        let integrator_name = "test";
+        #[cfg(feature = "parallel")]
+        let context = PluginContext::new(&world, integrator_name, 0.016, None);
+        #[cfg(not(feature = "parallel"))]
+        let context = PluginContext::new(&world, integrator_name, 0.016);
+
         assert!(registry.initialize_all(&context).is_ok());
         assert!(registry.is_initialized());
     }
@@ -545,7 +533,13 @@ mod tests {
             .register(Box::new(TestPlugin::new("plugin_b", vec!["plugin_a"])))
             .unwrap();
 
-        let context = create_test_context();
+        let world = World::new();
+        let integrator_name = "test";
+        #[cfg(feature = "parallel")]
+        let context = PluginContext::new(&world, integrator_name, 0.016, None);
+        #[cfg(not(feature = "parallel"))]
+        let context = PluginContext::new(&world, integrator_name, 0.016);
+
         assert!(registry.initialize_all(&context).is_ok());
 
         // Check that plugin_a is loaded before plugin_b
@@ -562,7 +556,13 @@ mod tests {
             .register(Box::new(TestPlugin::new("plugin_b", vec!["plugin_a"])))
             .unwrap();
 
-        let context = create_test_context();
+        let world = World::new();
+        let integrator_name = "test";
+        #[cfg(feature = "parallel")]
+        let context = PluginContext::new(&world, integrator_name, 0.016, None);
+        #[cfg(not(feature = "parallel"))]
+        let context = PluginContext::new(&world, integrator_name, 0.016);
+
         let result = registry.initialize_all(&context);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("not registered"));
@@ -583,7 +583,13 @@ mod tests {
             .register(Box::new(TestPlugin::new("plugin_c", vec!["plugin_b"])))
             .unwrap();
 
-        let context = create_test_context();
+        let world = World::new();
+        let integrator_name = "test";
+        #[cfg(feature = "parallel")]
+        let context = PluginContext::new(&world, integrator_name, 0.016, None);
+        #[cfg(not(feature = "parallel"))]
+        let context = PluginContext::new(&world, integrator_name, 0.016);
+
         let result = registry.initialize_all(&context);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Circular dependency"));
@@ -596,7 +602,13 @@ mod tests {
             .register(Box::new(TestPlugin::new("test", vec![])))
             .unwrap();
 
-        let context = create_test_context();
+        let world = World::new();
+        let integrator_name = "test";
+        #[cfg(feature = "parallel")]
+        let context = PluginContext::new(&world, integrator_name, 0.016, None);
+        #[cfg(not(feature = "parallel"))]
+        let context = PluginContext::new(&world, integrator_name, 0.016);
+
         registry.initialize_all(&context).unwrap();
         registry.update_all(&context).unwrap();
 
@@ -616,7 +628,13 @@ mod tests {
             .register(Box::new(TestPlugin::new("test", vec![])))
             .unwrap();
 
-        let context = create_test_context();
+        let world = World::new();
+        let integrator_name = "test";
+        #[cfg(feature = "parallel")]
+        let context = PluginContext::new(&world, integrator_name, 0.016, None);
+        #[cfg(not(feature = "parallel"))]
+        let context = PluginContext::new(&world, integrator_name, 0.016);
+
         registry.initialize_all(&context).unwrap();
         registry.shutdown_all().unwrap();
 
@@ -632,11 +650,24 @@ mod tests {
 
     #[test]
     fn test_version_compatibility() {
+        // For 0.x.y versions, minor versions must match (breaking changes)
         assert!(is_version_compatible("0.1.0", "0.1.0"));
-        assert!(is_version_compatible("0.1.0", "0.2.0")); // Minor upgrade ok
-        assert!(!is_version_compatible("0.2.0", "0.1.0")); // Plugin newer
+        assert!(is_version_compatible("0.1.5", "0.1.10")); // Patch versions ok
+        assert!(!is_version_compatible("0.1.0", "0.2.0")); // Minor version mismatch for 0.x
+        assert!(!is_version_compatible("0.2.0", "0.1.0")); // Minor version mismatch for 0.x
+        
+        // For 1.x.y and higher, minor version <= is ok
+        assert!(is_version_compatible("1.0.0", "1.0.0"));
+        assert!(is_version_compatible("1.0.0", "1.2.0")); // Minor upgrade ok for major >= 1
+        assert!(!is_version_compatible("1.2.0", "1.0.0")); // Plugin newer
+        
+        // Major version must always match
         assert!(!is_version_compatible("1.0.0", "0.1.0")); // Major mismatch
+        assert!(!is_version_compatible("2.0.0", "1.0.0")); // Major mismatch
+        
+        // Invalid versions
         assert!(!is_version_compatible("invalid", "0.1.0")); // Invalid format
+        assert!(!is_version_compatible("0.1.0", "invalid")); // Invalid format
     }
 
     #[test]
