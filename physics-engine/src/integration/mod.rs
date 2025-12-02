@@ -135,8 +135,6 @@ pub trait Integrator: Send + Sync {
 
 #[cfg(test)]
 mod tests {
-    use crate::ecs::{Entity};
-
     // Simple harmonic oscillator test fixture
     // Mass-spring system: F = -kx, analytical solution: x(t) = A*cos(ωt + φ)
     struct HarmonicOscillator {
