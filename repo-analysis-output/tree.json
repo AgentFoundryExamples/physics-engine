@@ -38,6 +38,72 @@
     },
     {
       "type": "directory",
+      "name": "docs",
+      "children": [
+        {
+          "type": "file",
+          "name": "architecture.md"
+        }
+      ]
+    },
+    {
+      "type": "directory",
+      "name": "physics-engine",
+      "children": [
+        {
+          "type": "directory",
+          "name": "examples",
+          "children": [
+            {
+              "type": "file",
+              "name": "basic.rs"
+            }
+          ]
+        },
+        {
+          "type": "directory",
+          "name": "src",
+          "children": [
+            {
+              "type": "directory",
+              "name": "ecs",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "component.rs"
+                },
+                {
+                  "type": "file",
+                  "name": "entity.rs"
+                },
+                {
+                  "type": "file",
+                  "name": "mod.rs"
+                },
+                {
+                  "type": "file",
+                  "name": "system.rs"
+                },
+                {
+                  "type": "file",
+                  "name": "world.rs"
+                }
+              ]
+            },
+            {
+              "type": "file",
+              "name": "lib.rs"
+            }
+          ]
+        },
+        {
+          "type": "file",
+          "name": "Cargo.toml"
+        }
+      ]
+    },
+    {
+      "type": "directory",
       "name": "repo-analysis-output",
       "children": [
         {
@@ -61,6 +127,18 @@
           "name": "tree.md"
         }
       ]
+    },
+    {
+      "type": "file",
+      "name": ".gitignore"
+    },
+    {
+      "type": "file",
+      "name": "Cargo.lock"
+    },
+    {
+      "type": "file",
+      "name": "Cargo.toml"
     },
     {
       "type": "file",

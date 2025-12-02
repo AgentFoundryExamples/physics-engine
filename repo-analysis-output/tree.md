@@ -7,11 +7,28 @@
     └── repo-analyzer.config.json
   └── workflows
     └── af_maintenance.yml
+├── docs
+  └── architecture.md
+├── physics-engine
+  ├── examples
+    └── basic.rs
+  ├── src
+    ├── ecs
+      ├── component.rs
+      ├── entity.rs
+      ├── mod.rs
+      ├── system.rs
+      └── world.rs
+    └── lib.rs
+  └── Cargo.toml
 ├── repo-analysis-output
   ├── dependencies.json
   ├── dependencies.md
   ├── SUMMARY.md
   ├── tree.json
   └── tree.md
+├── .gitignore
+├── Cargo.lock
+├── Cargo.toml
 ├── LICENSE
 └── README.md
