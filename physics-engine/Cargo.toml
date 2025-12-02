@@ -1,0 +1,22 @@
+[package]
+name = "physics-engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "A high-performance ECS-based physics engine with parallel execution support"
+
+[features]
+default = ["parallel"]
+parallel = ["dep:rayon"]
+
+[dependencies]
+rayon = { workspace = true, optional = true }
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
+[package.metadata.docs.rs]
+all-features = true
