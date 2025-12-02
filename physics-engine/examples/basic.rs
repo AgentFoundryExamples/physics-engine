@@ -3,7 +3,7 @@
 //! This example shows how to create a world, spawn entities,
 //! and interact with the basic ECS components.
 
-use physics_engine::ecs::{World, Component, ComponentStorage, HashMapStorage};
+use physics_engine::ecs::{World, Component, ComponentStorage, HashMapStorage, System, SystemExecutor};
 
 #[derive(Debug)]
 struct Position {
@@ -22,6 +22,21 @@ struct Velocity {
 }
 
 impl Component for Velocity {}
+
+// Simple physics system that applies velocity to position
+struct PhysicsSystem;
+
+impl System for PhysicsSystem {
+    fn run(&mut self, _world: &mut World) {
+        println!("  [PhysicsSystem] Running physics update...");
+        // Note: In a real implementation, systems would query components from the world
+        // This is a placeholder to demonstrate system execution
+    }
+
+    fn name(&self) -> &str {
+        "PhysicsSystem"
+    }
+}
 
 fn main() {
     println!("Physics Engine - Basic ECS Example");
@@ -78,6 +93,25 @@ fn main() {
             println!("  {} moved to Position({:.1}, {:.1}, {:.1})", 
                      entity, pos.x, pos.y, pos.z);
         }
+    }
+
+    // Demonstrate system execution
+    println!("\nDemonstrating system execution:");
+    let mut executor = SystemExecutor::new();
+    executor.add_system(PhysicsSystem);
+    
+    println!("  Registered {} system(s)", executor.system_count());
+    
+    #[cfg(feature = "parallel")]
+    {
+        println!("  Running systems with parallel support...");
+        executor.run_parallel(&mut world);
+    }
+    
+    #[cfg(not(feature = "parallel"))]
+    {
+        println!("  Running systems sequentially...");
+        executor.run_sequential(&mut world);
     }
 
     // Clean up
