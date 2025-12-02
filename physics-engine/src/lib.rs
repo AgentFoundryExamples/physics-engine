@@ -43,4 +43,7 @@
 /// Entity Component System implementation
 pub mod ecs;
 
+/// Numerical integration methods
+pub mod integration;
+
 pub use ecs::{World, Entity};

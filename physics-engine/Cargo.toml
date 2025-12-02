@@ -14,9 +14,16 @@ parallel = ["dep:rayon"]
 [dependencies]
 rayon = { workspace = true, optional = true }
 
+[dev-dependencies]
+criterion = "0.5.1"
+
 [[example]]
 name = "basic"
 path = "examples/basic.rs"
+
+[[bench]]
+name = "integration"
+harness = false
 
 [package.metadata.docs.rs]
 all-features = true
