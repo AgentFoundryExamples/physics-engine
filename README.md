@@ -18,6 +18,7 @@ This physics engine provides a flexible and efficient foundation for simulating 
 - ⚡ **Parallel Execution**: Optional multi-threaded system execution with Rayon
 - 🔌 **Plugin Architecture**: Extensible design for adding custom functionality via force providers
 - 🔄 **Force Accumulation**: Generic system for applying forces without hardcoded simulation logic
+- 🔢 **Advanced Integrators**: Velocity Verlet and RK4 for accurate physics simulation
 - 📊 **Cache-Friendly**: Data-oriented design with SIMD-friendly component layouts
 - 🦀 **Pure Rust**: Memory-safe implementation without runtime overhead
 
@@ -52,6 +53,7 @@ use physics_engine::ecs::{World, Entity, Component, ComponentStorage, HashMapSto
 use physics_engine::ecs::components::{Position, Velocity, Mass};
 use physics_engine::ecs::systems::{ForceRegistry, ForceProvider, Force};
 use physics_engine::ecs::scheduler::{Scheduler, stages};
+use physics_engine::integration::{VelocityVerletIntegrator, Integrator};
 
 fn main() {
     // Create a world and entities
@@ -72,6 +74,9 @@ fn main() {
     let mut force_registry = ForceRegistry::new();
     // Register custom force providers (gravity, springs, etc.)
     
+    // Create an integrator for physics simulation
+    let mut integrator = VelocityVerletIntegrator::new(1.0 / 60.0); // 60 FPS
+    
     // Use the scheduler for deterministic staged execution
     let mut scheduler = Scheduler::new();
     // Add systems to appropriate stages
@@ -80,7 +85,41 @@ fn main() {
 
 ## Configuration
 
-### Feature Flags
+### Configuration
+
+#### Numerical Integration
+
+The engine provides multiple integrators with different accuracy/performance tradeoffs:
+
+- **Velocity Verlet** (recommended): Symplectic integrator with excellent energy conservation
+  - Best for long-running simulations, oscillatory motion, orbital mechanics
+  - Second-order accurate: O(dt²)
+  - ~2x force evaluations per step
+
+- **RK4**: Fourth-order Runge-Kutta for high-precision simulation
+  - Best for smooth nonlinear forces requiring high accuracy
+  - Fourth-order accurate: O(dt⁴)
+  - 4x force evaluations per step
+
+```rust
+use physics_engine::integration::{VelocityVerletIntegrator, RK4Integrator, Integrator};
+
+// For long simulations with oscillatory motion
+let verlet = VelocityVerletIntegrator::new(1.0 / 60.0);
+
+// For high-precision with smooth forces
+let rk4 = RK4Integrator::new(1.0 / 60.0);
+```
+
+**Timestep Selection:**
+- Start with dt = 1/60 (60 FPS) or dt = 0.01
+- For oscillatory systems: dt < 2/ω where ω is the angular frequency
+- Too small: precision issues (dt < 1e-9 will warn)
+- Too large: instability (dt > 1.0 will warn)
+
+See [Integration Documentation](docs/integration.md) for detailed guidance.
+
+#### Feature Flags
 
 The engine supports the following Cargo features:
 
@@ -100,6 +139,7 @@ The engine supports the following Cargo features:
 Comprehensive documentation is available:
 
 - **[Architecture Guide](docs/architecture.md)**: Detailed design overview, ECS concepts, and parallelization strategy
+- **[Integration Methods](docs/integration.md)**: Guide to numerical integrators, timestep selection, and accuracy considerations
 - **API Documentation**: Generate with `cargo doc --open --all-features`
 - **Examples**: See the `examples/` directory for practical usage
 
@@ -113,6 +153,7 @@ Comprehensive documentation is available:
   - **Mass**: Entity mass with special handling for immovable bodies
 - **Systems**: Logic that operates on entities with specific components
 - **Force Registry**: Accumulates forces from multiple providers for Newtonian mechanics
+- **Integrators**: Numerical methods for updating motion (Verlet, RK4)
 - **Scheduler**: Executes systems in deterministic stages with parallel support
 - **World**: Central container managing all ECS data
 
@@ -122,22 +163,29 @@ Comprehensive documentation is available:
 physics-engine/
 ├── physics-engine/       # Main library crate
 │   ├── src/
-│   │   ├── lib.rs       # Library root
-│   │   └── ecs/         # ECS implementation
-│   │       ├── mod.rs        # ECS module root
-│   │       ├── entity.rs     # Entity management
-│   │       ├── component.rs  # Component storage
-│   │       ├── components.rs # Newtonian physics components
-│   │       ├── system.rs     # System execution
-│   │       ├── systems.rs    # Newtonian physics systems
-│   │       ├── scheduler.rs  # Staged parallel scheduler
-│   │       └── world.rs      # World container
-│   └── examples/        # Example programs
-│       └── basic.rs     # Basic ECS demonstration
-├── docs/                # Documentation
-│   └── architecture.md  # Architecture overview
-├── Cargo.toml          # Workspace configuration
-└── README.md           # This file
+│   │   ├── lib.rs        # Library root
+│   │   ├── ecs/          # ECS implementation
+│   │   │   ├── mod.rs         # ECS module root
+│   │   │   ├── entity.rs      # Entity management
+│   │   │   ├── component.rs   # Component storage
+│   │   │   ├── components.rs  # Newtonian physics components
+│   │   │   ├── system.rs      # System execution
+│   │   │   ├── systems.rs     # Newtonian physics systems
+│   │   │   ├── scheduler.rs   # Staged parallel scheduler
+│   │   │   └── world.rs       # World container
+│   │   └── integration/  # Numerical integrators
+│   │       ├── mod.rs         # Integration module root
+│   │       ├── verlet.rs      # Velocity Verlet integrator
+│   │       └── rk4.rs         # Runge-Kutta 4 integrator
+│   ├── benches/          # Performance benchmarks
+│   │   └── integration.rs # Integrator benchmarks
+│   └── examples/         # Example programs
+│       └── basic.rs      # Basic ECS demonstration
+├── docs/                 # Documentation
+│   ├── architecture.md   # Architecture overview
+│   └── integration.md    # Integration methods guide
+├── Cargo.toml           # Workspace configuration
+└── README.md            # This file
 ```
 
 ## Development
@@ -153,6 +201,9 @@ cargo test --all-features
 
 # Run tests without parallel support
 cargo test --no-default-features
+
+# Run benchmarks
+cargo bench
 ```
 
 ### Code Quality
@@ -167,7 +218,8 @@ The project enforces:
 - [ ] Archetype-based entity organization
 - [ ] Query DSL for ergonomic component access
 - [ ] Automatic system scheduling and dependency resolution
-- [ ] Advanced integrators (Verlet, RK4) for better accuracy
+- [x] Advanced integrators (Verlet, RK4) for better accuracy
+- [ ] Adaptive timestepping for automatic dt adjustment
 - [ ] Collision detection and response systems
 - [ ] Constraint solvers for joints and contacts
 - [ ] Integration examples with graphics libraries
