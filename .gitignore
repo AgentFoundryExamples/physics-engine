@@ -1,0 +1,27 @@
+# Rust build artifacts
+/target/
+**/target/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Debug and profiling
+*.pdb
+flamegraph.svg
+perf.data*
+
+# Documentation build
+/docs/_build/
+
+# Test and coverage
+*.profraw
+*.profdata
+
+# Temporary files
+/tmp/
+*.tmp
