@@ -148,6 +148,7 @@ impl RK4Integrator {
         };
 
         // Temporarily set position to evaluation point
+        let original_pos = positions.get(entity).copied();
         if let Some(pos) = positions.get_mut(entity) {
             *pos = eval_pos;
         }
@@ -155,6 +156,11 @@ impl RK4Integrator {
         // Compute forces at this position
         force_registry.clear_forces();
         force_registry.accumulate_for_entity(entity);
+
+        // Restore original position
+        if let (Some(p), Some(orig_p)) = (positions.get_mut(entity), original_pos) {
+            *p = orig_p;
+        }
 
         // Compute acceleration from forces
         let mass = masses.get(entity)?;

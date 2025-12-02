@@ -254,7 +254,7 @@ fn test_rk4_position_accuracy() {
 
 #[test]
 fn test_verlet_constant_acceleration() {
-    // Test with constant acceleration (like gravity)
+    // Test with constant acceleration (like gravity) using a force provider
     let entity = Entity::new(1, 0);
 
     let mut positions = HashMapStorage::<Position>::new();
@@ -264,13 +264,32 @@ fn test_verlet_constant_acceleration() {
     velocities.insert(entity, Velocity::new(0.0, 0.0, 0.0));
 
     let mut accelerations = HashMapStorage::<Acceleration>::new();
-    let a = -9.81; // gravity
+    // Initialize with first acceleration for proper Verlet startup
+    let a = -9.81; // gravity acceleration
     accelerations.insert(entity, Acceleration::new(0.0, a, 0.0));
 
     let mut masses = HashMapStorage::<Mass>::new();
-    masses.insert(entity, Mass::new(1.0));
+    let m = 1.0;
+    masses.insert(entity, Mass::new(m));
 
+    // Create a constant force provider to simulate gravity
+    struct ConstantForce {
+        force: Force,
+    }
+    impl ForceProvider for ConstantForce {
+        fn compute_force(&self, _entity: Entity, _registry: &ForceRegistry) -> Option<Force> {
+            Some(self.force)
+        }
+        fn name(&self) -> &str {
+            "ConstantForce"
+        }
+    }
+
+    let a = -9.81; // gravity acceleration
     let mut force_registry = ForceRegistry::new();
+    force_registry.register_provider(Box::new(ConstantForce {
+        force: Force::new(0.0, m * a, 0.0), // F = ma
+    }));
 
     let dt = 0.01;
     let steps = 100;

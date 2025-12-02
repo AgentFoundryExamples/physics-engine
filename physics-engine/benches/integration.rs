@@ -37,9 +37,10 @@ impl SpringForce {
 
 impl ForceProvider for SpringForce {
     fn compute_force(&self, _entity: Entity, _registry: &ForceRegistry) -> Option<Force> {
-        // For benchmarking, we'll return a simple constant force
-        // In a real scenario, this would read from position components
-        // We simplify here to avoid complex shared state in benchmarks
+        // Note: This is a simplified constant force for benchmarking throughput.
+        // Real harmonic oscillator forces would be F = -k*x, requiring position access.
+        // This benchmark primarily measures integrator computational overhead,
+        // not physical accuracy. See tests/conservation.rs for accuracy validation.
         Some(Force::new(
             -self.spring_constant * 0.5, // Approximate average displacement
             0.0,

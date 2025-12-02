@@ -192,19 +192,14 @@ impl Integrator for VelocityVerletIntegrator {
             let old_acc = accelerations.get(*entity);
             let new_acc = new_accelerations.get(*entity);
 
-            // If we have both old and new accelerations, use average
-            // If we only have one, use that one
-            // If we have neither, velocity doesn't change (but position was still updated)
-            let (ax, ay, az) = match (old_acc, new_acc) {
-                (Some(old), Some(new)) => (
-                    0.5 * (old.ax() + new.ax()),
-                    0.5 * (old.ay() + new.ay()),
-                    0.5 * (old.az() + new.az()),
-                ),
-                (Some(old), None) => (old.ax(), old.ay(), old.az()),
-                (None, Some(new)) => (new.ax(), new.ay(), new.az()),
-                (None, None) => (0.0, 0.0, 0.0), // No acceleration, velocity stays same
-            };
+            // Use Verlet formula: v' = v + 0.5*(a_old + a_new)*dt
+            // If acceleration is missing, treat as zero
+            let old_acc = old_acc.copied().unwrap_or_else(Acceleration::zero);
+            let new_acc = new_acc.copied().unwrap_or_else(Acceleration::zero);
+
+            let ax = 0.5 * (old_acc.ax() + new_acc.ax());
+            let ay = 0.5 * (old_acc.ay() + new_acc.ay());
+            let az = 0.5 * (old_acc.az() + new_acc.az());
 
             let new_dx = vel.dx() + ax * dt;
             let new_dy = vel.dy() + ay * dt;
