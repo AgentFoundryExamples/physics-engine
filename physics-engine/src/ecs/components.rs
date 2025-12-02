@@ -346,10 +346,22 @@ impl Mass {
     ///
     /// # Panics
     ///
-    /// Panics if the mass is negative or NaN.
+    /// Panics if the mass is negative or NaN. For fallible setting, use `try_set_value`.
     pub fn set_value(&mut self, value: f64) {
         assert!(value >= 0.0 && value.is_finite(), "Mass must be non-negative and finite");
         self.value = value;
+    }
+
+    /// Try to set the mass value
+    ///
+    /// Returns `Ok(())` on success, or `Err(())` if the value is negative or NaN.
+    pub fn try_set_value(&mut self, value: f64) -> Result<(), ()> {
+        if value >= 0.0 && value.is_finite() {
+            self.value = value;
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 
     /// Check if the mass is valid (non-negative and finite)
@@ -526,6 +538,25 @@ mod tests {
         let zero_mass = Mass::new(0.0);
         assert!(zero_mass.is_immovable());
         assert_eq!(zero_mass.inverse(), 0.0); // Should not divide by zero
+    }
+
+    #[test]
+    fn test_mass_try_set_value() {
+        let mut mass = Mass::new(10.0);
+        
+        // Valid update
+        assert!(mass.try_set_value(20.0).is_ok());
+        assert_eq!(mass.value(), 20.0);
+        
+        // Invalid updates
+        assert!(mass.try_set_value(-1.0).is_err());
+        assert_eq!(mass.value(), 20.0); // Value unchanged
+        
+        assert!(mass.try_set_value(f64::NAN).is_err());
+        assert_eq!(mass.value(), 20.0); // Value unchanged
+        
+        assert!(mass.try_set_value(f64::INFINITY).is_err());
+        assert_eq!(mass.value(), 20.0); // Value unchanged
     }
 
     #[test]

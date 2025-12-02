@@ -127,8 +127,8 @@ impl ForceRegistry {
             if let Some(force) = provider.compute_force(entity, self) {
                 if !force.is_valid() {
                     if self.warn_on_missing_components {
-                        eprintln!("Warning: Force provider '{}' produced invalid force (NaN/Inf) for entity {}", 
-                                  provider.name(), entity);
+                        // Use Debug formatting to prevent injection attacks
+                        eprintln!("Warning: Force provider produced invalid force (NaN/Inf) for {:?}", entity);
                     }
                     continue;
                 }
@@ -141,8 +141,10 @@ impl ForceRegistry {
         // Check for overflow
         if has_forces && total_force.magnitude() > self.max_force_magnitude {
             if self.warn_on_missing_components {
-                eprintln!("Warning: Total force magnitude {} exceeds limit {} for entity {}", 
-                          total_force.magnitude(), self.max_force_magnitude, entity);
+                let mag = total_force.magnitude();
+                // Sanitize numeric output
+                eprintln!("Warning: Total force magnitude {:.2e} exceeds limit {:.2e} for {:?}", 
+                          mag, self.max_force_magnitude, entity);
             }
             // Clamp to max magnitude
             let mag = total_force.magnitude();
@@ -217,7 +219,7 @@ where
             Some(m) => m,
             None => {
                 if warn_on_missing {
-                    eprintln!("Warning: Entity {} has force but no Mass component, skipping", entity);
+                    eprintln!("Warning: Entity {:?} has force but no Mass component, skipping", entity);
                 }
                 continue;
             }
@@ -239,7 +241,7 @@ where
         // Validate acceleration
         if !acceleration.is_valid() {
             if warn_on_missing {
-                eprintln!("Warning: Computed invalid acceleration for entity {}, skipping", entity);
+                eprintln!("Warning: Computed invalid acceleration for entity {:?}, skipping", entity);
             }
             continue;
         }
@@ -302,7 +304,7 @@ where
             Some(v) => v,
             None => {
                 if warn_on_missing && acc.is_some() {
-                    eprintln!("Warning: Entity {} has acceleration but no Velocity component, skipping", entity);
+                    eprintln!("Warning: Entity {:?} has acceleration but no Velocity component, skipping", entity);
                 }
                 continue;
             }
@@ -313,7 +315,7 @@ where
             Some(p) => p,
             None => {
                 if warn_on_missing {
-                    eprintln!("Warning: Entity {} has velocity but no Position component, skipping", entity);
+                    eprintln!("Warning: Entity {:?} has velocity but no Position component, skipping", entity);
                 }
                 continue;
             }
@@ -334,7 +336,7 @@ where
         // Validate results
         if !pos.is_valid() || !vel.is_valid() {
             if warn_on_missing {
-                eprintln!("Warning: Integration produced invalid state for entity {}", entity);
+                eprintln!("Warning: Integration produced invalid state for entity {:?}", entity);
             }
             continue;
         }

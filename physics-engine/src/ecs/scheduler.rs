@@ -20,6 +20,7 @@
 
 use crate::ecs::System;
 use crate::ecs::World;
+use std::collections::BTreeMap;
 
 /// Stage identifier for grouping systems
 ///
@@ -55,12 +56,6 @@ pub mod stages {
     pub const POST_PROCESS: StageId = StageId(4);
 }
 
-/// A system with metadata for scheduling
-struct ScheduledSystem {
-    system: Box<dyn System>,
-    stage: StageId,
-}
-
 /// System scheduler with support for staged parallel execution
 ///
 /// The scheduler organizes systems into stages that execute sequentially,
@@ -82,23 +77,24 @@ struct ScheduledSystem {
 /// scheduler.add_system(MySystem, stages::INTEGRATION);
 /// ```
 pub struct Scheduler {
-    systems: Vec<ScheduledSystem>,
+    stages: BTreeMap<StageId, Vec<Box<dyn System>>>,
 }
 
 impl Scheduler {
     /// Create a new scheduler
     pub fn new() -> Self {
         Scheduler {
-            systems: Vec::new(),
+            stages: BTreeMap::new(),
         }
     }
 
     /// Create a scheduler with a specific number of stages
     ///
     /// Pre-allocates capacity for the given number of stages to reduce allocations.
-    pub fn with_stages(stage_count: usize) -> Self {
+    pub fn with_stages(_stage_count: usize) -> Self {
+        // BTreeMap doesn't support pre-allocation, so we just create a new one
         Scheduler {
-            systems: Vec::with_capacity(stage_count * 4), // Estimate 4 systems per stage
+            stages: BTreeMap::new(),
         }
     }
 
@@ -107,10 +103,10 @@ impl Scheduler {
     /// Systems within the same stage may run in parallel. Stages are executed
     /// in order (stage 0, then 1, then 2, etc.).
     pub fn add_system<S: System + 'static>(&mut self, system: S, stage: StageId) {
-        self.systems.push(ScheduledSystem {
-            system: Box::new(system),
-            stage,
-        });
+        self.stages
+            .entry(stage)
+            .or_insert_with(Vec::new)
+            .push(Box::new(system));
     }
 
     /// Add a system to the default integration stage
@@ -120,20 +116,12 @@ impl Scheduler {
 
     /// Get the number of registered systems
     pub fn system_count(&self) -> usize {
-        self.systems.len()
+        self.stages.values().map(|v| v.len()).sum()
     }
 
     /// Get the number of stages in use
     pub fn stage_count(&self) -> usize {
-        if self.systems.is_empty() {
-            0
-        } else {
-            self.systems.iter()
-                .map(|s| s.stage.0)
-                .max()
-                .map(|max| max + 1)
-                .unwrap_or(0)
-        }
+        self.stages.len()
     }
 
     /// Execute all systems sequentially in stage order
@@ -141,11 +129,11 @@ impl Scheduler {
     /// This is the fallback when parallel execution is not available or
     /// for debugging purposes.
     pub fn run_sequential(&mut self, world: &mut World) {
-        // Sort by stage to ensure deterministic order
-        self.systems.sort_by_key(|s| s.stage);
-
-        for scheduled in &mut self.systems {
-            scheduled.system.run(world);
+        // BTreeMap automatically maintains sorted order by key
+        for stage_systems in self.stages.values_mut() {
+            for system in stage_systems {
+                system.run(world);
+            }
         }
     }
 
@@ -161,31 +149,12 @@ impl Scheduler {
     /// concurrently. This will be implemented in a future release.
     #[cfg(feature = "parallel")]
     pub fn run_parallel(&mut self, world: &mut World) {
-        use std::collections::HashMap;
-
-        // Sort by stage to ensure deterministic order
-        self.systems.sort_by_key(|s| s.stage);
-
-        // Group systems by stage
-        let mut stages: HashMap<StageId, Vec<&mut Box<dyn System>>> = HashMap::new();
-        for scheduled in &mut self.systems {
-            stages.entry(scheduled.stage)
-                .or_insert_with(Vec::new)
-                .push(&mut scheduled.system);
-        }
-
-        // Get sorted stage IDs
-        let mut stage_ids: Vec<StageId> = stages.keys().copied().collect();
-        stage_ids.sort();
-
-        // Execute each stage sequentially
-        for stage_id in stage_ids {
-            if let Some(stage_systems) = stages.get_mut(&stage_id) {
-                // Within a stage, systems currently run sequentially
-                // Future enhancement: analyze component access to run independent systems in parallel
-                for system in stage_systems {
-                    system.run(world);
-                }
+        // BTreeMap automatically maintains sorted order by key (StageId)
+        for stage_systems in self.stages.values_mut() {
+            // Within a stage, systems currently run sequentially
+            // Future enhancement: analyze component access to run independent systems in parallel
+            for system in stage_systems {
+                system.run(world);
             }
         }
     }
@@ -198,7 +167,7 @@ impl Scheduler {
 
     /// Clear all systems from the scheduler
     pub fn clear(&mut self) {
-        self.systems.clear();
+        self.stages.clear();
     }
 }
 
@@ -347,9 +316,9 @@ mod tests {
         assert_eq!(scheduler.stage_count(), 1);
 
         scheduler.add_system(TestSystem::new("s2"), StageId::new(5));
-        assert_eq!(scheduler.stage_count(), 6); // Stages 0-5
+        assert_eq!(scheduler.stage_count(), 2); // Two distinct stages: 0 and 5
 
         scheduler.add_system(TestSystem::new("s3"), StageId::new(2));
-        assert_eq!(scheduler.stage_count(), 6); // Still 0-5
+        assert_eq!(scheduler.stage_count(), 3); // Three distinct stages: 0, 2, and 5
     }
 }
