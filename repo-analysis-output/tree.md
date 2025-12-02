@@ -15,9 +15,12 @@
   ├── src
     ├── ecs
       ├── component.rs
+      ├── components.rs
       ├── entity.rs
       ├── mod.rs
+      ├── scheduler.rs
       ├── system.rs
+      ├── systems.rs
       └── world.rs
     └── lib.rs
   └── Cargo.toml
