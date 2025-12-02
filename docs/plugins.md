@@ -619,16 +619,24 @@ impl ForceProvider for MyPlugin {
 
 3. **Minimize allocations**:
 ```rust
-// ❌ Bad: Allocates every frame
+// ❌ Bad: Allocates every frame and doesn't compile (Force doesn't implement Sum)
 fn compute_force(&self, ...) -> Option<Force> {
-    let forces = vec![Force::new(1.0, 0.0, 0.0), ...];
-    Some(forces.iter().sum())
+    // This doesn't work because Force doesn't implement Sum
+    // let forces = vec![Force::new(1.0, 0.0, 0.0), ...];
+    // Some(forces.iter().sum())
+    
+    // Use manual accumulation instead:
+    let mut total = Force::zero();
+    total.add(&Force::new(1.0, 0.0, 0.0));
+    total.add(&Force::new(0.0, 2.0, 0.0));
+    Some(total)
 }
 
-// ✅ Good: No allocations
+// ✅ Good: No allocations, correct usage
 fn compute_force(&self, ...) -> Option<Force> {
     let mut total = Force::zero();
     total.add(&Force::new(1.0, 0.0, 0.0));
+    total.add(&Force::new(0.0, 2.0, 0.0));
     Some(total)
 }
 ```

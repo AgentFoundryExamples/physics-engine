@@ -479,7 +479,9 @@ mod tests {
     }
 
     fn create_test_context() -> PluginContext<'static> {
-        // Use a Box::leak to create a static reference
+        // Note: Using Box::leak creates a memory leak, but is acceptable for tests
+        // as test processes are short-lived. In production code, use proper lifetime
+        // management or pass contexts with appropriate lifetimes.
         let world = Box::leak(Box::new(World::new()));
         let integrator_name = Box::leak(Box::new("test".to_string()));
 
