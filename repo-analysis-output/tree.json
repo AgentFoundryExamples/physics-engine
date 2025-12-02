@@ -43,6 +43,10 @@
         {
           "type": "file",
           "name": "architecture.md"
+        },
+        {
+          "type": "file",
+          "name": "integration.md"
         }
       ]
     },
@@ -50,6 +54,16 @@
       "type": "directory",
       "name": "physics-engine",
       "children": [
+        {
+          "type": "directory",
+          "name": "benches",
+          "children": [
+            {
+              "type": "file",
+              "name": "integration.rs"
+            }
+          ]
+        },
         {
           "type": "directory",
           "name": "examples",
@@ -103,8 +117,36 @@
               ]
             },
             {
+              "type": "directory",
+              "name": "integration",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "mod.rs"
+                },
+                {
+                  "type": "file",
+                  "name": "rk4.rs"
+                },
+                {
+                  "type": "file",
+                  "name": "verlet.rs"
+                }
+              ]
+            },
+            {
               "type": "file",
               "name": "lib.rs"
+            }
+          ]
+        },
+        {
+          "type": "directory",
+          "name": "tests",
+          "children": [
+            {
+              "type": "file",
+              "name": "conservation.rs"
             }
           ]
         },

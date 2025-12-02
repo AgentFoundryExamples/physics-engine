@@ -8,8 +8,11 @@
   └── workflows
     └── af_maintenance.yml
 ├── docs
-  └── architecture.md
+  ├── architecture.md
+  └── integration.md
 ├── physics-engine
+  ├── benches
+    └── integration.rs
   ├── examples
     └── basic.rs
   ├── src
@@ -22,7 +25,13 @@
       ├── system.rs
       ├── systems.rs
       └── world.rs
+    ├── integration
+      ├── mod.rs
+      ├── rk4.rs
+      └── verlet.rs
     └── lib.rs
+  ├── tests
+    └── conservation.rs
   └── Cargo.toml
 ├── repo-analysis-output
   ├── dependencies.json
