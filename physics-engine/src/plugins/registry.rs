@@ -355,7 +355,7 @@ fn topological_sort(dependencies: &HashMap<String, Vec<String>>) -> Result<Vec<S
         for dep in deps {
             adj_list
                 .entry(dep.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(dependent.clone());
             *in_degree.entry(dependent.clone()).or_insert(0) += 1;
         }

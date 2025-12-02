@@ -16,7 +16,7 @@ This physics engine provides a flexible and efficient foundation for simulating 
 - ✨ **Entity Component System**: Clean separation of data and logic
 - 🎯 **Newtonian Physics**: Components for position, velocity, acceleration, and mass with double-precision
 - ⚡ **Parallel Execution**: Optional multi-threaded system execution with Rayon
-- 🔌 **Plugin Architecture**: Extensible design for adding custom functionality via force providers
+- 🔌 **Plugin Architecture**: Extensible system for custom objects, forces, and constraints
 - 🔄 **Force Accumulation**: Generic system for applying forces without hardcoded simulation logic
 - 🔢 **Advanced Integrators**: Velocity Verlet and RK4 for accurate physics simulation
 - 📊 **Cache-Friendly**: Data-oriented design with SIMD-friendly component layouts
@@ -134,12 +134,91 @@ The engine supports the following Cargo features:
 - **WebAssembly**: Build with `--no-default-features` as threading support varies
 - **Embedded/No-Std**: Not currently supported, but planned for future versions
 
+## Plugin System
+
+The physics engine provides a comprehensive plugin API for extending functionality without modifying the core engine. Plugins can define custom objects, forces, and constraints.
+
+### Plugin Types
+
+1. **Object Factories**: Create entities with pre-configured components
+2. **Force Providers**: Compute custom forces (gravity, springs, drag, etc.)
+3. **Constraint Systems**: Enforce physical or geometric constraints
+
+### Quick Example
+
+```rust
+use physics_engine::plugins::{Plugin, ForceProviderPlugin, PluginRegistry};
+use physics_engine::ecs::Entity;
+use physics_engine::ecs::systems::{Force, ForceRegistry, ForceProvider};
+use std::any::Any;
+
+// Define a custom gravity plugin
+struct GravityPlugin {
+    acceleration: f64,
+}
+
+impl Plugin for GravityPlugin {
+    fn name(&self) -> &str { "gravity" }
+    fn version(&self) -> &str { "1.0.0" }
+    fn as_any(&self) -> &dyn Any { self }
+    fn as_any_mut(&mut self) -> &mut dyn Any { self }
+}
+
+impl ForceProvider for GravityPlugin {
+    fn compute_force(&self, _entity: Entity, _registry: &ForceRegistry) -> Option<Force> {
+        Some(Force::new(0.0, self.acceleration, 0.0))
+    }
+    fn name(&self) -> &str { "gravity" }
+}
+
+impl ForceProviderPlugin for GravityPlugin {
+    fn as_force_provider(&self) -> &dyn ForceProvider { self }
+}
+
+// Register and use the plugin
+fn main() {
+    let mut registry = PluginRegistry::new();
+    registry.register(Box::new(GravityPlugin { acceleration: -9.81 }))
+        .expect("Failed to register plugin");
+    
+    // Initialize and use plugins...
+}
+```
+
+### Features
+
+- ✅ **Type-safe API**: Compile-time safety guarantees
+- ✅ **Dependency resolution**: Automatic plugin ordering with cycle detection
+- ✅ **Version checking**: Semantic versioning compatibility validation
+- ✅ **Static registration**: Zero runtime overhead
+- ✅ **Thread-safe**: Safe for parallel execution
+- 🔄 **Dynamic loading**: Planned for future versions
+
+### Configuration
+
+Set the `PHYSICS_ENGINE_PLUGIN_PATH` environment variable to configure plugin search paths:
+
+```bash
+# Copy the example configuration
+cp .env.example .env
+
+# Edit to set your plugin paths
+export PHYSICS_ENGINE_PLUGIN_PATH=/path/to/plugins
+```
+
+**Note**: Dynamic plugin loading is not currently implemented. Use static registration via `PluginRegistry::register()`.
+
+### Learn More
+
+See the **[Plugin Guide](docs/plugins.md)** for detailed documentation, examples, and best practices.
+
 ## Documentation
 
 Comprehensive documentation is available:
 
 - **[Architecture Guide](docs/architecture.md)**: Detailed design overview, ECS concepts, and parallelization strategy
 - **[Integration Methods](docs/integration.md)**: Guide to numerical integrators, timestep selection, and accuracy considerations
+- **[Plugin Guide](docs/plugins.md)**: Plugin system architecture, API reference, and extension examples
 - **API Documentation**: Generate with `cargo doc --open --all-features`
 - **Examples**: See the `examples/` directory for practical usage
 
@@ -173,17 +252,23 @@ physics-engine/
 │   │   │   ├── systems.rs     # Newtonian physics systems
 │   │   │   ├── scheduler.rs   # Staged parallel scheduler
 │   │   │   └── world.rs       # World container
-│   │   └── integration/  # Numerical integrators
-│   │       ├── mod.rs         # Integration module root
-│   │       ├── verlet.rs      # Velocity Verlet integrator
-│   │       └── rk4.rs         # Runge-Kutta 4 integrator
+│   │   ├── integration/  # Numerical integrators
+│   │   │   ├── mod.rs         # Integration module root
+│   │   │   ├── verlet.rs      # Velocity Verlet integrator
+│   │   │   └── rk4.rs         # Runge-Kutta 4 integrator
+│   │   └── plugins/      # Plugin system
+│   │       ├── mod.rs         # Plugin module root
+│   │       ├── api.rs         # Plugin traits and context
+│   │       └── registry.rs    # Plugin registry and loader
 │   ├── benches/          # Performance benchmarks
 │   │   └── integration.rs # Integrator benchmarks
 │   └── examples/         # Example programs
 │       └── basic.rs      # Basic ECS demonstration
 ├── docs/                 # Documentation
 │   ├── architecture.md   # Architecture overview
-│   └── integration.md    # Integration methods guide
+│   ├── integration.md    # Integration methods guide
+│   └── plugins.md        # Plugin system guide
+├── .env.example         # Environment configuration template
 ├── Cargo.toml           # Workspace configuration
 └── README.md            # This file
 ```
