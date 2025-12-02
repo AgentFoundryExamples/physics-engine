@@ -17,12 +17,21 @@
 //! - Entity management
 //! - Component storage with cache-friendly data layouts
 //! - System execution framework
+//! - Newtonian physics components and systems
+//! - System scheduler with parallel execution support
 //! - Optional parallel execution support via Rayon
 
 mod entity;
 mod component;
 mod system;
 mod world;
+
+/// Newtonian physics components
+pub mod components;
+/// Newtonian physics systems
+pub mod systems;
+/// System scheduler
+pub mod scheduler;
 
 pub use entity::{Entity, EntityId};
 pub use component::{Component, ComponentStorage, HashMapStorage};
