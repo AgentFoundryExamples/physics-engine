@@ -1,4 +1,4 @@
-# agent-foundry-template
+# physics-engine
 
 ├── .github
   ├── af-config
