@@ -237,6 +237,9 @@ fn print_state(
     }
 }
 
+/// CSV header for diagnostic output
+const DIAG_HEADER: &str = "DIAG,step,time_s,dt_s,KE_J,PE_J,E_total_J,drift_frac,earth_AU,earth_v_ms,earth_a_ms2";
+
 /// Print detailed diagnostic information for failure analysis
 fn print_diagnostics(
     step: usize,
@@ -269,6 +272,7 @@ fn print_diagnostics(
             let v_mag = (vel.dx() * vel.dx() + vel.dy() * vel.dy() + vel.dz() * vel.dz()).sqrt();
             let a_mag = (acc.ax() * acc.ax() + acc.ay() * acc.ay() + acc.az() * acc.az()).sqrt();
             
+            // Format: step,time_s,dt_s,KE_J,PE_J,E_total_J,drift_frac,earth_AU,earth_v_ms,earth_a_ms2
             println!("DIAG,{},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e}",
                      step, time, dt, ke, pe, total_energy, energy_drift, r / AU, v_mag, a_mag);
         }
@@ -430,7 +434,7 @@ fn main() {
     if config.diagnostic_mode {
         println!();
         println!("=== DIAGNOSTIC MODE ENABLED ===");
-        println!("CSV Header: DIAG,step,time_s,dt_s,KE_J,PE_J,E_total_J,drift_frac,earth_AU,earth_v_ms,earth_a_ms2");
+        println!("CSV Header: {}", DIAG_HEADER);
         println!();
     }
 

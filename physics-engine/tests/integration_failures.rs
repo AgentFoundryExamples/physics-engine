@@ -25,9 +25,10 @@
 //! attribute can be removed.
 
 use physics_engine::ecs::components::{Position, Velocity, Mass, Acceleration};
-use physics_engine::ecs::systems::{ForceRegistry, ForceProvider, Force};
+use physics_engine::ecs::systems::{ForceRegistry, ForceProvider, Force, apply_forces_to_acceleration};
 use physics_engine::ecs::{Entity, HashMapStorage, ComponentStorage};
 use physics_engine::integration::{VelocityVerletIntegrator, RK4Integrator, Integrator};
+use physics_engine::plugins::gravity::{GravityPlugin, GravitySystem, GRAVITATIONAL_CONSTANT, DEFAULT_SOFTENING};
 
 /// Constant force provider for testing
 struct ConstantForce {
@@ -41,6 +42,23 @@ impl ForceProvider for ConstantForce {
     fn name(&self) -> &str {
         "ConstantForce"
     }
+}
+
+/// Calculate two-body gravitational potential energy with softening
+fn calculate_potential_energy_two_body(
+    m1: f64,
+    m2: f64,
+    pos1: &Position,
+    pos2: &Position,
+    g: f64,
+    softening: f64,
+) -> f64 {
+    let dx = pos2.x() - pos1.x();
+    let dy = pos2.y() - pos1.y();
+    let dz = pos2.z() - pos1.z();
+    let r_squared = dx * dx + dy * dy + dz * dz;
+    let r_softened = (r_squared + softening * softening).sqrt();
+    -g * m1 * m2 / r_softened
 }
 
 /// Test that demonstrates kinetic energy should change under constant force
@@ -204,8 +222,6 @@ fn test_rk4_kinetic_energy_changes_under_constant_force() {
 #[test]
 #[ignore = "Known failure - circular orbits become unstable and expand"]
 fn test_verlet_circular_orbit_stability() {
-    use physics_engine::plugins::gravity::{GravityPlugin, GravitySystem, GRAVITATIONAL_CONSTANT};
-
     // Simplified two-body problem: Sun and Earth
     let sun = Entity::new(1, 0);
     let earth = Entity::new(2, 0);
@@ -254,7 +270,6 @@ fn test_verlet_circular_orbit_stability() {
         gravity_system.compute_forces(&entities, &positions, &masses, &mut force_registry);
 
         // Apply forces to accelerations
-        use physics_engine::ecs::systems::apply_forces_to_acceleration;
         apply_forces_to_acceleration(
             entities.iter(),
             &force_registry,
@@ -304,8 +319,6 @@ fn test_verlet_circular_orbit_stability() {
 #[test]
 #[ignore = "Known failure - massive energy drift (175%)"]
 fn test_verlet_energy_conservation_gravity() {
-    use physics_engine::plugins::gravity::{GravityPlugin, GravitySystem, GRAVITATIONAL_CONSTANT, DEFAULT_SOFTENING};
-
     let sun = Entity::new(1, 0);
     let earth = Entity::new(2, 0);
 
@@ -337,7 +350,16 @@ fn test_verlet_energy_conservation_gravity() {
 
     // Calculate initial energy
     let initial_ke = 0.5 * m_earth * v_circular * v_circular;
-    let initial_pe = -GRAVITATIONAL_CONSTANT * m_sun * m_earth / (au * au + DEFAULT_SOFTENING * DEFAULT_SOFTENING).sqrt();
+    let sun_pos = positions.get(sun).unwrap();
+    let earth_pos = positions.get(earth).unwrap();
+    let initial_pe = calculate_potential_energy_two_body(
+        m_sun,
+        m_earth,
+        sun_pos,
+        earth_pos,
+        GRAVITATIONAL_CONSTANT,
+        DEFAULT_SOFTENING,
+    );
     let initial_energy = initial_ke + initial_pe;
 
     let dt = 86400.0;
@@ -348,7 +370,6 @@ fn test_verlet_energy_conservation_gravity() {
 
     for _ in 0..steps {
         gravity_system.compute_forces(&entities, &positions, &masses, &mut force_registry);
-        use physics_engine::ecs::systems::apply_forces_to_acceleration;
         apply_forces_to_acceleration(
             entities.iter(),
             &force_registry,
@@ -375,11 +396,16 @@ fn test_verlet_energy_conservation_gravity() {
                  earth_vel.dz() * earth_vel.dz()).sqrt();
     let final_ke = 0.5 * m_earth * v_mag * v_mag;
 
+    let sun_pos = positions.get(sun).unwrap();
     let earth_pos = positions.get(earth).unwrap();
-    let r = (earth_pos.x() * earth_pos.x() + 
-             earth_pos.y() * earth_pos.y() + 
-             earth_pos.z() * earth_pos.z()).sqrt();
-    let final_pe = -GRAVITATIONAL_CONSTANT * m_sun * m_earth / (r * r + DEFAULT_SOFTENING * DEFAULT_SOFTENING).sqrt();
+    let final_pe = calculate_potential_energy_two_body(
+        m_sun,
+        m_earth,
+        sun_pos,
+        earth_pos,
+        GRAVITATIONAL_CONSTANT,
+        DEFAULT_SOFTENING,
+    );
     let final_energy = final_ke + final_pe;
 
     let energy_drift = ((final_energy - initial_energy) / initial_energy).abs();

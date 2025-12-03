@@ -253,6 +253,9 @@ fn print_state(
     println!("  System Spread:  {:.1} m", spread);
 }
 
+/// CSV header for diagnostic output
+const DIAG_HEADER: &str = "DIAG,step,time_s,dt_s,KE_J,ke_change_frac,cm_x_m,cm_y_m,cm_z_m,spread_m";
+
 /// Print detailed diagnostic information for failure analysis
 fn print_diagnostics(
     step: usize,
@@ -273,6 +276,7 @@ fn print_diagnostics(
         0.0
     };
     
+    // Format: step,time_s,dt_s,KE_J,ke_change_frac,cm_x_m,cm_y_m,cm_z_m,spread_m
     println!("DIAG,{},{:.6e},{:.6e},{:.6e},{:.6e},{:.3e},{:.3e},{:.3e},{:.3e}",
              step, time, dt, ke, ke_change, cm.0, cm.1, cm.2, spread);
 }
@@ -453,7 +457,7 @@ fn main() {
     if config.diagnostic_mode {
         println!();
         println!("=== DIAGNOSTIC MODE ENABLED ===");
-        println!("CSV Header: DIAG,step,time_s,dt_s,KE_J,ke_change_frac,cm_x_m,cm_y_m,cm_z_m,spread_m");
+        println!("CSV Header: {}", DIAG_HEADER);
         println!();
     }
 
