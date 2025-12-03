@@ -142,65 +142,6 @@ impl RK4Integrator {
         self.acceleration_pool.clear();
     }
 
-    /// Compute derivative (velocity, acceleration) at current state
-    fn compute_derivative(
-        &mut self,
-        entity: Entity,
-        position: &Position,
-        velocity: &Velocity,
-        _dt_factor: f64,
-        use_buffer: Option<(Position, Velocity)>,
-        positions: &mut impl ComponentStorage<Component = Position>,
-        masses: &impl ComponentStorage<Component = Mass>,
-        force_registry: &mut ForceRegistry,
-    ) -> Option<(Velocity, Acceleration)> {
-        // For RK4, we need to temporarily update position to compute forces
-        let (eval_pos, eval_vel) = if let Some((buf_pos, buf_vel)) = use_buffer {
-            (buf_pos, buf_vel)
-        } else {
-            (*position, *velocity)
-        };
-
-        // Temporarily set position to evaluation point
-        let original_pos = positions.get(entity).copied();
-        if let Some(pos) = positions.get_mut(entity) {
-            *pos = eval_pos;
-        }
-
-        // Compute forces at this position
-        force_registry.clear_forces();
-        force_registry.accumulate_for_entity(entity);
-
-        // Restore original position
-        if let (Some(p), Some(orig_p)) = (positions.get_mut(entity), original_pos) {
-            *p = orig_p;
-        }
-
-        // Compute acceleration from forces
-        let mass = masses.get(entity)?;
-        if mass.is_immovable() {
-            return None;
-        }
-
-        // If no force, acceleration is zero (free motion)
-        let acceleration = if let Some(force) = force_registry.get_force(entity) {
-            let inv_mass = mass.inverse();
-            Acceleration::new(
-                force.fx * inv_mass,
-                force.fy * inv_mass,
-                force.fz * inv_mass,
-            )
-        } else {
-            Acceleration::zero()
-        };
-
-        if !acceleration.is_valid() {
-            return None;
-        }
-
-        // Derivative is (velocity, acceleration)
-        Some((eval_vel, acceleration))
-    }
 }
 
 impl Integrator for RK4Integrator {
@@ -251,19 +192,29 @@ impl Integrator for RK4Integrator {
         let mut k4_velocities = self.velocity_pool.acquire();
 
         // Store initial state for all entities
-        // Note: These could be pooled but are small and short-lived (within one integration call)
-        // The k1-k4 buffers are more important to pool as they're larger and accessed multiple times
         let mut initial_positions = HashMap::new();
         let mut initial_velocities = HashMap::new();
 
         for entity in &entities_vec {
             if let (Some(pos), Some(vel)) = (positions.get(*entity), velocities.get(*entity)) {
+                // Skip immovable bodies
+                if masses.get(*entity).map_or(true, |m| m.is_immovable()) {
+                    continue;
+                }
                 initial_positions.insert(*entity, *pos);
                 initial_velocities.insert(*entity, *vel);
             }
         }
 
-        // Compute k1 for all entities
+        // ==================== STAGE 1: Compute k1 ====================
+        // Compute k1 at initial state (t, y0)
+        // All entities remain at their initial positions during this stage
+        
+        force_registry.clear_forces();
+        for entity in &entities_vec {
+            force_registry.accumulate_for_entity(*entity);
+        }
+
         for entity in &entities_vec {
             let pos = match initial_positions.get(entity) {
                 Some(p) => p,
@@ -274,46 +225,70 @@ impl Integrator for RK4Integrator {
                 None => continue,
             };
 
-            // Skip immovable bodies or entities without a mass component
-            if masses.get(*entity).map_or(true, |m| m.is_immovable()) {
-                continue;
-            }
+            let mass = match masses.get(*entity) {
+                Some(m) => m,
+                None => continue,
+            };
 
-            if let Some((_k1_vel, k1_acc)) = self.compute_derivative(
-                *entity,
-                pos,
-                vel,
-                0.0,
-                None,
-                positions,
-                masses,
-                force_registry,
-            ) {
-                // k1 for position derivative is velocity (dx/dt = v)
-                // We store velocity values in Position type for buffer reuse
-                k1_positions.insert(*entity, Position::new(
-                    vel.dx(), vel.dy(), vel.dz()
-                ));
-                // k1 for velocity derivative is acceleration (dv/dt = a)
-                // We store acceleration values in Velocity type for buffer reuse
+            // k1 for position derivative is current velocity (dx/dt = v)
+            k1_positions.insert(*entity, Position::new(
+                vel.dx(), vel.dy(), vel.dz()
+            ));
+
+            // k1 for velocity derivative is acceleration at current state (dv/dt = a)
+            let acceleration = if let Some(force) = force_registry.get_force(*entity) {
+                let inv_mass = mass.inverse();
+                Acceleration::new(
+                    force.fx * inv_mass,
+                    force.fy * inv_mass,
+                    force.fz * inv_mass,
+                )
+            } else {
+                Acceleration::zero()
+            };
+
+            if acceleration.is_valid() {
                 k1_velocities.insert(*entity, Velocity::new(
-                    k1_acc.ax(), k1_acc.ay(), k1_acc.az()
+                    acceleration.ax(), acceleration.ay(), acceleration.az()
                 ));
             }
         }
 
-        // Compute k2 for all entities
+        // ==================== STAGE 2: Compute k2 ====================
+        // Compute k2 at intermediate state (t + dt/2, y0 + k1*dt/2)
+        // Update ALL entities' positions to their k2 evaluation points
+        
         for entity in &entities_vec {
             let pos = match initial_positions.get(entity) {
                 Some(p) => p,
                 None => continue,
             };
-            let vel = match initial_velocities.get(entity) {
-                Some(v) => v,
-                None => continue,
-            };
             let k1_pos = match k1_positions.get(entity) {
                 Some(k) => k,
+                None => continue,
+            };
+
+            // Move entity to intermediate position: pos + k1*dt/2
+            let intermediate_pos = Position::new(
+                pos.x() + k1_pos.x() * dt_2,
+                pos.y() + k1_pos.y() * dt_2,
+                pos.z() + k1_pos.z() * dt_2,
+            );
+
+            if let Some(p) = positions.get_mut(*entity) {
+                *p = intermediate_pos;
+            }
+        }
+
+        // Now compute forces with ALL entities at their intermediate positions
+        force_registry.clear_forces();
+        for entity in &entities_vec {
+            force_registry.accumulate_for_entity(*entity);
+        }
+
+        for entity in &entities_vec {
+            let vel = match initial_velocities.get(entity) {
+                Some(v) => v,
                 None => continue,
             };
             let k1_vel = match k1_velocities.get(entity) {
@@ -321,55 +296,75 @@ impl Integrator for RK4Integrator {
                 None => continue,
             };
 
-            // Evaluate at y + k1*dt/2
-            // k1_pos contains velocity, so we advance position by velocity*dt/2
-            let eval_pos = Position::new(
-                pos.x() + k1_pos.x() * dt_2,
-                pos.y() + k1_pos.y() * dt_2,
-                pos.z() + k1_pos.z() * dt_2,
-            );
-            // k1_vel contains acceleration, so we advance velocity by acceleration*dt/2
-            let eval_vel = Velocity::new(
+            let mass = match masses.get(*entity) {
+                Some(m) => m,
+                None => continue,
+            };
+
+            // k2 for position derivative is velocity at intermediate state
+            let intermediate_vel = Velocity::new(
                 vel.dx() + k1_vel.dx() * dt_2,
                 vel.dy() + k1_vel.dy() * dt_2,
                 vel.dz() + k1_vel.dz() * dt_2,
             );
+            k2_positions.insert(*entity, Position::new(
+                intermediate_vel.dx(), intermediate_vel.dy(), intermediate_vel.dz()
+            ));
 
-            if let Some((k2_vel, k2_acc)) = self.compute_derivative(
-                *entity,
-                pos,
-                vel,
-                dt_2,
-                Some((eval_pos, eval_vel)),
-                positions,
-                masses,
-                force_registry,
-            ) {
-                // k2 for position derivative is the velocity at the evaluation point
-                // We store velocity values in Position type for buffer reuse
-                k2_positions.insert(*entity, Position::new(
-                    k2_vel.dx(), k2_vel.dy(), k2_vel.dz()
-                ));
-                // k2 for velocity derivative is the acceleration at the evaluation point
-                // We store acceleration values in Velocity type for buffer reuse
+            // k2 for velocity derivative is acceleration at intermediate state
+            let acceleration = if let Some(force) = force_registry.get_force(*entity) {
+                let inv_mass = mass.inverse();
+                Acceleration::new(
+                    force.fx * inv_mass,
+                    force.fy * inv_mass,
+                    force.fz * inv_mass,
+                )
+            } else {
+                Acceleration::zero()
+            };
+
+            if acceleration.is_valid() {
                 k2_velocities.insert(*entity, Velocity::new(
-                    k2_acc.ax(), k2_acc.ay(), k2_acc.az()
+                    acceleration.ax(), acceleration.ay(), acceleration.az()
                 ));
             }
         }
 
-        // Compute k3 for all entities
+        // ==================== STAGE 3: Compute k3 ====================
+        // Compute k3 at intermediate state (t + dt/2, y0 + k2*dt/2)
+        // Update ALL entities' positions to their k3 evaluation points
+        
         for entity in &entities_vec {
             let pos = match initial_positions.get(entity) {
                 Some(p) => p,
                 None => continue,
             };
-            let vel = match initial_velocities.get(entity) {
-                Some(v) => v,
-                None => continue,
-            };
             let k2_pos = match k2_positions.get(entity) {
                 Some(k) => k,
+                None => continue,
+            };
+
+            // Move entity to intermediate position: pos + k2*dt/2
+            let intermediate_pos = Position::new(
+                pos.x() + k2_pos.x() * dt_2,
+                pos.y() + k2_pos.y() * dt_2,
+                pos.z() + k2_pos.z() * dt_2,
+            );
+
+            if let Some(p) = positions.get_mut(*entity) {
+                *p = intermediate_pos;
+            }
+        }
+
+        // Compute forces with ALL entities at their k3 intermediate positions
+        force_registry.clear_forces();
+        for entity in &entities_vec {
+            force_registry.accumulate_for_entity(*entity);
+        }
+
+        for entity in &entities_vec {
+            let vel = match initial_velocities.get(entity) {
+                Some(v) => v,
                 None => continue,
             };
             let k2_vel = match k2_velocities.get(entity) {
@@ -377,53 +372,75 @@ impl Integrator for RK4Integrator {
                 None => continue,
             };
 
-            // Evaluate at y + k2*dt/2
-            let eval_pos = Position::new(
-                pos.x() + k2_pos.x() * dt_2,
-                pos.y() + k2_pos.y() * dt_2,
-                pos.z() + k2_pos.z() * dt_2,
-            );
-            let eval_vel = Velocity::new(
+            let mass = match masses.get(*entity) {
+                Some(m) => m,
+                None => continue,
+            };
+
+            // k3 for position derivative is velocity at intermediate state
+            let intermediate_vel = Velocity::new(
                 vel.dx() + k2_vel.dx() * dt_2,
                 vel.dy() + k2_vel.dy() * dt_2,
                 vel.dz() + k2_vel.dz() * dt_2,
             );
+            k3_positions.insert(*entity, Position::new(
+                intermediate_vel.dx(), intermediate_vel.dy(), intermediate_vel.dz()
+            ));
 
-            if let Some((k3_vel, k3_acc)) = self.compute_derivative(
-                *entity,
-                pos,
-                vel,
-                dt_2,
-                Some((eval_pos, eval_vel)),
-                positions,
-                masses,
-                force_registry,
-            ) {
-                // k3 for position derivative is velocity at evaluation point
-                // We store velocity values in Position type for buffer reuse
-                k3_positions.insert(*entity, Position::new(
-                    k3_vel.dx(), k3_vel.dy(), k3_vel.dz()
-                ));
-                // k3 for velocity derivative is acceleration at evaluation point
-                // We store acceleration values in Velocity type for buffer reuse
+            // k3 for velocity derivative is acceleration at intermediate state
+            let acceleration = if let Some(force) = force_registry.get_force(*entity) {
+                let inv_mass = mass.inverse();
+                Acceleration::new(
+                    force.fx * inv_mass,
+                    force.fy * inv_mass,
+                    force.fz * inv_mass,
+                )
+            } else {
+                Acceleration::zero()
+            };
+
+            if acceleration.is_valid() {
                 k3_velocities.insert(*entity, Velocity::new(
-                    k3_acc.ax(), k3_acc.ay(), k3_acc.az()
+                    acceleration.ax(), acceleration.ay(), acceleration.az()
                 ));
             }
         }
 
-        // Compute k4 for all entities
+        // ==================== STAGE 4: Compute k4 ====================
+        // Compute k4 at end state (t + dt, y0 + k3*dt)
+        // Update ALL entities' positions to their k4 evaluation points
+        
         for entity in &entities_vec {
             let pos = match initial_positions.get(entity) {
                 Some(p) => p,
                 None => continue,
             };
-            let vel = match initial_velocities.get(entity) {
-                Some(v) => v,
-                None => continue,
-            };
             let k3_pos = match k3_positions.get(entity) {
                 Some(k) => k,
+                None => continue,
+            };
+
+            // Move entity to end position: pos + k3*dt
+            let end_pos = Position::new(
+                pos.x() + k3_pos.x() * dt,
+                pos.y() + k3_pos.y() * dt,
+                pos.z() + k3_pos.z() * dt,
+            );
+
+            if let Some(p) = positions.get_mut(*entity) {
+                *p = end_pos;
+            }
+        }
+
+        // Compute forces with ALL entities at their k4 end positions
+        force_registry.clear_forces();
+        for entity in &entities_vec {
+            force_registry.accumulate_for_entity(*entity);
+        }
+
+        for entity in &entities_vec {
+            let vel = match initial_velocities.get(entity) {
+                Some(v) => v,
                 None => continue,
             };
             let k3_vel = match k3_velocities.get(entity) {
@@ -431,42 +448,43 @@ impl Integrator for RK4Integrator {
                 None => continue,
             };
 
-            // Evaluate at y + k3*dt (full step)
-            let eval_pos = Position::new(
-                pos.x() + k3_pos.x() * dt,
-                pos.y() + k3_pos.y() * dt,
-                pos.z() + k3_pos.z() * dt,
-            );
-            let eval_vel = Velocity::new(
+            let mass = match masses.get(*entity) {
+                Some(m) => m,
+                None => continue,
+            };
+
+            // k4 for position derivative is velocity at end state
+            let end_vel = Velocity::new(
                 vel.dx() + k3_vel.dx() * dt,
                 vel.dy() + k3_vel.dy() * dt,
                 vel.dz() + k3_vel.dz() * dt,
             );
+            k4_positions.insert(*entity, Position::new(
+                end_vel.dx(), end_vel.dy(), end_vel.dz()
+            ));
 
-            if let Some((k4_vel, k4_acc)) = self.compute_derivative(
-                *entity,
-                pos,
-                vel,
-                dt,
-                Some((eval_pos, eval_vel)),
-                positions,
-                masses,
-                force_registry,
-            ) {
-                // k4 for position derivative is velocity at evaluation point
-                // We store velocity values in Position type for buffer reuse
-                k4_positions.insert(*entity, Position::new(
-                    k4_vel.dx(), k4_vel.dy(), k4_vel.dz()
-                ));
-                // k4 for velocity derivative is acceleration at evaluation point
-                // We store acceleration values in Velocity type for buffer reuse
+            // k4 for velocity derivative is acceleration at end state
+            let acceleration = if let Some(force) = force_registry.get_force(*entity) {
+                let inv_mass = mass.inverse();
+                Acceleration::new(
+                    force.fx * inv_mass,
+                    force.fy * inv_mass,
+                    force.fz * inv_mass,
+                )
+            } else {
+                Acceleration::zero()
+            };
+
+            if acceleration.is_valid() {
                 k4_velocities.insert(*entity, Velocity::new(
-                    k4_acc.ax(), k4_acc.ay(), k4_acc.az()
+                    acceleration.ax(), acceleration.ay(), acceleration.az()
                 ));
             }
         }
 
-        // Final update: y(t+dt) = y(t) + (k1 + 2*k2 + 2*k3 + k4)*dt/6
+        // ==================== FINAL UPDATE ====================
+        // Apply the RK4 weighted average: y(t+dt) = y(t) + (k1 + 2*k2 + 2*k3 + k4)*dt/6
+        
         for entity in &entities_vec {
             let pos = match initial_positions.get(entity) {
                 Some(p) => p,
@@ -497,14 +515,14 @@ impl Integrator for RK4Integrator {
                 _ => continue,
             };
 
-            // Update position
+            // Update position with RK4 formula
             let new_pos = Position::new(
                 pos.x() + (k1_pos.x() + 2.0 * k2_pos.x() + 2.0 * k3_pos.x() + k4_pos.x()) * dt_6,
                 pos.y() + (k1_pos.y() + 2.0 * k2_pos.y() + 2.0 * k3_pos.y() + k4_pos.y()) * dt_6,
                 pos.z() + (k1_pos.z() + 2.0 * k2_pos.z() + 2.0 * k3_pos.z() + k4_pos.z()) * dt_6,
             );
 
-            // Update velocity
+            // Update velocity with RK4 formula
             let new_vel = Velocity::new(
                 vel.dx() + (k1_vel.dx() + 2.0 * k2_vel.dx() + 2.0 * k3_vel.dx() + k4_vel.dx()) * dt_6,
                 vel.dy() + (k1_vel.dy() + 2.0 * k2_vel.dy() + 2.0 * k3_vel.dy() + k4_vel.dy()) * dt_6,
