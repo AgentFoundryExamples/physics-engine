@@ -20,11 +20,26 @@ This physics engine provides a flexible and efficient foundation for simulating 
 - 🔄 **Force Accumulation**: Generic system for applying forces without hardcoded simulation logic
 - 🔢 **Advanced Integrators**: Velocity Verlet and RK4 for accurate physics simulation
 - 📊 **Cache-Friendly**: Data-oriented design with SIMD-friendly component layouts
+- 🔬 **Diagnostics**: Built-in diagnostic tools for physics validation and debugging
 - 🦀 **Pure Rust**: Memory-safe implementation without runtime overhead
 
-## Version 0.1.0 - Foundation Release
+## Version 0.1.1 - Diagnostics and Documentation Patch
 
-This release completes the foundational scope (ISS-1 through ISS-5):
+This patch release improves physics fidelity documentation and introduces diagnostic capabilities:
+
+### 🔧 What's New in 0.1.1
+
+- **Enhanced Diagnostics**: CSV output with `--diagnostics` flag for solar_system and particle_collision examples
+- **Warning Controls**: Configurable force magnitude warnings in gravity plugin (`warn_on_high_forces`, `max_expected_force`)
+- **Investigation Documentation**: Comprehensive failure analysis in `docs/FAILURE_ANALYSIS.md` documenting current limitations
+- **Improved Examples**: Better parameter validation and deterministic seeding for reproducibility
+- **Known Issues**: Transparent documentation of energy conservation challenges in long-term orbital simulations
+
+**Note**: This release focuses on diagnostics and documentation. See [CHANGELOG.md](CHANGELOG.md) for details on known physics issues and recommended workarounds.
+
+### Version 0.1.0 - Foundation Release
+
+Initial release completing the foundational scope (ISS-1 through ISS-5):
 
 ### ✅ ISS-1: ECS Core Architecture
 - Entity management with generational indices
@@ -182,6 +197,51 @@ let rk4 = RK4Integrator::new(1.0 / 60.0);
 - Too large: instability (dt > 1.0 will warn)
 
 See [Integration Documentation](docs/integration.md) for detailed guidance.
+
+#### Warning Controls (New in 0.1.1)
+
+The gravity plugin now supports configurable warning controls for high-force scenarios:
+
+```rust
+use physics_engine::plugins::gravity::GravityPlugin;
+
+// Create gravity plugin with custom warning thresholds
+let mut gravity = GravityPlugin::new(6.67430e-11);
+
+// Set maximum expected force (default: 1e10 N)
+gravity.set_max_expected_force(1e12); // 1 trillion Newtons
+
+// Disable high-force warnings for known extreme scenarios
+gravity.set_warn_on_high_forces(false);
+```
+
+**Configuration via Code:**
+- `set_max_expected_force(f64)`: Set threshold for force magnitude warnings
+- `set_warn_on_high_forces(bool)`: Enable/disable warnings for forces exceeding threshold
+- `set_softening(f64)`: Configure softening factor to prevent singularities (default: 1e3 m)
+
+See [Plugin Guide](docs/plugins.md) for complete API reference.
+
+#### Diagnostics (New in 0.1.1)
+
+Examples now support detailed diagnostic output for physics validation:
+
+```bash
+# Solar system with CSV diagnostics
+cargo run --release --example solar_system -- --diagnostics --years 1 > diagnostics.csv
+
+# Particle collision with diagnostics
+cargo run --release --example particle_collision -- --diagnostics --duration 5
+```
+
+**Diagnostic Output Includes:**
+- Timestep and simulation time
+- Kinetic energy, potential energy, total energy
+- Energy drift percentage from initial state
+- Reference body position, velocity, and acceleration
+- System center of mass and spread
+
+See [`docs/DIAGNOSTICS_README.md`](docs/DIAGNOSTICS_README.md) for methodology and analysis tools.
 
 #### Feature Flags
 

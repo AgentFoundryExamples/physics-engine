@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2025-12-03
+
+### Fixed
+
+**Physics Investigation and Diagnostics**
+
+This patch release documents extensive investigation into physics simulation stability and introduces diagnostic capabilities to aid in debugging and validation. While the investigation identified specific failure modes in the integrators, this release focuses on documentation, diagnostics, and configuration improvements.
+
+#### Integrator Investigation
+- Documented integrator failure modes in orbital mechanics scenarios (see `docs/FAILURE_ANALYSIS.md`)
+- Identified 175% energy drift in solar system simulations over 1 Earth year
+- Analyzed velocity integration behavior showing kinetic energy freeze
+- Characterized runaway trajectories in N-body gravitational systems
+- Established reproducible test parameters and acceptance criteria
+- Created regression test suite (`tests/integration_failures.rs`) to track known issues
+
+#### Gravity Plugin Enhancements
+- Added configurable warning suppression for high-force scenarios
+- Introduced `max_expected_force` parameter (default: 1e10 N) to control force magnitude thresholds
+- Added `warn_on_high_forces` flag to disable warnings in known high-force environments
+- Improved numerical stability with softening factor (ε = 1 km default)
+- Enhanced documentation of gravitational constant usage (CODATA 2018 value)
+
+#### Diagnostic Capabilities
+- Added `--diagnostics` flag to solar_system example for CSV output
+- Added `--diagnostics` flag to particle_collision example
+- Diagnostic output includes: timestep, kinetic energy, potential energy, total energy, drift percentage, reference body position/velocity/acceleration
+- Logging frequency optimized to prevent output explosion (every 10 steps for solar system, every 50 steps for particles)
+- Created `docs/DIAGNOSTICS_README.md` with methodology and usage instructions
+
+#### Example Stabilization
+- Enhanced solar_system example with energy conservation tracking
+- Improved particle_collision example with deterministic seeding (default: 12345)
+- Added command-line parameter validation
+- Clarified timestep selection guidance in documentation
+- Updated examples to warn users about current limitations
+
+### Changed
+
+- Version bumped from 0.1.0 to 0.1.1 (patch release)
+- Updated `docs/performance.md` with "Critical Known Issues" section
+- Updated `docs/examples.md` with "Known Issues" warnings
+- Improved `.env.example` documentation for future warning control configurations
+- Enhanced README with diagnostics and warning control information
+
+### Documentation
+
+- **NEW**: `docs/FAILURE_ANALYSIS.md` - Comprehensive technical failure analysis with measurements, hypotheses, and acceptance targets
+- **NEW**: `docs/DIAGNOSTICS_README.md` - Diagnostic tools usage guide and methodology documentation
+- **UPDATED**: `docs/examples.md` - Added known issues section and usage warnings
+- **UPDATED**: `docs/performance.md` - Added critical known issues section for users
+- **UPDATED**: README.md - Added configuration section for warning controls
+
+### Notes
+
+This is a **documentation and diagnostics patch release**. The core integrator issues identified in the investigation remain to be addressed in a future release. Users should be aware of:
+
+1. **Energy Conservation Issues**: Total energy drift of ~175% over 1 Earth year in orbital simulations
+2. **Orbital Instability**: Circular orbits may become unstable over time (Earth orbit grows from 1.0 AU to 6.4 AU)
+3. **Recommended Workarounds**: Use shorter simulation durations, smaller timesteps (< 1 day for solar system), or wait for fixes in future releases
+
+For detailed failure modes, reproduction steps, and diagnostic procedures, see `docs/FAILURE_ANALYSIS.md`.
+
 ## [0.1.0] - 2025-12-03
 
 ### Added - Core Physics Engine Foundation
@@ -308,4 +371,5 @@ Apache 2.0 - See [LICENSE](LICENSE) for details.
 
 Created by Agent Foundry and John Brosnihan
 
+[0.1.1]: https://github.com/AgentFoundryExamples/physics-engine/releases/tag/v0.1.1
 [0.1.0]: https://github.com/AgentFoundryExamples/physics-engine/releases/tag/v0.1.0
