@@ -642,10 +642,11 @@ impl<T: Component + Copy> ComponentStorage for SoAStorage<T> {
 ///
 /// storage.insert(entity, Position::new(1.0, 2.0, 3.0));
 ///
-/// // Access via traditional API
-/// assert_eq!(storage.get(entity).unwrap().x(), 1.0);
+/// // The `get()` method returns `None` for SoA storage.
+/// // Access must be done via `field_arrays()`.
+/// assert!(storage.get(entity).is_none());
 ///
-/// // Or access field arrays directly for SIMD operations
+/// // Access field arrays directly for SIMD operations
 /// if let Some(arrays) = storage.field_arrays() {
 ///     let (x, y, z) = arrays.as_position_arrays();
 ///     // Process x, y, z with SIMD
@@ -729,7 +730,7 @@ impl ComponentStorage for PositionSoAStorage {
                 // Update the entity that was swapped
                 let swapped_entity = self.index_to_entity[last_index];
                 *self.entity_to_index.get_mut(&swapped_entity)
-                    .expect("Internal invariant violated") = index;
+                    .expect("PositionSoAStorage: entity_to_index missing entry for swapped entity during remove") = index;
                 self.index_to_entity.swap(index, last_index);
             }
             
@@ -744,18 +745,16 @@ impl ComponentStorage for PositionSoAStorage {
         }
     }
 
-    fn get(&self, entity: Entity) -> Option<&Self::Component> {
+    fn get(&self, _entity: Entity) -> Option<&Self::Component> {
         // True SoA storage cannot return references to individual components
         // because fields are stored in separate arrays. Systems should use
         // field_arrays() instead for SIMD-friendly bulk operations.
-        let _ = entity; // Suppress unused warning
         None
     }
 
-    fn get_mut(&mut self, entity: Entity) -> Option<&mut Self::Component> {
+    fn get_mut(&mut self, _entity: Entity) -> Option<&mut Self::Component> {
         // True SoA storage cannot return mutable references to individual components.
         // Use field_arrays_mut() for bulk field mutations.
-        let _ = entity; // Suppress unused warning
         None
     }
 
@@ -861,7 +860,7 @@ impl ComponentStorage for VelocitySoAStorage {
                 
                 let swapped_entity = self.index_to_entity[last_index];
                 *self.entity_to_index.get_mut(&swapped_entity)
-                    .expect("Internal invariant violated") = index;
+                    .expect("VelocitySoAStorage: entity_to_index missing entry for swapped entity during remove") = index;
                 self.index_to_entity.swap(index, last_index);
             }
             
@@ -984,7 +983,7 @@ impl ComponentStorage for AccelerationSoAStorage {
                 
                 let swapped_entity = self.index_to_entity[last_index];
                 *self.entity_to_index.get_mut(&swapped_entity)
-                    .expect("Internal invariant violated") = index;
+                    .expect("AccelerationSoAStorage: entity_to_index missing entry for swapped entity during remove") = index;
                 self.index_to_entity.swap(index, last_index);
             }
             
@@ -1095,7 +1094,7 @@ impl ComponentStorage for MassSoAStorage {
                 
                 let swapped_entity = self.index_to_entity[last_index];
                 *self.entity_to_index.get_mut(&swapped_entity)
-                    .expect("Internal invariant violated") = index;
+                    .expect("MassSoAStorage: entity_to_index missing entry for swapped entity during remove") = index;
                 self.index_to_entity.swap(index, last_index);
             }
             
