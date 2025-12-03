@@ -725,6 +725,203 @@ PHYSICS_ENGINE_PLUGIN_PATH=/usr/local/lib/physics-plugins:/home/user/custom-plug
 
 **Solution**: Update the plugin to match the engine API version, or update the engine to support the plugin version.
 
+## Built-in Plugins
+
+### Gravitational N-Body Plugin
+
+The engine includes a high-performance gravitational force plugin that implements Newton's law of universal gravitation.
+
+#### Features
+
+- **Realistic Physics**: Uses the standard gravitational constant (G = 6.67430 × 10⁻¹¹ m³/(kg⋅s²))
+- **Softening Factor**: Prevents singularities when particles are very close
+- **Parallel Computation**: Efficient O(N²) pairwise force calculation using Rayon
+- **Configurable**: Adjustable G constant, softening, and chunk sizes
+- **Validated**: Comprehensive test suite with reference calculations
+
+#### Usage Example
+
+```rust
+use physics_engine::ecs::{World, Entity, ComponentStorage, HashMapStorage};
+use physics_engine::ecs::components::{Position, Velocity, Mass, Acceleration};
+use physics_engine::ecs::systems::{ForceRegistry, apply_forces_to_acceleration};
+use physics_engine::integration::VelocityVerletIntegrator;
+use physics_engine::plugins::gravity::{
+    GravityPlugin, GravitySystem, GRAVITATIONAL_CONSTANT
+};
+
+fn main() {
+    // Create world and entities
+    let mut world = World::new();
+    let earth = world.create_entity();
+    let moon = world.create_entity();
+
+    // Setup component storage
+    let mut positions = HashMapStorage::<Position>::new();
+    let mut velocities = HashMapStorage::<Velocity>::new();
+    let mut masses = HashMapStorage::<Mass>::new();
+    let mut accelerations = HashMapStorage::<Acceleration>::new();
+
+    // Earth at origin
+    positions.insert(earth, Position::new(0.0, 0.0, 0.0));
+    velocities.insert(earth, Velocity::zero());
+    masses.insert(earth, Mass::new(5.972e24)); // kg
+    accelerations.insert(earth, Acceleration::zero());
+
+    // Moon at ~384,400 km distance
+    positions.insert(moon, Position::new(3.844e8, 0.0, 0.0));
+    velocities.insert(moon, Velocity::new(0.0, 1022.0, 0.0)); // m/s
+    masses.insert(moon, Mass::new(7.342e22)); // kg
+    accelerations.insert(moon, Acceleration::zero());
+
+    // Create gravity system
+    let gravity_plugin = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
+    let gravity_system = GravitySystem::new(gravity_plugin);
+
+    // Create force registry and integrator
+    let mut force_registry = ForceRegistry::new();
+    force_registry.max_force_magnitude = 1e25; // Increase limit for large forces
+    let mut integrator = VelocityVerletIntegrator::new(3600.0); // 1 hour timestep
+
+    // Simulation loop
+    let entities = vec![earth, moon];
+    for _step in 0..1000 {
+        // Compute gravitational forces
+        gravity_system.compute_forces(&entities, &positions, &masses, &mut force_registry);
+
+        // Apply forces → accelerations
+        apply_forces_to_acceleration(
+            entities.iter(),
+            &force_registry,
+            &masses,
+            &mut accelerations,
+            false,
+        );
+
+        // Integrate motion
+        integrator.integrate(
+            entities.iter(),
+            &mut positions,
+            &mut velocities,
+            &accelerations,
+            &masses,
+            &mut force_registry,
+            false,
+        );
+
+        // Clear forces for next step
+        force_registry.clear_forces();
+    }
+}
+```
+
+#### Configuration Options
+
+**Creating a Gravity Plugin**:
+
+```rust
+// Standard gravitational constant
+let gravity = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
+
+// Scaled G for demonstrations (stronger/weaker gravity)
+let gravity_strong = GravityPlugin::with_scaled_g(1e10); // 10^21 × G
+
+// Default settings
+let gravity_default = GravityPlugin::default_settings();
+```
+
+**Setting Softening**:
+
+```rust
+let mut gravity = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
+
+// No softening (can cause singularities!)
+gravity.set_softening(0.0);
+
+// Small softening for solar system (1 km)
+gravity.set_softening(1e3);
+
+// Large softening for particle clouds (100 m)
+gravity.set_softening(100.0);
+```
+
+**Parallel Performance Tuning**:
+
+```rust
+let mut gravity = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
+
+// Automatic chunk sizing (recommended)
+gravity.set_chunk_size(0);
+
+// Manual chunk size (advanced)
+gravity.set_chunk_size(64); // Process 64 entities per chunk
+```
+
+#### Physics Background
+
+The plugin implements Newton's law of universal gravitation:
+
+**F = G × (m₁ × m₂) / r²**
+
+With softening to prevent singularities:
+
+**F = G × (m₁ × m₂) / (r² + ε²)**
+
+Where:
+- **F**: Gravitational force (Newtons)
+- **G**: Gravitational constant (6.67430 × 10⁻¹¹ m³/(kg⋅s²))
+- **m₁, m₂**: Masses of the two bodies (kg)
+- **r**: Distance between centers of mass (m)
+- **ε**: Softening length (m)
+
+#### Performance Characteristics
+
+- **Complexity**: O(N²) for N bodies (all pairwise interactions)
+- **Parallelization**: Chunk-based parallel processing with Rayon
+- **Memory**: O(N) for force accumulation
+- **Typical Performance**:
+  - N=10 (solar system): microseconds per step
+  - N=100 (particle cloud): milliseconds per step
+  - N=1000 (large N-body): ~0.5-1 second per step
+
+For N > 1000, consider:
+- Barnes-Hut tree (O(N log N))
+- Fast Multipole Method (O(N))
+- GPU acceleration
+
+#### Edge Cases and Validation
+
+The plugin handles:
+
+✅ **Zero distance**: Softening prevents division by zero  
+✅ **Immovable bodies**: Bodies with zero/tiny mass don't experience forces  
+✅ **Negative masses**: Rejected with assertion during construction  
+✅ **NaN/Infinity**: Detected and reported as invalid forces  
+✅ **Large forces**: Configurable force magnitude limits in ForceRegistry
+
+#### Examples
+
+See complete working examples in:
+- [`examples/solar_system.rs`](../physics-engine/examples/solar_system.rs): Realistic solar system simulation
+- [`examples/particle_collision.rs`](../physics-engine/examples/particle_collision.rs): N-body particle dynamics
+
+Run with:
+```bash
+cargo run --example solar_system --release
+cargo run --example particle_collision --release -- --particles 200
+```
+
+#### References
+
+**Physics**:
+- Newton, I. (1687). *Philosophiæ Naturalis Principia Mathematica*
+- [CODATA 2018 Gravitational Constant](https://physics.nist.gov/cgi-bin/cuu/Value?bg)
+- Goldstein, H., et al. (2002). *Classical Mechanics* (3rd ed.)
+
+**Numerical Methods**:
+- Dehnen, W. (2001). "Towards optimal softening in three-dimensional N-body codes"
+- Aarseth, S. J. (2003). *Gravitational N-Body Simulations*
+
 ## Future Enhancements
 
 Planned features for future versions:
@@ -734,9 +931,11 @@ Planned features for future versions:
 - **Plugin marketplace**: Repository of community plugins
 - **Configuration files**: Load plugin settings from TOML/JSON
 - **Debugging tools**: Plugin introspection and profiling
+- **More built-in plugins**: Springs, damping, collision response, constraints
 
 ## References
 
 - [API Documentation](../README.md#plugin-architecture)
 - [Architecture Guide](architecture.md)
-- [Example Plugins](../examples/) (coming soon)
+- [Examples Guide](examples.md)
+- [Integration Guide](integration.md)
