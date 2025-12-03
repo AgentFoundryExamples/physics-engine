@@ -171,67 +171,6 @@ for (pos, vel) in positions.iter().zip(velocities.iter()) {
 
 **Target**: Q3-Q4 2025 (aspirational)
 
-**Focus**: Scalability for large particle counts
-
-### High Priority
-
-#### Barnes-Hut Tree for Gravity
-**Goal**: O(N log N) gravitational force computation
-
-**Algorithm**:
-- Hierarchical octree subdivision
-- Approximate distant particles as single mass
-- Configurable accuracy threshold (θ parameter)
-
-**Expected Impact**: 10-100× speedup for N > 1000 particles
-
-**Use Cases**:
-- Large N-body simulations
-- Galaxy formation
-- Particle swarms
-
-**Implementation Notes**:
-- Tree construction: O(N log N)
-- Force evaluation: O(N log N)
-- Parallel tree traversal challenges
-
-#### Octree Spatial Partitioning
-**Goal**: General-purpose spatial acceleration structure
-
-**Use Cases**:
-- Fast collision detection (O(log N) per query)
-- Spatial queries (nearest neighbor, radius search)
-- Level-of-detail selection
-- Frustum culling for rendering
-
-**Features**:
-- Dynamic insertion/removal
-- Configurable subdivision criteria
-- Parallel construction
-
-### Medium Priority
-
-#### Broad-Phase Collision Detection
-**Goal**: Quickly identify potential collision pairs
-
-**Methods Under Consideration**:
-- **Sweep and Prune** (SAP): Sort along axes, detect overlaps
-- **Spatial Hashing**: Grid-based bucketing
-- **Bounding Volume Hierarchies** (BVH): Tree of bounding boxes
-
-**Trade-offs**:
-| Method | Construction | Query | Dynamic Updates | Memory |
-|--------|--------------|-------|-----------------|--------|
-| SAP    | O(N log N)   | O(N)  | Fast            | Low    |
-| Spatial Hash | O(N)  | O(1) avg | Instant        | Medium |
-| BVH    | O(N log N)   | O(log N) | Slow        | High   |
-
-**Decision**: Likely start with spatial hashing for simplicity, add BVH later for complex scenes.
-
-## Version 0.3.0 - Spatial Acceleration & Query Improvements (Planned)
-
-**Target**: Q3-Q4 2025 (aspirational)
-
 **Focus**: Scalability for large particle counts and improved API ergonomics
 
 ### High Priority
