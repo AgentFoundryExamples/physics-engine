@@ -34,7 +34,11 @@ pub mod systems;
 pub mod scheduler;
 
 pub use entity::{Entity, EntityId};
-pub use component::{Component, ComponentStorage, HashMapStorage, SoAStorage};
+pub use component::{
+    Component, ComponentStorage, HashMapStorage, SoAStorage,
+    FieldArrays, FieldArraysMut,
+    PositionSoAStorage, VelocitySoAStorage, AccelerationSoAStorage, MassSoAStorage,
+};
 pub use system::{System, SystemExecutor};
 pub use world::World;
 
