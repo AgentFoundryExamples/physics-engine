@@ -131,8 +131,8 @@ fn test_near_immovable_mass_consistency() {
     let accelerations = HashMapStorage::<Acceleration>::new();
     
     let mut masses = HashMapStorage::<Mass>::new();
-    masses.insert(entity_below, Mass::new(1e-11)); // Below threshold
-    masses.insert(entity_above, Mass::new(1e-9));  // Above threshold
+    masses.insert(entity_below, Mass::new(1e-11)); // Below Mass::IMMOVABLE_THRESHOLD
+    masses.insert(entity_above, Mass::new(1e-9));  // Above Mass::IMMOVABLE_THRESHOLD
 
     let mut force_registry = ForceRegistry::new();
     let mut integrator = VelocityVerletIntegrator::new(0.01);

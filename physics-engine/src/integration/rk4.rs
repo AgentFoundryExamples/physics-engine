@@ -268,10 +268,12 @@ impl Integrator for RK4Integrator {
                 force_registry,
             ) {
                 // k1 for position derivative is velocity (dx/dt = v)
+                // We store velocity values in Position type for buffer reuse
                 self.k1_positions.insert(*entity, Position::new(
                     vel.dx(), vel.dy(), vel.dz()
                 ));
                 // k1 for velocity derivative is acceleration (dv/dt = a)
+                // We store acceleration values in Velocity type for buffer reuse
                 self.k1_velocities.insert(*entity, Velocity::new(
                     k1_acc.ax(), k1_acc.ay(), k1_acc.az()
                 ));
@@ -322,10 +324,12 @@ impl Integrator for RK4Integrator {
                 force_registry,
             ) {
                 // k2 for position derivative is the velocity at the evaluation point
+                // We store velocity values in Position type for buffer reuse
                 self.k2_positions.insert(*entity, Position::new(
                     k2_vel.dx(), k2_vel.dy(), k2_vel.dz()
                 ));
                 // k2 for velocity derivative is the acceleration at the evaluation point
+                // We store acceleration values in Velocity type for buffer reuse
                 self.k2_velocities.insert(*entity, Velocity::new(
                     k2_acc.ax(), k2_acc.ay(), k2_acc.az()
                 ));
@@ -374,10 +378,12 @@ impl Integrator for RK4Integrator {
                 force_registry,
             ) {
                 // k3 for position derivative is velocity at evaluation point
+                // We store velocity values in Position type for buffer reuse
                 self.k3_positions.insert(*entity, Position::new(
                     k3_vel.dx(), k3_vel.dy(), k3_vel.dz()
                 ));
                 // k3 for velocity derivative is acceleration at evaluation point
+                // We store acceleration values in Velocity type for buffer reuse
                 self.k3_velocities.insert(*entity, Velocity::new(
                     k3_acc.ax(), k3_acc.ay(), k3_acc.az()
                 ));
@@ -426,10 +432,12 @@ impl Integrator for RK4Integrator {
                 force_registry,
             ) {
                 // k4 for position derivative is velocity at evaluation point
+                // We store velocity values in Position type for buffer reuse
                 self.k4_positions.insert(*entity, Position::new(
                     k4_vel.dx(), k4_vel.dy(), k4_vel.dz()
                 ));
                 // k4 for velocity derivative is acceleration at evaluation point
+                // We store acceleration values in Velocity type for buffer reuse
                 self.k4_velocities.insert(*entity, Velocity::new(
                     k4_acc.ax(), k4_acc.ay(), k4_acc.az()
                 ));
