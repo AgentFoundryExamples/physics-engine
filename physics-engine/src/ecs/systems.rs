@@ -116,6 +116,15 @@ impl ForceRegistry {
         self.accumulated_forces.clear();
     }
 
+    /// Clear all providers and accumulated forces
+    ///
+    /// This is useful for resetting the registry between simulation steps
+    /// when force providers need to be re-registered with updated force values.
+    pub fn clear(&mut self) {
+        self.providers.clear();
+        self.accumulated_forces.clear();
+    }
+
     /// Accumulate forces for a specific entity from all providers
     ///
     /// Returns true if forces were accumulated, false if entity was skipped

@@ -112,7 +112,7 @@ cargo run --example particle_collision --release   # Particle dynamics
 ### Example: Solar System Simulation
 
 ```bash
-# Simulate 1 Earth year with default settings
+# Simulate 1 Earth year with default settings (Velocity Verlet)
 cargo run --example solar_system --release
 
 # Compare Verlet vs RK4 integrators
@@ -120,6 +120,10 @@ cargo run --example solar_system --release -- --integrator rk4
 
 # Simulate 10 years with hourly timesteps
 cargo run --example solar_system --release -- --years 10 --timestep 3600
+
+# Note: Unknown integrators produce clear error messages
+cargo run --example solar_system --release -- --integrator unknown
+# Error: Unknown integrator 'unknown'. Valid options: verlet, rk4
 ```
 
 ### Example: Gravitational N-Body Plugin
