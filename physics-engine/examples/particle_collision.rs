@@ -45,7 +45,11 @@ use physics_engine::plugins::gravity::{GravityPlugin, GravitySystem};
 use std::time::Instant;
 
 /// Simple pseudo-random number generator for deterministic results
-/// Uses a linear congruential generator (LCG)
+/// Uses a linear congruential generator (LCG) with parameters from
+/// Numerical Recipes (Press et al., 2007), specifically:
+/// - Multiplier: 6364136223846793005 (Knuth's 64-bit multiplier)
+/// - Increment: 1442695040888963407
+/// These parameters provide good statistical properties for 64-bit integers.
 struct SimpleRng {
     state: u64,
 }
@@ -56,7 +60,8 @@ impl SimpleRng {
     }
 
     fn next_u64(&mut self) -> u64 {
-        // LCG parameters from Numerical Recipes
+        // LCG: X_{n+1} = (a * X_n + c) mod m
+        // Using parameters from Numerical Recipes / Knuth MMIX
         self.state = self.state.wrapping_mul(6364136223846793005)
             .wrapping_add(1442695040888963407);
         self.state

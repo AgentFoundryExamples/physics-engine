@@ -329,17 +329,16 @@ impl Plugin for GravityPlugin {
 
 impl ForceProvider for GravityPlugin {
     fn compute_force(&self, _entity: Entity, _registry: &ForceRegistry) -> Option<Force> {
-        // Note: We need access to all entities to compute N-body interactions.
-        // In a real implementation, we would cache entity lists or use a spatial
-        // data structure. For this proof-of-concept, we'll document the limitation.
+        // NOTE: This implementation returns None because gravitational forces require
+        // knowledge of ALL entities in the system (N-body problem). The generic
+        // ForceProvider interface only provides access to a single entity at a time.
         //
-        // The force registry doesn't provide direct access to all entities,
-        // so gravitational forces should be computed in a separate system that
-        // can iterate over all entities and accumulate forces appropriately.
+        // Instead, use GravitySystem::compute_forces() which efficiently computes
+        // all pairwise gravitational interactions in a single pass.
         //
-        // This implementation serves as a template for the force calculation logic.
-        
-        // For now, return None to indicate this force provider needs special handling
+        // This trait implementation is provided for API compatibility but is not
+        // intended to be used directly. Attempting to register this plugin with
+        // a ForceRegistry will not produce gravitational forces.
         None
     }
 

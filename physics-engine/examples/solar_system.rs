@@ -61,8 +61,6 @@ struct CelestialBody {
     mass: f64,              // kg
     distance: f64,          // m (semi-major axis)
     orbital_velocity: f64,  // m/s (approximate circular orbit velocity)
-    #[allow(dead_code)]
-    color: &'static str,    // For display purposes
 }
 
 /// Solar system body data from NASA
@@ -73,35 +71,30 @@ const SOLAR_BODIES: &[CelestialBody] = &[
         mass: 1.989e30,
         distance: 0.0,
         orbital_velocity: 0.0,
-        color: "yellow",
     },
     CelestialBody {
         name: "Mercury",
         mass: 3.301e23,
         distance: 0.387 * AU,
         orbital_velocity: 47870.0,
-        color: "gray",
     },
     CelestialBody {
         name: "Venus",
         mass: 4.867e24,
         distance: 0.723 * AU,
         orbital_velocity: 35020.0,
-        color: "orange",
     },
     CelestialBody {
         name: "Earth",
         mass: 5.972e24,
         distance: 1.0 * AU,
         orbital_velocity: 29780.0,
-        color: "blue",
     },
     CelestialBody {
         name: "Mars",
         mass: 6.417e23,
         distance: 1.524 * AU,
         orbital_velocity: 24070.0,
-        color: "red",
     },
 ];
 
