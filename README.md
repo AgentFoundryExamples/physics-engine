@@ -22,6 +22,51 @@ This physics engine provides a flexible and efficient foundation for simulating 
 - 📊 **Cache-Friendly**: Data-oriented design with SIMD-friendly component layouts
 - 🦀 **Pure Rust**: Memory-safe implementation without runtime overhead
 
+## Version 0.1.0 - Foundation Release
+
+This release completes the foundational scope (ISS-1 through ISS-5):
+
+### ✅ ISS-1: ECS Core Architecture
+- Entity management with generational indices
+- Component storage traits and HashMap implementation
+- System execution framework with staged scheduler
+- World container for centralized entity/component management
+- Parallel execution support via Rayon (optional)
+
+### ✅ ISS-2: Newtonian Physics Systems  
+- Physics components: Position, Velocity, Acceleration, Mass
+- Force accumulation and provider system
+- F=ma acceleration computation with safeguards
+- Semi-implicit Euler integration
+- Edge case handling (NaN/Inf, zero mass, overflow)
+
+### ✅ ISS-3: Numerical Integration Methods
+- Velocity Verlet integrator (symplectic, 2nd-order accurate)
+- RK4 integrator (4th-order accurate)
+- Unified Integrator trait for pluggable algorithms
+- Timestep validation and warnings
+- Energy conservation for long-term stability
+
+### ✅ ISS-4: Plugin System and API
+- Plugin trait with initialization/update/shutdown lifecycle
+- Dependency resolution with topological sorting
+- API versioning with semantic compatibility checks
+- Plugin types: ObjectFactory, ForceProvider, ConstraintSystem
+- Gravitational N-body plugin with realistic physics
+
+### ✅ ISS-5: Documentation and Examples
+- Architecture guide with ECS design and parallelization
+- Integration methods guide with algorithm comparison
+- Plugin guide with API reference and examples
+- Performance analysis with benchmark results
+- Project roadmap with GPU and visualization plans
+- Changelog documenting all features
+- Three working examples: basic ECS, solar system, particle collision
+- Comprehensive test suite (93 unit tests + conservation tests)
+- Benchmark suite comparing integrators
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
+
 ## Quick Start
 
 ### Prerequisites
@@ -239,6 +284,9 @@ Comprehensive documentation is available:
 - **[Architecture Guide](docs/architecture.md)**: Detailed design overview, ECS concepts, and parallelization strategy
 - **[Integration Methods](docs/integration.md)**: Guide to numerical integrators, timestep selection, and accuracy considerations
 - **[Plugin Guide](docs/plugins.md)**: Plugin system architecture, API reference, and extension examples
+- **[Performance Analysis](docs/performance.md)**: Benchmark results, optimization guidelines, and performance characteristics
+- **[Project Roadmap](docs/roadmap.md)**: Future plans for GPU acceleration, collision systems, and visualization
+- **[Changelog](CHANGELOG.md)**: Detailed version history and release notes
 - **API Documentation**: Generate with `cargo doc --open --all-features`
 
 ### Key Concepts
@@ -309,10 +357,46 @@ cargo test --all-features
 
 # Run tests without parallel support
 cargo test --no-default-features
-
-# Run benchmarks
-cargo bench
 ```
+
+### Running Benchmarks
+
+The engine includes comprehensive benchmarks comparing integrator performance:
+
+```bash
+# Run all benchmarks
+cargo bench
+
+# Run specific benchmark group
+cargo bench integrator_throughput
+cargo bench integrator_accuracy
+cargo bench free_motion
+
+# Save baseline for comparison
+cargo bench -- --save-baseline my_baseline
+
+# Compare against baseline
+cargo bench -- --baseline my_baseline
+```
+
+**Benchmark Categories:**
+- **Integrator Throughput**: Measures entities processed per second (10, 100, 1000 entities)
+- **Integrator Accuracy**: Evaluates numerical accuracy over one oscillation period
+- **Free Motion**: Baseline integration overhead with zero forces
+
+**Key Results** (see [Performance Analysis](docs/performance.md) for details):
+- Velocity Verlet: ~2× faster than RK4 for equivalent entity counts
+- Both integrators scale well up to 1000+ entities
+- RK4 provides higher accuracy (O(dt⁴)) at cost of 2× more force evaluations
+
+**Interpreting Results:**
+
+Criterion outputs statistical analysis including:
+- **time**: [lower bound, estimate, upper bound] for benchmark duration
+- **thrpt**: Throughput in entities/second
+- **change**: Performance change vs previous run or baseline
+
+For detailed methodology, hardware specifications, and optimization guidance, see [`docs/performance.md`](docs/performance.md).
 
 ### Code Quality
 
@@ -323,14 +407,45 @@ The project enforces:
 
 ### Future Roadmap
 
-- [ ] Archetype-based entity organization
+See [`docs/roadmap.md`](docs/roadmap.md) for comprehensive future plans. Highlights include:
+
+**Version 0.2.0 - Performance & Memory** (Q1-Q2 2025):
+- [ ] Structure-of-Arrays (SoA) component storage for 2-4× speedup
+- [ ] SIMD vectorization (AVX2/AVX-512) for parallel computation
+- [ ] Memory pooling to reduce allocation overhead
+- [ ] Adaptive chunk sizing for optimal parallelism
 - [ ] Query DSL for ergonomic component access
-- [ ] Automatic system scheduling and dependency resolution
-- [x] Advanced integrators (Verlet, RK4) for better accuracy
-- [ ] Adaptive timestepping for automatic dt adjustment
-- [ ] Collision detection and response systems
-- [ ] Constraint solvers for joints and contacts
-- [ ] Integration examples with graphics libraries
+
+**Version 0.3.0 - Spatial Acceleration** (Q2-Q3 2025):
+- [ ] Barnes-Hut tree for O(N log N) gravitational forces
+- [ ] Octree spatial partitioning for collision detection
+- [ ] Broad-phase collision detection (sweep-and-prune or spatial hashing)
+
+**Version 0.4.0 - Collision & Constraints** (Q3-Q4 2025):
+- [ ] Narrow-phase collision detection (sphere, box, convex polyhedra)
+- [ ] Impulse-based collision response with friction
+- [ ] Joint constraints (ball-and-socket, hinge, slider)
+- [ ] Distance constraints and SHAKE/RATTLE algorithms
+
+**Version 0.5.0 - GPU Acceleration** (Q4 2025 - Q1 2026):
+- [ ] WebGPU compute shader integration (cross-platform)
+- [ ] Optional CUDA backend for NVIDIA GPUs
+- [ ] GPU buffer management and transfer optimization
+- [ ] Hybrid CPU/GPU workload distribution
+
+**Version 0.6.0 - Visualization** (Q1-Q2 2026):
+- [ ] WebGPU + Three.js real-time 3D visualization
+- [ ] Interactive controls for simulation parameters
+- [ ] Rust-WASM bridge for browser integration
+- [ ] Debug visualization tools (force vectors, energy graphs)
+
+**Version 1.0.0 - Stable Release** (2026):
+- [ ] Stable, well-tested API with semantic versioning commitment
+- [ ] Multiple backend support (CPU, GPU)
+- [ ] Production-ready performance
+- [ ] Long-term support plan
+
+**Note**: All dates are aspirational and subject to change. This is a volunteer-driven open-source project with no guaranteed delivery dates. See [`docs/roadmap.md`](docs/roadmap.md) for details, risk mitigation, and dependency considerations.
 
 ## Performance
 
