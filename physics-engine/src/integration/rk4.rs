@@ -483,9 +483,23 @@ impl Integrator for RK4Integrator {
         }
 
         // ==================== FINAL UPDATE ====================
-        // Apply the RK4 weighted average: y(t+dt) = y(t) + (k1 + 2*k2 + 2*k3 + k4)*dt/6
-        
+        // Restore all entities to their original positions before applying the final update
+        // This ensures the positions storage is in a clean state for the final update
         for entity in &entities_vec {
+            if let Some(initial_pos) = initial_positions.get(entity) {
+                if let Some(p) = positions.get_mut(*entity) {
+                    *p = *initial_pos;
+                }
+            }
+        }
+        
+        // Apply the RK4 weighted average: y(t+dt) = y(t) + (k1 + 2*k2 + 2*k3 + k4)*dt/6
+        for entity in &entities_vec {
+            // Re-check immovability in case it changed during integration
+            if masses.get(*entity).map_or(true, |m| m.is_immovable()) {
+                continue;
+            }
+            
             let pos = match initial_positions.get(entity) {
                 Some(p) => p,
                 None => continue,
