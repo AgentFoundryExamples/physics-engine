@@ -221,10 +221,14 @@ fn test_rk4_kinetic_energy_changes_under_constant_force() {
 ///
 /// CURRENT BEHAVIOR: Orbit expands dramatically (Earth goes from 1 AU to 6.4 AU)
 /// EXPECTED BEHAVIOR: Orbital radius should remain within ~10% of initial value
+///
+/// NOTE: This is a simplified one-body problem with a fixed central force.
+/// The "sun" entity has such a large mass that its motion is negligible.
 #[test]
 #[ignore = "Known failure - circular orbits become unstable and expand"]
 fn test_verlet_circular_orbit_stability() {
     // Simplified two-body problem: Sun and Earth
+    // Sun is much more massive, so we treat it as approximately fixed
     let sun = Entity::new(1, 0);
     let earth = Entity::new(2, 0);
 
@@ -233,7 +237,7 @@ fn test_verlet_circular_orbit_stability() {
     let mut accelerations = HashMapStorage::<Acceleration>::new();
     let mut masses = HashMapStorage::<Mass>::new();
 
-    // Sun at origin
+    // Sun at origin with huge mass (so it barely moves)
     let m_sun = 1.989e30; // kg
     positions.insert(sun, Position::new(0.0, 0.0, 0.0));
     velocities.insert(sun, Velocity::new(0.0, 0.0, 0.0));
