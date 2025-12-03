@@ -5,6 +5,82 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2025-12-03
+
+### Fixed
+
+**Critical Physics Bugs**
+
+This patch release fixes critical bugs in force computation and example implementation that were causing massive energy drift and orbital instability. The integrators themselves were correct, but the way examples used them had several critical flaws.
+
+#### Force Provider Accumulation Bug (CRITICAL)
+- **Root Cause**: `ForceRegistry.register_provider()` ADDS providers to a list rather than replacing them. When examples recomputed forces within the integration loop, providers accumulated, causing forces to multiply (2x, 3x, 4x...) on each iteration.
+- **Impact**: Massive energy drift (175%+ over 1 year), exponential kinetic energy growth, orbits escaping to infinity
+- **Fix**: Create fresh `ForceRegistry` instances for each force computation instead of reusing the same registry
+- **Verification**: Solar system energy drift now < 0.0001% over 1 year, Earth stays at 1.000 ±0.001 AU
+
+#### Forces Not Accumulated Bug (CRITICAL)
+- **Root Cause**: Examples called `gravity_system.compute_forces()` which registers force providers, but never called `force_registry.accumulate_for_entity()` to actually accumulate the forces. As a result, `apply_forces_to_acceleration()` always got `None` for forces, producing zero accelerations.
+- **Impact**: All accelerations were zero, velocities frozen, kinetic energy constant despite changing positions
+- **Fix**: Explicitly call `accumulate_for_entity()` after `compute_forces()` in integration loop
+- **Verification**: Velocities now update correctly, kinetic energy varies with orbital position
+
+#### Momentum Conservation Bug
+- **Root Cause**: Initial conditions placed all planets moving in same direction with Sun stationary, resulting in non-zero total system momentum
+- **Impact**: Artificial drift of system center of mass, spurious energy changes
+- **Fix**: Adjust all velocities to center-of-mass reference frame in solar_system example
+- **Verification**: System center of mass remains stationary (< 1 m drift over simulation)
+
+### Added
+
+#### Gravity Plugin Enhancements
+- Added configurable warning suppression for high-force scenarios
+- Introduced `max_expected_force` parameter (default: 1e10 N) to control force magnitude thresholds
+- Added `warn_on_high_forces` flag to disable warnings in known high-force environments
+- Improved numerical stability with configurable softening factor (default: 1 km)
+- Enhanced documentation of gravitational constant usage (CODATA 2018 value)
+
+#### Diagnostic Capabilities
+- Added `--diagnostics` flag to solar_system example for CSV output
+- Added `--diagnostics` flag to particle_collision example
+- Diagnostic output includes: timestep, kinetic energy, potential energy, total energy, drift percentage, reference body position/velocity/acceleration
+- Logging frequency optimized to prevent output explosion (every 10 steps for solar system, every 50 steps for particles)
+- Created `docs/DIAGNOSTICS_README.md` with methodology and usage instructions
+
+#### Example Improvements
+- Enhanced solar_system example with energy conservation tracking and warnings
+- Improved particle_collision example with deterministic seeding (default: 12345)
+- Added command-line parameter validation
+- Clarified timestep selection guidance in documentation
+- Better error messages and user feedback
+
+### Changed
+
+- Version bumped from 0.1.0 to 0.1.1 (patch release)
+- Updated `docs/performance.md` documenting the fixed issues
+- Updated `docs/examples.md` with verification results
+- Improved `.env.example` documentation for warning control configurations
+- Enhanced README with diagnostics and warning control information
+
+### Documentation
+
+- **NEW**: `docs/FAILURE_ANALYSIS.md` - Historical document preserving the investigation that led to bug discovery (before fixes were applied)
+- **NEW**: `docs/DIAGNOSTICS_README.md` - Diagnostic tools usage guide and methodology documentation
+- **UPDATED**: `docs/examples.md` - Added "Recent Improvements" section documenting fixed bugs and verified behavior
+- **UPDATED**: `docs/performance.md` - Added "Fixed Issues" section explaining the root causes and fixes
+- **UPDATED**: README.md - Added configuration section for warning controls and diagnostics
+
+### Notes
+
+**Important**: The FAILURE_ANALYSIS.md document is a historical record of the bugs as they existed in version 0.1.0, preserved for educational purposes and to document the investigation process. All issues described in that document have been fixed in version 0.1.1.
+
+**Current Status**:
+- ✅ Energy conservation: < 0.0001% drift in solar system over 1 Earth year
+- ✅ Orbital stability: Earth stays at 1.000 ±0.001 AU
+- ✅ Momentum conservation: Center of mass drift < 1 m
+- ✅ Kinetic energy: Varies correctly with orbital position
+- ✅ No exponential growth or runaway trajectories
+
 ## [0.1.0] - 2025-12-03
 
 ### Added - Core Physics Engine Foundation
@@ -308,4 +384,5 @@ Apache 2.0 - See [LICENSE](LICENSE) for details.
 
 Created by Agent Foundry and John Brosnihan
 
+[0.1.1]: https://github.com/AgentFoundryExamples/physics-engine/releases/tag/v0.1.1
 [0.1.0]: https://github.com/AgentFoundryExamples/physics-engine/releases/tag/v0.1.0
