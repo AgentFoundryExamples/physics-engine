@@ -8,10 +8,10 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 22
+- **Total files**: 23
 - **Intra-repo dependencies**: 6
 - **External stdlib dependencies**: 9
-- **External third-party dependencies**: 10
+- **External third-party dependencies**: 11
 
 ## External Dependencies
 
@@ -31,12 +31,13 @@ Total: 9 unique modules
 
 ### Third-Party Packages
 
-Total: 10 unique packages
+Total: 11 unique packages
 
 - `criterion::`
 - `physics_engine::ecs::`
 - `physics_engine::ecs::components::`
 - `physics_engine::ecs::systems::`
+- `physics_engine::ecs::systems::ForceRegistry`
 - `physics_engine::integration::`
 - `physics_engine::plugins::gravity::`
 - `rayon::ThreadPool`

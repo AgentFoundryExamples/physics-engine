@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 22
+Total files: 23
 
 ## physics-engine/benches/integration.rs
 **Language:** Rust  
@@ -208,10 +208,10 @@ Total files: 22
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 18.66 KB  
-**LOC:** 385  
+**Size:** 20.46 KB  
+**LOC:** 422  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 38  
+**Declarations:** 39  
 **Top-level declarations:**
   - fn new
   - fn zero
@@ -223,7 +223,7 @@ Total files: 22
   - fn new
   - fn register_provider
   - fn clear_forces
-  - ... and 28 more
+  - ... and 29 more
 
 ## physics-engine/src/ecs/world.rs
 **Language:** Rust  
@@ -250,11 +250,13 @@ Total files: 22
 **Language:** Rust  
 **Role:** module-init  
 **Role Justification:** module initialization file 'mod'  
-**Size:** 6.96 KB  
-**LOC:** 92  
+**Size:** 7.84 KB  
+**LOC:** 120  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 15  
+**Declarations:** 17  
 **Top-level declarations:**
+  - fn calculate_kinetic_energy
+  - fn calculate_total_kinetic_energy
   - fn name
   - fn timestep
   - fn set_timestep
@@ -263,16 +265,14 @@ Total files: 22
   - fn new
   - fn omega
   - fn amplitude
-  - fn phase
-  - fn position_at
-  - ... and 5 more
+  - ... and 7 more
 
 ## physics-engine/src/integration/rk4.rs
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 19.34 KB  
-**LOC:** 419  
+**Size:** 20.92 KB  
+**LOC:** 422  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 15  
 **Top-level declarations:**
@@ -292,8 +292,8 @@ Total files: 22
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 12.70 KB  
-**LOC:** 222  
+**Size:** 13.20 KB  
+**LOC:** 227  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 20  
 **Top-level declarations:**
@@ -395,10 +395,10 @@ Total files: 22
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 12.79 KB  
-**LOC:** 291  
+**Size:** 18.27 KB  
+**LOC:** 418  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 16  
+**Declarations:** 23  
 **Top-level declarations:**
   - fn compute_force
   - fn name
@@ -410,14 +410,35 @@ Total files: 22
   - fn test_verlet_constant_acceleration
   - fn compute_force
   - fn name
-  - ... and 6 more
+  - ... and 13 more
+
+## physics-engine/tests/edge_cases.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 10.80 KB  
+**LOC:** 213  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 20  
+**Top-level declarations:**
+  - fn test_verlet_zero_timestep
+  - fn test_rk4_zero_timestep
+  - fn test_verlet_negative_timestep
+  - fn test_rk4_negative_timestep
+  - fn test_verlet_nan_timestep
+  - fn test_rk4_nan_timestep
+  - fn test_verlet_infinite_timestep
+  - fn test_rk4_infinite_timestep
+  - fn test_verlet_very_small_timestep_validation
+  - fn test_rk4_very_small_timestep_validation
+  - ... and 10 more
 
 ## physics-engine/tests/integration_failures.rs
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 13.62 KB  
-**LOC:** 289  
+**Size:** 14.20 KB  
+**LOC:** 293  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 9  
 **Top-level declarations:**

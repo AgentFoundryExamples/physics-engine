@@ -204,6 +204,10 @@
             },
             {
               "type": "file",
+              "name": "edge_cases.rs"
+            },
+            {
+              "type": "file",
               "name": "integration_failures.rs"
             }
           ]

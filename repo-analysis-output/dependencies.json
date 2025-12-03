@@ -273,6 +273,20 @@
       }
     },
     {
+      "id": "physics-engine/tests/edge_cases.rs",
+      "path": "physics-engine/tests/edge_cases.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "physics_engine::ecs::",
+          "physics_engine::ecs::components::",
+          "physics_engine::ecs::systems::ForceRegistry",
+          "physics_engine::integration::"
+        ]
+      }
+    },
+    {
       "id": "physics-engine/tests/integration_failures.rs",
       "path": "physics-engine/tests/integration_failures.rs",
       "type": "file",
@@ -331,6 +345,7 @@
       "physics_engine::ecs::",
       "physics_engine::ecs::components::",
       "physics_engine::ecs::systems::",
+      "physics_engine::ecs::systems::ForceRegistry",
       "physics_engine::integration::",
       "physics_engine::plugins::gravity::",
       "rayon::ThreadPool",
@@ -339,6 +354,6 @@
       "tests"
     ],
     "stdlib_count": 9,
-    "third-party_count": 10
+    "third-party_count": 11
   }
 }

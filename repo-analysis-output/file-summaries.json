@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 22,
+  "total_files": 23,
   "files": [
     {
       "schema_version": "2.0",
@@ -498,10 +498,10 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 19109,
-        "loc": 385,
+        "size_bytes": 20954,
+        "loc": 422,
         "todo_count": 0,
-        "declaration_count": 38
+        "declaration_count": 39
       },
       "structure": {
         "declarations": [
@@ -534,6 +534,7 @@
           "fn test_apply_forces_skips_immovable",
           "fn test_integrate_motion",
           "fn test_integrate_motion_without_acceleration",
+          "fn test_integrate_motion_skips_immovable",
           "fn test_missing_components_handling",
           "struct Force",
           "struct ForceRegistry",
@@ -601,13 +602,15 @@
       "role": "module-init",
       "role_justification": "module initialization file 'mod'",
       "metrics": {
-        "size_bytes": 7125,
-        "loc": 92,
+        "size_bytes": 8033,
+        "loc": 120,
         "todo_count": 0,
-        "declaration_count": 15
+        "declaration_count": 17
       },
       "structure": {
         "declarations": [
+          "fn calculate_kinetic_energy",
+          "fn calculate_total_kinetic_energy",
           "fn name",
           "fn timestep",
           "fn set_timestep",
@@ -641,8 +644,8 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 19804,
-        "loc": 419,
+        "size_bytes": 21426,
+        "loc": 422,
         "todo_count": 0,
         "declaration_count": 15
       },
@@ -681,8 +684,8 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 13004,
-        "loc": 222,
+        "size_bytes": 13517,
+        "loc": 227,
         "todo_count": 0,
         "declaration_count": 20
       },
@@ -978,10 +981,10 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 13095,
-        "loc": 291,
+        "size_bytes": 18711,
+        "loc": 418,
         "todo_count": 0,
-        "declaration_count": 16
+        "declaration_count": 23
       },
       "structure": {
         "declarations": [
@@ -997,10 +1000,62 @@
           "fn name",
           "fn test_rk4_constant_acceleration",
           "fn test_multiple_entities",
+          "fn test_verlet_long_run_free_particle",
+          "fn test_rk4_long_run_free_particle",
+          "fn test_immovable_body_stays_fixed",
+          "fn compute_force",
+          "fn name",
           "struct SpringForceProvider",
           "struct ConstantForce",
+          "struct TestForce",
           "impl ForceProvider",
-          "impl ForceProvider"
+          "impl ForceProvider",
+          "impl physics_engine::ecs::systems::ForceProvider"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/tests/edge_cases.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 11063,
+        "loc": 213,
+        "todo_count": 0,
+        "declaration_count": 20
+      },
+      "structure": {
+        "declarations": [
+          "fn test_verlet_zero_timestep",
+          "fn test_rk4_zero_timestep",
+          "fn test_verlet_negative_timestep",
+          "fn test_rk4_negative_timestep",
+          "fn test_verlet_nan_timestep",
+          "fn test_rk4_nan_timestep",
+          "fn test_verlet_infinite_timestep",
+          "fn test_rk4_infinite_timestep",
+          "fn test_verlet_very_small_timestep_validation",
+          "fn test_rk4_very_small_timestep_validation",
+          "fn test_verlet_large_timestep_validation",
+          "fn test_rk4_large_timestep_validation",
+          "fn test_verlet_reasonable_timestep_validation",
+          "fn test_rk4_reasonable_timestep_validation",
+          "fn test_near_immovable_mass_consistency",
+          "fn test_empty_entity_list",
+          "fn test_missing_components",
+          "fn test_rk4_buffer_reuse_thread_safety",
+          "fn test_entity_without_mass_treated_as_immovable",
+          "fn test_extreme_velocity"
         ]
       },
       "dependencies": {
@@ -1019,8 +1074,8 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 13949,
-        "loc": 289,
+        "size_bytes": 14536,
+        "loc": 293,
         "todo_count": 0,
         "declaration_count": 9
       },
