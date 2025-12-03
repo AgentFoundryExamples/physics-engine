@@ -49,4 +49,8 @@ pub mod integration;
 /// Plugin system for extensibility
 pub mod plugins;
 
+/// SIMD vectorization support
+#[cfg(feature = "simd")]
+pub mod simd;
+
 pub use ecs::{World, Entity};

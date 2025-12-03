@@ -270,5 +270,109 @@ fn bench_free_motion(c: &mut Criterion) {
     group.finish();
 }
 
+#[cfg(feature = "simd")]
+fn bench_simd_operations(c: &mut Criterion) {
+    use physics_engine::integration::{simd_update_velocities, simd_update_positions, simd_accumulate_forces};
+    
+    let mut group = c.benchmark_group("simd_operations");
+    
+    // Test with varying sizes to see SIMD benefits
+    for size in [100, 1000, 10000].iter() {
+        group.throughput(Throughput::Elements(*size as u64));
+        
+        // Benchmark velocity update
+        group.bench_with_input(
+            BenchmarkId::new("velocity_update", size),
+            size,
+            |b, &size| {
+                let mut vx = vec![1.0; size];
+                let mut vy = vec![2.0; size];
+                let mut vz = vec![3.0; size];
+                let ax = vec![0.5; size];
+                let ay = vec![1.0; size];
+                let az = vec![1.5; size];
+                let dt = 0.01;
+                
+                b.iter(|| {
+                    simd_update_velocities(
+                        black_box(&mut vx),
+                        black_box(&mut vy),
+                        black_box(&mut vz),
+                        black_box(&ax),
+                        black_box(&ay),
+                        black_box(&az),
+                        black_box(dt),
+                    )
+                });
+            },
+        );
+        
+        // Benchmark position update
+        group.bench_with_input(
+            BenchmarkId::new("position_update", size),
+            size,
+            |b, &size| {
+                let mut px = vec![0.0; size];
+                let mut py = vec![0.0; size];
+                let mut pz = vec![0.0; size];
+                let vx = vec![10.0; size];
+                let vy = vec![20.0; size];
+                let vz = vec![30.0; size];
+                let ax = vec![1.0; size];
+                let ay = vec![2.0; size];
+                let az = vec![3.0; size];
+                let dt = 0.01;
+                
+                b.iter(|| {
+                    simd_update_positions(
+                        black_box(&mut px),
+                        black_box(&mut py),
+                        black_box(&mut pz),
+                        black_box(&vx),
+                        black_box(&vy),
+                        black_box(&vz),
+                        black_box(&ax),
+                        black_box(&ay),
+                        black_box(&az),
+                        black_box(dt),
+                    )
+                });
+            },
+        );
+        
+        // Benchmark force accumulation
+        group.bench_with_input(
+            BenchmarkId::new("force_accumulation", size),
+            size,
+            |b, &size| {
+                let mut total_fx = vec![0.0; size];
+                let mut total_fy = vec![0.0; size];
+                let mut total_fz = vec![0.0; size];
+                let fx = vec![1.0; size];
+                let fy = vec![2.0; size];
+                let fz = vec![3.0; size];
+                
+                b.iter(|| {
+                    simd_accumulate_forces(
+                        black_box(&mut total_fx),
+                        black_box(&mut total_fy),
+                        black_box(&mut total_fz),
+                        black_box(&fx),
+                        black_box(&fy),
+                        black_box(&fz),
+                    )
+                });
+            },
+        );
+    }
+    
+    group.finish();
+}
+
+#[cfg(feature = "simd")]
+criterion_group!(benches, bench_integrator_throughput, bench_integrator_accuracy, bench_free_motion, bench_simd_operations);
+
+#[cfg(not(feature = "simd"))]
 criterion_group!(benches, bench_integrator_throughput, bench_integrator_accuracy, bench_free_motion);
+
 criterion_main!(benches);
