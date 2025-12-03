@@ -45,9 +45,11 @@ use crate::ecs::systems::ForceRegistry;
 
 mod verlet;
 mod rk4;
+mod simd_helpers;
 
 pub use verlet::VelocityVerletIntegrator;
 pub use rk4::RK4Integrator;
+pub use simd_helpers::*;
 
 /// Calculate kinetic energy for a single entity
 ///
