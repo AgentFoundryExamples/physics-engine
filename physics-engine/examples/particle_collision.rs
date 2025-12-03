@@ -97,6 +97,7 @@ struct SimulationConfig {
     velocity_range: f64,      // m/s
     softening: f64,           // meters
     seed: u64,
+    diagnostic_mode: bool,    // Enable detailed per-step diagnostics
 }
 
 impl Default for SimulationConfig {
@@ -113,6 +114,7 @@ impl Default for SimulationConfig {
             velocity_range: 10.0,      // ±10 m/s
             softening: 1.0,            // 1 m softening
             seed: 12345,
+            diagnostic_mode: false,
         }
     }
 }
@@ -251,6 +253,30 @@ fn print_state(
     println!("  System Spread:  {:.1} m", spread);
 }
 
+/// Print detailed diagnostic information for failure analysis
+fn print_diagnostics(
+    step: usize,
+    time: f64,
+    dt: f64,
+    entities: &[Entity],
+    positions: &HashMapStorage<Position>,
+    velocities: &HashMapStorage<Velocity>,
+    masses: &HashMapStorage<Mass>,
+    initial_ke: f64,
+) {
+    let ke = calculate_kinetic_energy(entities, velocities, masses);
+    let cm = calculate_center_of_mass(entities, positions, masses);
+    let spread = calculate_spread(entities, positions, cm);
+    let ke_change = if initial_ke != 0.0 {
+        ((ke - initial_ke) / initial_ke).abs()
+    } else {
+        0.0
+    };
+    
+    println!("DIAG,{},{:.6e},{:.6e},{:.6e},{:.6e},{:.3e},{:.3e},{:.3e},{:.3e}",
+             step, time, dt, ke, ke_change, cm.0, cm.1, cm.2, spread);
+}
+
 fn main() {
     println!("==========================================================");
     println!("       N-Body Particle Collision Simulation");
@@ -337,6 +363,10 @@ fn main() {
                     std::process::exit(1);
                 }
             }
+            "--diagnostics" => {
+                config.diagnostic_mode = true;
+                i += 1;
+            }
             _ => {
                 i += 1;
             }
@@ -419,6 +449,14 @@ fn main() {
     let initial_energy = calculate_kinetic_energy(&entities, &velocities, &masses);
     print_state(0.0, &entities, &positions, &velocities, &masses);
 
+    // Diagnostic mode header
+    if config.diagnostic_mode {
+        println!();
+        println!("=== DIAGNOSTIC MODE ENABLED ===");
+        println!("CSV Header: DIAG,step,time_s,dt_s,KE_J,ke_change_frac,cm_x_m,cm_y_m,cm_z_m,spread_m");
+        println!();
+    }
+
     // Simulation loop
     let mut time = 0.0;
     let mut next_output_time = config.output_interval;
@@ -432,7 +470,7 @@ fn main() {
     let start_time = Instant::now();
     let mut step_times = Vec::new();
 
-    for _step in 0..num_steps {
+    for step in 0..num_steps {
         let step_start = Instant::now();
 
         // Compute gravitational forces
@@ -463,6 +501,20 @@ fn main() {
 
         time += config.timestep;
         step_times.push(step_start.elapsed().as_secs_f64());
+
+        // Diagnostic logging (every 50 steps to avoid explosion)
+        if config.diagnostic_mode && step % 50 == 0 {
+            print_diagnostics(
+                step,
+                time,
+                config.timestep,
+                &entities,
+                &positions,
+                &velocities,
+                &masses,
+                initial_energy,
+            );
+        }
 
         // Output at intervals
         if time >= next_output_time {
