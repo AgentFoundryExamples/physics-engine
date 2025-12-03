@@ -101,6 +101,12 @@ pub const DEFAULT_SOFTENING: f64 = 1e3; // 1 km
 /// // For scaled simulation (e.g., demonstration)
 /// let scaled = GravityPlugin::with_scaled_g(1e-3);
 /// ```
+/// 
+/// # Clone Implementation
+///
+/// Clone is derived to allow plugin configuration to be shared across
+/// GravitySystem instances and for WorldAwareForceProvider trait implementation.
+/// All fields are primitive types (f64, usize, bool) which are Copy/Clone.
 #[derive(Clone)]
 pub struct GravityPlugin {
     /// Gravitational constant (default: GRAVITATIONAL_CONSTANT)
@@ -495,13 +501,12 @@ impl GravitySystem {
             (entities.len() / 4).max(1)
         };
 
-        // Use Rayon's reduce pattern to eliminate mutex contention.
-        // Each thread computes forces for its chunk into a local HashMap,
-        // then we reduce all HashMaps into a single one without global locking.
+        // Use Rayon's fold-reduce pattern to improve efficiency.
+        // Each thread accumulates forces into a single HashMap,
+        // then we reduce all HashMaps into a final one.
         let forces = entities
             .par_chunks(chunk_size)
-            .map(|chunk| {
-                let mut local_forces = HashMap::new();
+            .fold(HashMap::new, |mut local_forces, chunk| {
                 for &entity in chunk {
                     if let Some(force) = plugin.compute_force_for_entity(entity, positions, masses, entities) {
                         local_forces.insert(entity, force);
@@ -509,13 +514,10 @@ impl GravitySystem {
                 }
                 local_forces
             })
-            .reduce(
-                HashMap::new,
-                |mut acc, local_forces| {
-                    acc.extend(local_forces);
-                    acc
-                },
-            );
+            .reduce(HashMap::new, |mut acc, local_forces| {
+                acc.extend(local_forces);
+                acc
+            });
 
         // Accumulate forces in registry
         let count = forces.len();
@@ -797,12 +799,31 @@ mod tests {
         assert!(force_registry.get_force(e2).is_some());
         assert!(force_registry.get_force(e3).is_some());
         
+        // Verify forces on outer bodies
+        let f1 = force_registry.get_force(e1).unwrap();
+        let f3 = force_registry.get_force(e3).unwrap();
+        
+        // e1 (leftmost) should experience force in positive x direction (toward e2 and e3)
+        assert!(f1.fx > 0.0, "e1 should be pulled to the right");
+        assert!(f1.fy.abs() < 1e-10, "e1 should have no y force");
+        assert!(f1.fz.abs() < 1e-10, "e1 should have no z force");
+        
+        // e3 (rightmost) should experience force in negative x direction (toward e1 and e2)
+        assert!(f3.fx < 0.0, "e3 should be pulled to the left");
+        assert!(f3.fy.abs() < 1e-10, "e3 should have no y force");
+        assert!(f3.fz.abs() < 1e-10, "e3 should have no z force");
+        
+        // Due to symmetry, forces on e1 and e3 should have equal magnitude but opposite direction
+        assert!((f1.fx + f3.fx).abs() < 1e-10, "e1 and e3 forces should be symmetric");
+        
         // Middle body (e2) should have forces pulling in both directions
         let f2 = force_registry.get_force(e2).unwrap();
         // Force from e1 is negative x (pulling left)
         // Force from e3 is positive x (pulling right)
         // They should roughly cancel out due to symmetry
-        assert!(f2.fx.abs() < 1e-6); // Nearly zero net force due to symmetry
+        assert!(f2.fx.abs() < 1e-6, "e2 net force should be nearly zero due to symmetry");
+        assert!(f2.fy.abs() < 1e-10, "e2 should have no y force");
+        assert!(f2.fz.abs() < 1e-10, "e2 should have no z force");
     }
 
     #[cfg(feature = "parallel")]
