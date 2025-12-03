@@ -242,7 +242,7 @@ cargo run --release --example particle_collision -- --diagnostics --duration 5
 - Reference body position, velocity, and acceleration
 - System center of mass and spread
 
-See [`docs/DIAGNOSTICS_README.md`](docs/DIAGNOSTICS_README.md) for methodology and analysis tools.
+See [docs/DIAGNOSTICS_README.md](docs/DIAGNOSTICS_README.md) for methodology and analysis tools.
 
 #### Feature Flags
 
