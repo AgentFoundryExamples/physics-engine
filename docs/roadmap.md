@@ -39,16 +39,16 @@ This document outlines the planned features, enhancements, and long-term vision 
 - Working examples demonstrating features
 - Documentation suite covering architecture and usage
 
-## Version 0.2.0 - Performance & Memory (Completed)
+## Version 0.2.0 - Performance & Memory (✅ COMPLETED 2025-12-03)
 
-✅ **Released**: 2025-12-03
+**Status**: ✅ **Released**: 2025-12-03
 
 **Focus**: Memory layout optimization and cache efficiency improvements
 
 ### Completed Features
 
 #### ✅ Dense Array Component Storage
-**Status**: Implemented as `SoAStorage<T>` using dense Array-of-Structures layout
+**Status**: ✅ COMPLETED - Implemented as `SoAStorage<T>` using dense Array-of-Structures layout
 
 **Delivered Benefits**:
 - ✅ 1.5-3× faster sequential iteration vs HashMap for 1000+ entities
@@ -76,20 +76,22 @@ for pos in positions.components() {
 ```
 
 #### ✅ SIMD Vectorization
-**Status**: Implemented with AVX2 support and runtime CPU detection
+**Status**: ✅ COMPLETED - Implemented with AVX2 support and runtime CPU detection
 
 **Delivered Benefits**:
 - ✅ 2-4× speedup for math operations on AVX2 CPUs
 - ✅ Velocity updates: ~1.67 Gelem/s throughput
 - ✅ Position updates: ~1.34 Gelem/s throughput
 - ✅ Force accumulation: ~1.95 Gelem/s throughput
-- ✅ Automatic scalar fallback for older CPUs
+- ✅ **Automatic scalar fallback for older CPUs** - works on all x86_64 systems
+- ✅ **Runtime CPU detection** - no configuration needed
 
 **Implementation**:
 - AVX2 support for x86_64 (Intel Haswell 2013+, AMD Excavator 2015+)
 - Runtime CPU feature detection via `raw-cpuid` crate
 - Transparent backend selection (no user configuration)
 - Enable with `--features simd` flag
+- **Debug active backend**: Use `select_backend().name()` to verify "AVX2" or "Scalar"
 
 **Performance** (AMD EPYC 7763):
 - 4 × f64 operations per instruction (256-bit vectors)
@@ -97,7 +99,7 @@ for pos in positions.components() {
 - Zero overhead on CPUs without AVX2 (scalar fallback)
 
 #### ✅ Memory Pooling
-**Status**: Implemented for RK4 integrator with configurable pools
+**Status**: ✅ COMPLETED - Implemented for RK4 integrator with configurable pools
 
 **Delivered Benefits**:
 - ✅ 10-20% reduction in allocation overhead
@@ -159,13 +161,22 @@ for (pos, vel) in positions.iter().zip(velocities.iter()) {
 
 ### Documentation Delivered
 
-- ✅ **Updated** `docs/architecture.md` - Dense storage design and trade-offs
-- ✅ **Updated** `docs/performance.md` - SIMD benchmarks, memory pooling tuning
-- ✅ **Updated** `README.md` - Version 0.2.0 features and configuration
-- ✅ **Updated** `.env.example` - Memory pooling reference configuration
-- ✅ **Added** Storage benchmark suite (`cargo bench --bench storage`)
-- ✅ **Added** Pooling benchmark suite (`cargo bench --bench pooling`)
-- ✅ **Added** SIMD benchmark suite (`cargo bench --features simd`)
+- ✅ **UPDATED** `docs/architecture.md` - Dense storage design and trade-offs
+- ✅ **UPDATED** `docs/performance.md` - SIMD benchmarks, memory pooling tuning, SIMD debugging guidance
+- ✅ **UPDATED** `README.md` - Version 0.2.0 features, SIMD detection, and configuration
+- ✅ **UPDATED** `.env.example` - Memory pooling reference configuration
+- ✅ **UPDATED** `CHANGELOG.md` - Comprehensive upgrade guide for plugin authors
+- ✅ **ADDED** Storage benchmark suite (`cargo bench --bench storage`)
+- ✅ **ADDED** Pooling benchmark suite (`cargo bench --bench pooling`)
+- ✅ **ADDED** SIMD benchmark suite (`cargo bench --features simd`)
+
+### Breaking Changes
+
+**None** - This is a fully backward-compatible minor version release:
+- All v0.1.x code continues to work unchanged
+- New features are opt-in via feature flags and API selection
+- No trait signature changes
+- Plugin API remains stable
 
 ## Version 0.3.0 - Spatial Acceleration & Query Improvements (Planned)
 
