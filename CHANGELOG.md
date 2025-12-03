@@ -274,6 +274,8 @@ println!("Active SIMD backend: {}", backend.name());
 // Expected output on older CPUs: "Active SIMD backend: Scalar"
 ```
 
+**Example**: Run `cargo run --features simd --example simd_detection` to see detailed SIMD capabilities of your CPU.
+
 ## [0.1.1] - 2025-12-03
 
 ### Fixed

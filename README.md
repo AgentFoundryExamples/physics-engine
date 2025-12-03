@@ -66,6 +66,11 @@ use physics_engine::simd::select_backend;
 println!("SIMD backend: {}", select_backend().name()); // "AVX2" or "Scalar"
 ```
 
+**Example**: See `examples/simd_detection.rs` for a complete demonstration. Run with:
+```bash
+cargo run --features simd --example simd_detection
+```
+
 **When to Use Dense Storage**: Systems that can use direct array iteration, medium-large entity counts (>100), performance-critical paths.
 
 **When to Use HashMap**: Small entity counts (<100), sparse access patterns, prototyping.
