@@ -87,7 +87,8 @@ jobs:
                   "enabled": true,
                   "graceful_degradation": true
                 }
-              },
+              }
+            },
             "language_parser_preferences": {
               "C": ["libclang", "tree_sitter", "regex"],
               "C++": ["libclang", "tree_sitter", "regex"],
