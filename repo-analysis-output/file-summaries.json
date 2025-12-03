@@ -78,8 +78,8 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 23889,
-        "loc": 485,
+        "size_bytes": 21814,
+        "loc": 442,
         "todo_count": 0,
         "declaration_count": 22
       },
@@ -125,8 +125,8 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 23810,
-        "loc": 478,
+        "size_bytes": 21708,
+        "loc": 435,
         "todo_count": 0,
         "declaration_count": 19
       },
@@ -498,10 +498,10 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 20954,
-        "loc": 422,
+        "size_bytes": 21279,
+        "loc": 426,
         "todo_count": 0,
-        "declaration_count": 39
+        "declaration_count": 40
       },
       "structure": {
         "declarations": [
@@ -515,6 +515,7 @@
           "fn new",
           "fn register_provider",
           "fn clear_forces",
+          "fn clear",
           "fn accumulate_for_entity",
           "fn get_force",
           "fn provider_count",

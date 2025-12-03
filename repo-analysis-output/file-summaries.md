@@ -49,8 +49,8 @@ Total files: 23
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 23.33 KB  
-**LOC:** 485  
+**Size:** 21.30 KB  
+**LOC:** 442  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 22  
 **Top-level declarations:**
@@ -70,8 +70,8 @@ Total files: 23
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 23.25 KB  
-**LOC:** 478  
+**Size:** 21.20 KB  
+**LOC:** 435  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 19  
 **Top-level declarations:**
@@ -208,10 +208,10 @@ Total files: 23
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 20.46 KB  
-**LOC:** 422  
+**Size:** 20.78 KB  
+**LOC:** 426  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 39  
+**Declarations:** 40  
 **Top-level declarations:**
   - fn new
   - fn zero
@@ -223,7 +223,7 @@ Total files: 23
   - fn new
   - fn register_provider
   - fn clear_forces
-  - ... and 29 more
+  - ... and 30 more
 
 ## physics-engine/src/ecs/world.rs
 **Language:** Rust  
