@@ -183,6 +183,7 @@ impl Integrator for VelocityVerletIntegrator {
         }
         
         // Convert forces to accelerations
+        // Note: We could pool this but HashMapStorage doesn't support external HashMap injection
         let mut new_accelerations = crate::ecs::HashMapStorage::<Acceleration>::new();
         apply_forces_to_acceleration(
             entities_vec.iter(),

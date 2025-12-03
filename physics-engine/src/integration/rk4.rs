@@ -58,6 +58,7 @@
 use crate::ecs::{Entity, ComponentStorage};
 use crate::ecs::components::{Position, Velocity, Acceleration, Mass};
 use crate::ecs::systems::ForceRegistry;
+use crate::pool::{HashMapPool, PoolConfig};
 use super::Integrator;
 use std::collections::HashMap;
 
@@ -67,6 +68,12 @@ use std::collections::HashMap;
 /// of 4x force evaluations per timestep compared to simpler methods.
 /// Best suited for systems where high precision is needed and forces
 /// vary smoothly with position.
+///
+/// # Memory Pooling
+///
+/// RK4 uses memory pools for intermediate k1-k4 buffers to reduce
+/// allocation churn. Pools are configured at creation time and reused
+/// across integration steps.
 ///
 /// # Example
 ///
@@ -78,54 +85,61 @@ use std::collections::HashMap;
 /// ```
 pub struct RK4Integrator {
     timestep: f64,
-    // Reusable buffers to avoid allocation on each integration step
-    k1_positions: HashMap<Entity, Position>,
-    k1_velocities: HashMap<Entity, Velocity>,
-    k2_positions: HashMap<Entity, Position>,
-    k2_velocities: HashMap<Entity, Velocity>,
-    k3_positions: HashMap<Entity, Position>,
-    k3_velocities: HashMap<Entity, Velocity>,
-    k4_positions: HashMap<Entity, Position>,
-    k4_velocities: HashMap<Entity, Velocity>,
-    temp_accelerations: HashMap<Entity, Acceleration>,
+    // Memory pools for reusable buffers to reduce allocation churn
+    position_pool: HashMapPool<Entity, Position>,
+    velocity_pool: HashMapPool<Entity, Velocity>,
+    acceleration_pool: HashMapPool<Entity, Acceleration>,
 }
 
 impl RK4Integrator {
     /// Create a new RK4 integrator with the given timestep
     ///
+    /// Uses default pool configuration (64 initial capacity, 8 max pool size).
+    ///
     /// # Panics
     ///
     /// Panics if timestep is non-positive, NaN, or infinite
     pub fn new(timestep: f64) -> Self {
+        Self::with_pool_config(timestep, PoolConfig::default())
+    }
+
+    /// Create a new RK4 integrator with custom pool configuration
+    ///
+    /// # Arguments
+    ///
+    /// * `timestep` - Integration timestep in seconds
+    /// * `pool_config` - Configuration for buffer pools
+    ///
+    /// # Panics
+    ///
+    /// Panics if timestep is non-positive, NaN, or infinite
+    pub fn with_pool_config(timestep: f64, pool_config: PoolConfig) -> Self {
         assert!(
             timestep > 0.0 && timestep.is_finite(),
             "Timestep must be positive and finite"
         );
         RK4Integrator {
             timestep,
-            k1_positions: HashMap::new(),
-            k1_velocities: HashMap::new(),
-            k2_positions: HashMap::new(),
-            k2_velocities: HashMap::new(),
-            k3_positions: HashMap::new(),
-            k3_velocities: HashMap::new(),
-            k4_positions: HashMap::new(),
-            k4_velocities: HashMap::new(),
-            temp_accelerations: HashMap::new(),
+            position_pool: HashMapPool::with_config(pool_config.clone()),
+            velocity_pool: HashMapPool::with_config(pool_config.clone()),
+            acceleration_pool: HashMapPool::with_config(pool_config),
         }
     }
 
-    /// Clear internal buffers (automatically done at start of each integration)
-    fn clear_buffers(&mut self) {
-        self.k1_positions.clear();
-        self.k1_velocities.clear();
-        self.k2_positions.clear();
-        self.k2_velocities.clear();
-        self.k3_positions.clear();
-        self.k3_velocities.clear();
-        self.k4_positions.clear();
-        self.k4_velocities.clear();
-        self.temp_accelerations.clear();
+    /// Get pool statistics for monitoring
+    pub fn pool_stats(&self) -> (crate::pool::PoolStats, crate::pool::PoolStats, crate::pool::PoolStats) {
+        (
+            self.position_pool.stats(),
+            self.velocity_pool.stats(),
+            self.acceleration_pool.stats(),
+        )
+    }
+
+    /// Clear all buffer pools (useful for shutdown or reset)
+    pub fn clear_pools(&self) {
+        self.position_pool.clear();
+        self.velocity_pool.clear();
+        self.acceleration_pool.clear();
     }
 
     /// Compute derivative (velocity, acceleration) at current state
@@ -223,10 +237,18 @@ impl Integrator for RK4Integrator {
         let dt_2 = dt * 0.5;
         let dt_6 = dt / 6.0;
 
-        self.clear_buffers();
-
         let entities_vec: Vec<Entity> = entities.copied().collect();
         let mut updated_count = 0;
+
+        // Acquire buffers from pools (automatically returned on scope exit)
+        let mut k1_positions = self.position_pool.acquire();
+        let mut k1_velocities = self.velocity_pool.acquire();
+        let mut k2_positions = self.position_pool.acquire();
+        let mut k2_velocities = self.velocity_pool.acquire();
+        let mut k3_positions = self.position_pool.acquire();
+        let mut k3_velocities = self.velocity_pool.acquire();
+        let mut k4_positions = self.position_pool.acquire();
+        let mut k4_velocities = self.velocity_pool.acquire();
 
         // Store initial state for all entities
         let mut initial_positions = HashMap::new();
@@ -267,12 +289,12 @@ impl Integrator for RK4Integrator {
             ) {
                 // k1 for position derivative is velocity (dx/dt = v)
                 // We store velocity values in Position type for buffer reuse
-                self.k1_positions.insert(*entity, Position::new(
+                k1_positions.insert(*entity, Position::new(
                     vel.dx(), vel.dy(), vel.dz()
                 ));
                 // k1 for velocity derivative is acceleration (dv/dt = a)
                 // We store acceleration values in Velocity type for buffer reuse
-                self.k1_velocities.insert(*entity, Velocity::new(
+                k1_velocities.insert(*entity, Velocity::new(
                     k1_acc.ax(), k1_acc.ay(), k1_acc.az()
                 ));
             }
@@ -288,11 +310,11 @@ impl Integrator for RK4Integrator {
                 Some(v) => v,
                 None => continue,
             };
-            let k1_pos = match self.k1_positions.get(entity) {
+            let k1_pos = match k1_positions.get(entity) {
                 Some(k) => k,
                 None => continue,
             };
-            let k1_vel = match self.k1_velocities.get(entity) {
+            let k1_vel = match k1_velocities.get(entity) {
                 Some(k) => k,
                 None => continue,
             };
@@ -323,12 +345,12 @@ impl Integrator for RK4Integrator {
             ) {
                 // k2 for position derivative is the velocity at the evaluation point
                 // We store velocity values in Position type for buffer reuse
-                self.k2_positions.insert(*entity, Position::new(
+                k2_positions.insert(*entity, Position::new(
                     k2_vel.dx(), k2_vel.dy(), k2_vel.dz()
                 ));
                 // k2 for velocity derivative is the acceleration at the evaluation point
                 // We store acceleration values in Velocity type for buffer reuse
-                self.k2_velocities.insert(*entity, Velocity::new(
+                k2_velocities.insert(*entity, Velocity::new(
                     k2_acc.ax(), k2_acc.ay(), k2_acc.az()
                 ));
             }
@@ -344,11 +366,11 @@ impl Integrator for RK4Integrator {
                 Some(v) => v,
                 None => continue,
             };
-            let k2_pos = match self.k2_positions.get(entity) {
+            let k2_pos = match k2_positions.get(entity) {
                 Some(k) => k,
                 None => continue,
             };
-            let k2_vel = match self.k2_velocities.get(entity) {
+            let k2_vel = match k2_velocities.get(entity) {
                 Some(k) => k,
                 None => continue,
             };
@@ -377,12 +399,12 @@ impl Integrator for RK4Integrator {
             ) {
                 // k3 for position derivative is velocity at evaluation point
                 // We store velocity values in Position type for buffer reuse
-                self.k3_positions.insert(*entity, Position::new(
+                k3_positions.insert(*entity, Position::new(
                     k3_vel.dx(), k3_vel.dy(), k3_vel.dz()
                 ));
                 // k3 for velocity derivative is acceleration at evaluation point
                 // We store acceleration values in Velocity type for buffer reuse
-                self.k3_velocities.insert(*entity, Velocity::new(
+                k3_velocities.insert(*entity, Velocity::new(
                     k3_acc.ax(), k3_acc.ay(), k3_acc.az()
                 ));
             }
@@ -398,11 +420,11 @@ impl Integrator for RK4Integrator {
                 Some(v) => v,
                 None => continue,
             };
-            let k3_pos = match self.k3_positions.get(entity) {
+            let k3_pos = match k3_positions.get(entity) {
                 Some(k) => k,
                 None => continue,
             };
-            let k3_vel = match self.k3_velocities.get(entity) {
+            let k3_vel = match k3_velocities.get(entity) {
                 Some(k) => k,
                 None => continue,
             };
@@ -431,12 +453,12 @@ impl Integrator for RK4Integrator {
             ) {
                 // k4 for position derivative is velocity at evaluation point
                 // We store velocity values in Position type for buffer reuse
-                self.k4_positions.insert(*entity, Position::new(
+                k4_positions.insert(*entity, Position::new(
                     k4_vel.dx(), k4_vel.dy(), k4_vel.dz()
                 ));
                 // k4 for velocity derivative is acceleration at evaluation point
                 // We store acceleration values in Velocity type for buffer reuse
-                self.k4_velocities.insert(*entity, Velocity::new(
+                k4_velocities.insert(*entity, Velocity::new(
                     k4_acc.ax(), k4_acc.ay(), k4_acc.az()
                 ));
             }
@@ -454,20 +476,20 @@ impl Integrator for RK4Integrator {
             };
 
             let (k1_pos, k2_pos, k3_pos, k4_pos) = match (
-                self.k1_positions.get(entity),
-                self.k2_positions.get(entity),
-                self.k3_positions.get(entity),
-                self.k4_positions.get(entity),
+                k1_positions.get(entity),
+                k2_positions.get(entity),
+                k3_positions.get(entity),
+                k4_positions.get(entity),
             ) {
                 (Some(k1), Some(k2), Some(k3), Some(k4)) => (k1, k2, k3, k4),
                 _ => continue,
             };
 
             let (k1_vel, k2_vel, k3_vel, k4_vel) = match (
-                self.k1_velocities.get(entity),
-                self.k2_velocities.get(entity),
-                self.k3_velocities.get(entity),
-                self.k4_velocities.get(entity),
+                k1_velocities.get(entity),
+                k2_velocities.get(entity),
+                k3_velocities.get(entity),
+                k4_velocities.get(entity),
             ) {
                 (Some(k1), Some(k2), Some(k3), Some(k4)) => (k1, k2, k3, k4),
                 _ => continue,
