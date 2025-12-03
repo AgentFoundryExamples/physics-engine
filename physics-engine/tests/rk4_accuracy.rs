@@ -105,7 +105,7 @@ fn test_rk4_constant_acceleration_accuracy() {
     
     assert!(
         vel_error < 1e-10,
-        "RK4 velocity error ({:.6e}) should be < 1e-8% for constant acceleration. \
+        "RK4 velocity error ({:.6e}) should be extremely small for constant acceleration. \
          Analytical: {:.6}, RK4: {:.6}",
         vel_error, v_analytical, vel.dx()
     );
