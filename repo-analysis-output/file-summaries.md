@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 23
+Total files: 24
 
 ## physics-engine/benches/integration.rs
 **Language:** Rust  
@@ -25,6 +25,21 @@ Total files: 23
   - struct SpringForce
   - impl SpringForce
   - impl ForceProvider
+
+## physics-engine/benches/storage.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 14.40 KB  
+**LOC:** 317  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 5  
+**Top-level declarations:**
+  - fn bench_storage_insert
+  - fn bench_storage_random_access
+  - fn bench_storage_sequential_iteration
+  - fn bench_storage_bulk_update
+  - fn bench_storage_remove
 
 ## physics-engine/examples/basic.rs
 **Language:** Rust  
@@ -91,10 +106,10 @@ Total files: 23
 **Language:** Rust  
 **Role:** component  
 **Role Justification:** filename contains 'component'  
-**Size:** 4.07 KB  
-**LOC:** 71  
+**Size:** 23.84 KB  
+**LOC:** 411  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 24  
+**Declarations:** 60  
 **Top-level declarations:**
   - fn type_id
   - fn insert
@@ -106,7 +121,7 @@ Total files: 23
   - fn new
   - fn default
   - fn insert
-  - ... and 14 more
+  - ... and 50 more
 
 ## physics-engine/src/ecs/components.rs
 **Language:** Rust  
@@ -154,7 +169,7 @@ Total files: 23
 **Language:** Rust  
 **Role:** module-init  
 **Role Justification:** module initialization file 'mod'  
-**Size:** 1.71 KB  
+**Size:** 1.72 KB  
 **LOC:** 24  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 2  

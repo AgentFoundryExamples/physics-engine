@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 23,
+  "total_files": 24,
   "files": [
     {
       "schema_version": "2.0",
@@ -26,6 +26,36 @@
           "struct SpringForce",
           "impl SpringForce",
           "impl ForceProvider"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/benches/storage.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 14747,
+        "loc": 317,
+        "todo_count": 0,
+        "declaration_count": 5
+      },
+      "structure": {
+        "declarations": [
+          "fn bench_storage_insert",
+          "fn bench_storage_random_access",
+          "fn bench_storage_sequential_iteration",
+          "fn bench_storage_bulk_update",
+          "fn bench_storage_remove"
         ]
       },
       "dependencies": {
@@ -169,10 +199,10 @@
       "role": "component",
       "role_justification": "filename contains 'component'",
       "metrics": {
-        "size_bytes": 4169,
-        "loc": 71,
+        "size_bytes": 24413,
+        "loc": 411,
         "todo_count": 0,
-        "declaration_count": 24
+        "declaration_count": 60
       },
       "structure": {
         "declarations": [
@@ -191,12 +221,48 @@
           "fn get_mut",
           "fn contains",
           "fn clear",
-          "fn test_component_storage",
+          "fn new",
+          "fn with_capacity",
+          "fn len",
+          "fn is_empty",
+          "fn reserve",
+          "fn entities",
+          "fn components",
+          "fn components_mut",
+          "fn get_index",
+          "fn check_invariants",
+          "fn default",
+          "fn insert",
+          "fn remove",
+          "fn get",
+          "fn get_mut",
+          "fn contains",
+          "fn clear",
+          "fn test_hashmap_storage",
+          "fn test_soa_storage_basic",
+          "fn test_soa_storage_multiple_entities",
+          "fn test_soa_storage_update",
+          "fn test_soa_storage_get_mut",
+          "fn test_soa_storage_clear",
+          "fn test_soa_storage_entity_generations",
+          "fn test_soa_storage_rapid_creation_destruction",
+          "fn test_soa_storage_large_entity_count",
+          "fn test_soa_storage_components_slice",
+          "fn test_soa_storage_entities_iter",
+          "fn test_soa_storage_with_position",
+          "fn test_soa_storage_with_velocity",
+          "fn test_soa_storage_with_mass",
+          "fn test_soa_storage_bulk_physics_operations",
+          "fn test_soa_storage_invariants",
           "struct HashMapStorage",
-          "struct Position",
+          "struct SoAStorage",
+          "struct TestComponent",
           "trait Component",
           "trait ComponentStorage",
           "impl HashMapStorage<T>",
+          "impl Default",
+          "impl ComponentStorage",
+          "impl SoAStorage<T>",
           "impl Default",
           "impl ComponentStorage",
           "impl Component"
@@ -365,7 +431,7 @@
       "role": "module-init",
       "role_justification": "module initialization file 'mod'",
       "metrics": {
-        "size_bytes": 1747,
+        "size_bytes": 1759,
         "loc": 24,
         "todo_count": 0,
         "declaration_count": 2

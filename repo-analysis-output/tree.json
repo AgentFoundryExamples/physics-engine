@@ -85,6 +85,10 @@
             {
               "type": "file",
               "name": "integration.rs"
+            },
+            {
+              "type": "file",
+              "name": "storage.rs"
             }
           ]
         },
