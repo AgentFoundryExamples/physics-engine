@@ -1,10 +1,329 @@
 {
-  "nodes": [],
-  "edges": [],
+  "nodes": [
+    {
+      "id": "physics-engine/benches/integration.rs",
+      "path": "physics-engine/benches/integration.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "criterion::",
+          "physics_engine::ecs::",
+          "physics_engine::ecs::components::",
+          "physics_engine::ecs::systems::",
+          "physics_engine::integration::"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/examples/basic.rs",
+      "path": "physics-engine/examples/basic.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "physics_engine::ecs::"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/examples/particle_collision.rs",
+      "path": "physics-engine/examples/particle_collision.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::time::Instant"
+        ],
+        "third-party": [
+          "physics_engine::ecs::",
+          "physics_engine::ecs::components::",
+          "physics_engine::ecs::systems::",
+          "physics_engine::integration::",
+          "physics_engine::plugins::gravity::"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/examples/solar_system.rs",
+      "path": "physics-engine/examples/solar_system.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "physics_engine::ecs::",
+          "physics_engine::ecs::components::",
+          "physics_engine::ecs::systems::",
+          "physics_engine::integration::",
+          "physics_engine::plugins::gravity::"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/ecs/component.rs",
+      "path": "physics-engine/src/ecs/component.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::any::TypeId",
+          "std::collections::HashMap"
+        ],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/ecs/components.rs",
+      "path": "physics-engine/src/ecs/components.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/ecs/entity.rs",
+      "path": "physics-engine/src/ecs/entity.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::fmt"
+        ],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/ecs/mod.rs",
+      "path": "physics-engine/src/ecs/mod.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/ecs/scheduler.rs",
+      "path": "physics-engine/src/ecs/scheduler.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::collections::BTreeMap"
+        ],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/ecs/system.rs",
+      "path": "physics-engine/src/ecs/system.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/ecs/systems.rs",
+      "path": "physics-engine/src/ecs/systems.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::collections::HashMap"
+        ],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/ecs/world.rs",
+      "path": "physics-engine/src/ecs/world.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::collections::"
+        ],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/integration/mod.rs",
+      "path": "physics-engine/src/integration/mod.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/integration/rk4.rs",
+      "path": "physics-engine/src/integration/rk4.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::collections::HashMap"
+        ],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/integration/verlet.rs",
+      "path": "physics-engine/src/integration/verlet.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/lib.rs",
+      "path": "physics-engine/src/lib.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": []
+      }
+    },
+    {
+      "id": "physics-engine/src/plugins/api.rs",
+      "path": "physics-engine/src/plugins/api.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::any::Any"
+        ],
+        "third-party": [
+          "rayon::ThreadPool",
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/plugins/gravity.rs",
+      "path": "physics-engine/src/plugins/gravity.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::any::Any",
+          "std::collections::HashMap",
+          "std::sync::Arc",
+          "std::sync::Mutex"
+        ],
+        "third-party": [
+          "rayon::prelude::",
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/plugins/mod.rs",
+      "path": "physics-engine/src/plugins/mod.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/src/plugins/registry.rs",
+      "path": "physics-engine/src/plugins/registry.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::any::Any",
+          "std::collections::"
+        ],
+        "third-party": [
+          "semver::Version",
+          "tests"
+        ]
+      }
+    },
+    {
+      "id": "physics-engine/tests/conservation.rs",
+      "path": "physics-engine/tests/conservation.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "physics_engine::ecs::",
+          "physics_engine::ecs::components::",
+          "physics_engine::ecs::systems::",
+          "physics_engine::integration::"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "physics-engine/src/ecs/mod.rs",
+      "target": "physics-engine/src/ecs/entity.rs"
+    },
+    {
+      "source": "physics-engine/src/ecs/mod.rs",
+      "target": "physics-engine/src/ecs/component.rs"
+    },
+    {
+      "source": "physics-engine/src/ecs/mod.rs",
+      "target": "physics-engine/src/ecs/system.rs"
+    },
+    {
+      "source": "physics-engine/src/ecs/mod.rs",
+      "target": "physics-engine/src/ecs/world.rs"
+    },
+    {
+      "source": "physics-engine/src/integration/mod.rs",
+      "target": "physics-engine/src/integration/verlet.rs"
+    },
+    {
+      "source": "physics-engine/src/integration/mod.rs",
+      "target": "physics-engine/src/integration/rk4.rs"
+    }
+  ],
   "external_dependencies_summary": {
-    "stdlib": [],
-    "third-party": [],
-    "stdlib_count": 0,
-    "third-party_count": 0
+    "stdlib": [
+      "std::any::Any",
+      "std::any::TypeId",
+      "std::collections::",
+      "std::collections::BTreeMap",
+      "std::collections::HashMap",
+      "std::fmt",
+      "std::sync::Arc",
+      "std::sync::Mutex",
+      "std::time::Instant"
+    ],
+    "third-party": [
+      "criterion::",
+      "physics_engine::ecs::",
+      "physics_engine::ecs::components::",
+      "physics_engine::ecs::systems::",
+      "physics_engine::integration::",
+      "physics_engine::plugins::gravity::",
+      "rayon::ThreadPool",
+      "rayon::prelude::",
+      "semver::Version",
+      "tests"
+    ],
+    "stdlib_count": 9,
+    "third-party_count": 10
   }
 }

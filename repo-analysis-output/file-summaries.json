@@ -1,0 +1,1012 @@
+{
+  "schema_version": "2.0",
+  "total_files": 21,
+  "files": [
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/benches/integration.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 10134,
+        "loc": 204,
+        "todo_count": 0,
+        "declaration_count": 10
+      },
+      "structure": {
+        "declarations": [
+          "fn new",
+          "fn compute_force",
+          "fn name",
+          "fn setup_harmonic_oscillator",
+          "fn bench_integrator_throughput",
+          "fn bench_integrator_accuracy",
+          "fn bench_free_motion",
+          "struct SpringForce",
+          "impl SpringForce",
+          "impl ForceProvider"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/examples/basic.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 4535,
+        "loc": 81,
+        "todo_count": 0,
+        "declaration_count": 9
+      },
+      "structure": {
+        "declarations": [
+          "fn run",
+          "fn name",
+          "fn main",
+          "struct Position",
+          "struct Velocity",
+          "struct PhysicsSystem",
+          "impl Component",
+          "impl Component",
+          "impl System"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/examples/particle_collision.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 18935,
+        "loc": 385,
+        "todo_count": 0,
+        "declaration_count": 20
+      },
+      "structure": {
+        "declarations": [
+          "fn new",
+          "fn next_u64",
+          "fn next_f64",
+          "fn next_f64_range",
+          "fn default",
+          "fn create_particles",
+          "fn calculate_kinetic_energy",
+          "fn calculate_center_of_mass",
+          "fn calculate_spread",
+          "fn print_state",
+          "fn main",
+          "fn name",
+          "fn integrate",
+          "struct SimpleRng",
+          "struct SimulationConfig",
+          "enum IntegratorWrapper",
+          "impl SimpleRng",
+          "impl Default",
+          "impl IntegratorWrapper",
+          "const F64_MANTISSA_MAX"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/examples/solar_system.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 16167,
+        "loc": 333,
+        "todo_count": 0,
+        "declaration_count": 17
+      },
+      "structure": {
+        "declarations": [
+          "fn default",
+          "fn create_solar_system",
+          "fn calculate_kinetic_energy",
+          "fn calculate_potential_energy",
+          "fn print_state",
+          "fn main",
+          "fn name",
+          "fn integrate",
+          "struct CelestialBody",
+          "struct SimulationConfig",
+          "enum IntegratorWrapper",
+          "impl Default",
+          "impl IntegratorWrapper",
+          "const AU",
+          "const DAY",
+          "const YEAR",
+          "const SOLAR_BODIES"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/ecs/component.rs",
+      "language": "Rust",
+      "role": "component",
+      "role_justification": "filename contains 'component'",
+      "metrics": {
+        "size_bytes": 4169,
+        "loc": 71,
+        "todo_count": 0,
+        "declaration_count": 24
+      },
+      "structure": {
+        "declarations": [
+          "fn type_id",
+          "fn insert",
+          "fn remove",
+          "fn get",
+          "fn get_mut",
+          "fn contains",
+          "fn clear",
+          "fn new",
+          "fn default",
+          "fn insert",
+          "fn remove",
+          "fn get",
+          "fn get_mut",
+          "fn contains",
+          "fn clear",
+          "fn test_component_storage",
+          "struct HashMapStorage",
+          "struct Position",
+          "trait Component",
+          "trait ComponentStorage",
+          "impl HashMapStorage<T>",
+          "impl Default",
+          "impl ComponentStorage",
+          "impl Component"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/ecs/components.rs",
+      "language": "Rust",
+      "role": "component",
+      "role_justification": "filename contains 'component'",
+      "metrics": {
+        "size_bytes": 14777,
+        "loc": 318,
+        "todo_count": 0,
+        "declaration_count": 82
+      },
+      "structure": {
+        "declarations": [
+          "fn new",
+          "fn zero",
+          "fn x",
+          "fn y",
+          "fn z",
+          "fn set_x",
+          "fn set_y",
+          "fn set_z",
+          "fn is_valid",
+          "fn as_array",
+          "fn from_array",
+          "fn default",
+          "fn new",
+          "fn zero",
+          "fn dx",
+          "fn dy",
+          "fn dz",
+          "fn set_dx",
+          "fn set_dy",
+          "fn set_dz",
+          "fn is_valid",
+          "fn as_array",
+          "fn from_array",
+          "fn magnitude",
+          "fn default",
+          "fn new",
+          "fn zero",
+          "fn ax",
+          "fn ay",
+          "fn az",
+          "fn set_ax",
+          "fn set_ay",
+          "fn set_az",
+          "fn is_valid",
+          "fn as_array",
+          "fn from_array",
+          "fn default",
+          "fn new",
+          "fn try_new",
+          "fn immovable",
+          "fn value",
+          "fn set_value",
+          "fn try_set_value",
+          "fn is_valid",
+          "fn is_immovable",
+          "fn inverse",
+          "fn default",
+          "fn test_position_creation",
+          "fn test_position_zero",
+          "fn test_position_validation",
+          "fn test_position_array_conversion",
+          "fn test_velocity_creation",
+          "fn test_velocity_magnitude",
+          "fn test_velocity_validation",
+          "fn test_acceleration_creation",
+          "fn test_acceleration_validation",
+          "fn test_mass_creation",
+          "fn test_mass_try_new",
+          "fn test_mass_negative_panics",
+          "fn test_mass_nan_panics",
+          "fn test_mass_immovable",
+          "fn test_mass_inverse",
+          "fn test_mass_zero_handling",
+          "fn test_mass_try_set_value",
+          "fn test_component_defaults",
+          "struct Position",
+          "struct Velocity",
+          "struct Acceleration",
+          "struct Mass",
+          "impl Position",
+          "impl Component",
+          "impl Default",
+          "impl Velocity",
+          "impl Component",
+          "impl Default",
+          "impl Acceleration",
+          "impl Component",
+          "impl Default",
+          "impl Mass",
+          "impl Component",
+          "impl Default",
+          "const IMMOVABLE_THRESHOLD"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/ecs/entity.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 2447,
+        "loc": 53,
+        "todo_count": 0,
+        "declaration_count": 15
+      },
+      "structure": {
+        "declarations": [
+          "fn new",
+          "fn raw",
+          "fn fmt",
+          "fn new",
+          "fn id",
+          "fn generation",
+          "fn fmt",
+          "fn test_entity_creation",
+          "fn test_entity_equality",
+          "struct EntityId",
+          "struct Entity",
+          "impl EntityId",
+          "impl fmt::Display",
+          "impl Entity",
+          "impl fmt::Display"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/ecs/mod.rs",
+      "language": "Rust",
+      "role": "module-init",
+      "role_justification": "module initialization file 'mod'",
+      "metrics": {
+        "size_bytes": 1747,
+        "loc": 24,
+        "todo_count": 0,
+        "declaration_count": 2
+      },
+      "structure": {
+        "declarations": [
+          "fn test_world_creation",
+          "fn test_entity_creation"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/ecs/scheduler.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 10420,
+        "loc": 167,
+        "todo_count": 0,
+        "declaration_count": 38
+      },
+      "structure": {
+        "declarations": [
+          "fn new",
+          "fn new",
+          "fn with_stages",
+          "fn add_system",
+          "fn add_system_default",
+          "fn system_count",
+          "fn stage_count",
+          "fn run_sequential",
+          "fn run_parallel",
+          "fn run_parallel",
+          "fn clear",
+          "fn default",
+          "fn new",
+          "fn run",
+          "fn name",
+          "fn test_scheduler_creation",
+          "fn test_add_system",
+          "fn test_stage_ordering",
+          "fn test_sequential_execution",
+          "fn test_parallel_execution",
+          "fn test_stage_barrier",
+          "fn test_empty_scheduler",
+          "fn test_clear_scheduler",
+          "fn test_many_systems",
+          "fn test_stage_count",
+          "struct StageId",
+          "struct Scheduler",
+          "struct TestSystem",
+          "impl StageId",
+          "impl Scheduler",
+          "impl Default",
+          "impl TestSystem",
+          "impl System",
+          "const FORCE_ACCUMULATION",
+          "const ACCELERATION",
+          "const INTEGRATION",
+          "const CONSTRAINTS",
+          "const POST_PROCESS"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/ecs/system.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 3811,
+        "loc": 60,
+        "todo_count": 1,
+        "declaration_count": 18
+      },
+      "structure": {
+        "declarations": [
+          "fn run",
+          "fn name",
+          "fn new",
+          "fn add_system",
+          "fn run_sequential",
+          "fn run_parallel",
+          "fn run_parallel",
+          "fn system_count",
+          "fn default",
+          "fn run",
+          "fn name",
+          "fn test_system_executor",
+          "struct SystemExecutor",
+          "struct TestSystem",
+          "trait System",
+          "impl SystemExecutor",
+          "impl Default",
+          "impl System"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/ecs/systems.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 19109,
+        "loc": 385,
+        "todo_count": 0,
+        "declaration_count": 38
+      },
+      "structure": {
+        "declarations": [
+          "fn new",
+          "fn zero",
+          "fn is_valid",
+          "fn add",
+          "fn magnitude",
+          "fn compute_force",
+          "fn name",
+          "fn new",
+          "fn register_provider",
+          "fn clear_forces",
+          "fn accumulate_for_entity",
+          "fn get_force",
+          "fn provider_count",
+          "fn default",
+          "fn apply_forces_to_acceleration",
+          "fn integrate_motion",
+          "fn test_force_creation",
+          "fn test_force_validation",
+          "fn test_force_add",
+          "fn test_force_magnitude",
+          "fn compute_force",
+          "fn name",
+          "fn test_force_registry",
+          "fn test_force_accumulation",
+          "fn test_force_overflow_detection",
+          "fn test_apply_forces_to_acceleration",
+          "fn test_apply_forces_skips_immovable",
+          "fn test_integrate_motion",
+          "fn test_integrate_motion_without_acceleration",
+          "fn test_missing_components_handling",
+          "struct Force",
+          "struct ForceRegistry",
+          "struct TestForceProvider",
+          "trait ForceProvider",
+          "impl Force",
+          "impl ForceRegistry",
+          "impl Default",
+          "impl ForceProvider"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/ecs/world.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 5466,
+        "loc": 113,
+        "todo_count": 0,
+        "declaration_count": 15
+      },
+      "structure": {
+        "declarations": [
+          "fn new",
+          "fn create_entity",
+          "fn destroy_entity",
+          "fn is_entity_alive",
+          "fn entity_count",
+          "fn clear",
+          "fn entities",
+          "fn default",
+          "fn test_world_entity_lifecycle",
+          "fn test_entity_generation",
+          "fn test_world_clear",
+          "fn test_entity_id_reuse",
+          "struct World",
+          "impl World",
+          "impl Default"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/integration/mod.rs",
+      "language": "Rust",
+      "role": "module-init",
+      "role_justification": "module initialization file 'mod'",
+      "metrics": {
+        "size_bytes": 7125,
+        "loc": 92,
+        "todo_count": 0,
+        "declaration_count": 15
+      },
+      "structure": {
+        "declarations": [
+          "fn name",
+          "fn timestep",
+          "fn set_timestep",
+          "fn validate_timestep",
+          "fn integrate",
+          "fn new",
+          "fn omega",
+          "fn amplitude",
+          "fn phase",
+          "fn position_at",
+          "fn energy",
+          "fn test_harmonic_oscillator_physics",
+          "struct HarmonicOscillator",
+          "trait Integrator",
+          "impl HarmonicOscillator"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/integration/rk4.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 19804,
+        "loc": 419,
+        "todo_count": 0,
+        "declaration_count": 15
+      },
+      "structure": {
+        "declarations": [
+          "fn new",
+          "fn clear_buffers",
+          "fn compute_derivative",
+          "fn name",
+          "fn timestep",
+          "fn set_timestep",
+          "fn integrate",
+          "fn test_rk4_creation",
+          "fn test_rk4_invalid_timestep",
+          "fn test_rk4_set_timestep",
+          "fn test_rk4_free_motion",
+          "fn test_rk4_buffer_reuse",
+          "struct RK4Integrator",
+          "impl RK4Integrator",
+          "impl Integrator"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/integration/verlet.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 13004,
+        "loc": 222,
+        "todo_count": 0,
+        "declaration_count": 20
+      },
+      "structure": {
+        "declarations": [
+          "fn new",
+          "fn name",
+          "fn timestep",
+          "fn set_timestep",
+          "fn integrate",
+          "fn compute_force",
+          "fn name",
+          "fn test_verlet_creation",
+          "fn test_verlet_invalid_timestep",
+          "fn test_verlet_negative_timestep",
+          "fn test_verlet_nan_timestep",
+          "fn test_verlet_timestep_validation",
+          "fn test_verlet_set_timestep",
+          "fn test_verlet_free_motion",
+          "fn test_verlet_constant_acceleration",
+          "struct VelocityVerletIntegrator",
+          "struct SpringForce",
+          "impl VelocityVerletIntegrator",
+          "impl Integrator",
+          "impl ForceProvider"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/lib.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 1763,
+        "loc": 4,
+        "todo_count": 0
+      },
+      "structure": {
+        "declarations": []
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/plugins/api.rs",
+      "language": "Rust",
+      "role": "api",
+      "role_justification": "filename contains 'api'",
+      "metrics": {
+        "size_bytes": 13409,
+        "loc": 168,
+        "todo_count": 0,
+        "declaration_count": 41
+      },
+      "structure": {
+        "declarations": [
+          "fn new",
+          "fn world",
+          "fn integrator_name",
+          "fn timestep",
+          "fn thread_count",
+          "fn is_parallel_enabled",
+          "fn name",
+          "fn version",
+          "fn api_version",
+          "fn dependencies",
+          "fn initialize",
+          "fn update",
+          "fn shutdown",
+          "fn as_any",
+          "fn as_any_mut",
+          "fn create_object",
+          "fn as_force_provider",
+          "fn apply_constraint",
+          "fn priority",
+          "fn new",
+          "fn name",
+          "fn version",
+          "fn initialize",
+          "fn as_any",
+          "fn as_any_mut",
+          "fn test_plugin_api_version",
+          "fn test_plugin_creation",
+          "fn test_plugin_dependencies",
+          "fn test_plugin_context",
+          "fn test_plugin_initialization",
+          "fn test_plugin_downcasting",
+          "struct PluginContext",
+          "struct TestPlugin",
+          "trait Plugin",
+          "trait ObjectFactory",
+          "trait ForceProviderPlugin",
+          "trait ConstraintSystem",
+          "impl PluginContext<'a>",
+          "impl TestPlugin",
+          "impl Plugin",
+          "const PLUGIN_API_VERSION"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/plugins/gravity.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 22721,
+        "loc": 356,
+        "todo_count": 0,
+        "declaration_count": 45
+      },
+      "structure": {
+        "declarations": [
+          "fn new",
+          "fn with_scaled_g",
+          "fn default_settings",
+          "fn set_softening",
+          "fn softening",
+          "fn set_chunk_size",
+          "fn set_warn_on_invalid",
+          "fn compute_pairwise_force",
+          "fn compute_force_for_entity",
+          "fn name",
+          "fn version",
+          "fn as_any",
+          "fn as_any_mut",
+          "fn initialize",
+          "fn compute_force",
+          "fn name",
+          "fn as_force_provider",
+          "fn new",
+          "fn compute_forces",
+          "fn compute_forces_parallel",
+          "fn compute_forces_sequential",
+          "fn new",
+          "fn compute_force",
+          "fn name",
+          "fn test_gravitational_constant",
+          "fn test_plugin_creation",
+          "fn test_plugin_with_scaled_g",
+          "fn test_negative_g_panics",
+          "fn test_negative_softening_panics",
+          "fn test_pairwise_force_calculation",
+          "fn test_zero_distance_handling",
+          "fn test_softening_prevents_singularity",
+          "fn test_immovable_bodies_ignored",
+          "struct GravityPlugin",
+          "struct GravitySystem",
+          "struct SimpleForceProvider",
+          "impl GravityPlugin",
+          "impl Plugin",
+          "impl ForceProvider",
+          "impl ForceProviderPlugin",
+          "impl GravitySystem",
+          "impl SimpleForceProvider",
+          "impl ForceProvider",
+          "const GRAVITATIONAL_CONSTANT",
+          "const DEFAULT_SOFTENING"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/plugins/mod.rs",
+      "language": "Rust",
+      "role": "module-init",
+      "role_justification": "module initialization file 'mod'",
+      "metrics": {
+        "size_bytes": 7236,
+        "loc": 15,
+        "todo_count": 0,
+        "declaration_count": 1
+      },
+      "structure": {
+        "declarations": [
+          "fn test_module_exports"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/plugins/registry.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 23545,
+        "loc": 420,
+        "todo_count": 0,
+        "declaration_count": 42
+      },
+      "structure": {
+        "declarations": [
+          "fn new",
+          "fn register",
+          "fn discover_plugins",
+          "fn initialize_all",
+          "fn update_all",
+          "fn shutdown_all",
+          "fn get",
+          "fn get_mut",
+          "fn plugin_count",
+          "fn is_initialized",
+          "fn load_order",
+          "fn default",
+          "fn is_version_compatible",
+          "fn topological_sort",
+          "fn new",
+          "fn name",
+          "fn version",
+          "fn dependencies",
+          "fn initialize",
+          "fn update",
+          "fn shutdown",
+          "fn as_any",
+          "fn as_any_mut",
+          "fn test_registry_creation",
+          "fn test_plugin_registration",
+          "fn test_duplicate_plugin_registration",
+          "fn test_plugin_initialization",
+          "fn test_dependency_resolution",
+          "fn test_missing_dependency",
+          "fn test_circular_dependency",
+          "fn test_plugin_update",
+          "fn test_plugin_shutdown",
+          "fn test_version_compatibility",
+          "fn test_topological_sort_simple",
+          "fn test_topological_sort_cycle",
+          "fn test_discover_plugins",
+          "struct PluginRegistry",
+          "struct TestPlugin",
+          "impl PluginRegistry",
+          "impl Default",
+          "impl TestPlugin",
+          "impl Plugin"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/tests/conservation.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 13095,
+        "loc": 291,
+        "todo_count": 0,
+        "declaration_count": 16
+      },
+      "structure": {
+        "declarations": [
+          "fn compute_force",
+          "fn name",
+          "fn compute_energy",
+          "fn test_verlet_energy_conservation_free_particle",
+          "fn test_rk4_energy_conservation_free_particle",
+          "fn test_verlet_position_accuracy",
+          "fn test_rk4_position_accuracy",
+          "fn test_verlet_constant_acceleration",
+          "fn compute_force",
+          "fn name",
+          "fn test_rk4_constant_acceleration",
+          "fn test_multiple_entities",
+          "struct SpringForceProvider",
+          "struct ConstantForce",
+          "impl ForceProvider",
+          "impl ForceProvider"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    }
+  ]
+}

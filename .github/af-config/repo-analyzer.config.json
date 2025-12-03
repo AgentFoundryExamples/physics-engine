@@ -15,7 +15,7 @@
   "file_summary_config": {
     "max_file_size_kb": 1024,
     "include_patterns": [
-      "*.py"
+      "*.rs"
     ],
     "detail_level": "detailed",
     "include_legacy_summary": false
@@ -32,5 +32,26 @@
       "go.mod",
       "Cargo.toml"
     ]
+  },
+  "parser_config": {
+    "enable_structured_parsers": true,
+    "enable_parser_cache": true,
+    "parsers": {
+      "tree_sitter": {
+        "enabled": true,
+        "graceful_degradation": true
+      },
+      "libclang": {
+        "enabled": true,
+        "graceful_degradation": true
+      }
+    }
+  },
+  "language_parser_preferences": {
+    "C": ["libclang", "tree_sitter", "regex"],
+    "C++": ["libclang", "tree_sitter", "regex"],
+    "Rust": ["tree_sitter", "regex"],
+    "Perl": ["tree_sitter", "regex"],
+    "ASM": ["regex"]
   }
 }

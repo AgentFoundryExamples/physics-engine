@@ -92,7 +92,7 @@ For migration information and detailed schema documentation, see the project REA
 
 ## Analysis Metadata
 
-- **Tool Version**: Repository Analyzer v0.2.1
+- **Tool Version**: Repository Analyzer v0.3.0
 - **Configuration**: See repo-analyzer.config.json
 - **Schema Version**: 2.0 (backward compatible with v1.0 consumers)
 - **Timestamp**: Generated on repository scan
