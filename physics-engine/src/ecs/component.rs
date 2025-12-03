@@ -138,6 +138,21 @@ impl<T: Component> ComponentStorage for HashMapStorage<T> {
 /// field3: [z0, z1, z2, z3, ...] // All z values contiguous
 /// ```
 ///
+/// # Copy Requirement
+///
+/// Components must implement `Copy` to support the `ComponentStorage` trait's
+/// `get()` and `remove()` methods, which return references and owned values respectively.
+/// In a true SoA layout, component fields are split across multiple arrays and cannot
+/// be referenced as a single contiguous structure. The `Copy` bound allows us to
+/// efficiently reconstruct components on demand.
+///
+/// For components that cannot implement `Copy` (e.g., types with heap allocations),
+/// use `HashMapStorage` instead, or consider refactoring the component to use
+/// value types (e.g., indices into separate data structures rather than owned data).
+///
+/// All physics components (Position, Velocity, Acceleration, Mass) are small,
+/// stack-allocated types that implement `Copy` naturally.
+///
 /// # Implementation Note
 ///
 /// While this storage provides a SoA-like interface, it still needs to support
@@ -227,6 +242,64 @@ impl<T: Component + Copy> SoAStorage<T> {
     pub fn get_index(&self, entity: Entity) -> Option<usize> {
         self.entity_to_index.get(&entity).copied()
     }
+
+    /// Check internal invariants for testing and debugging
+    ///
+    /// This method validates that the storage's internal state is consistent:
+    /// - All three data structures have the same length
+    /// - Entity-to-index mappings are bidirectional
+    /// - No entity appears twice
+    ///
+    /// Returns `Ok(())` if all invariants hold, or `Err(String)` with a
+    /// description of the violated invariant.
+    #[cfg(test)]
+    pub fn check_invariants(&self) -> Result<(), String> {
+        // Check lengths match
+        if self.entity_to_index.len() != self.index_to_entity.len() {
+            return Err(format!(
+                "Length mismatch: entity_to_index={}, index_to_entity={}",
+                self.entity_to_index.len(),
+                self.index_to_entity.len()
+            ));
+        }
+        if self.entity_to_index.len() != self.components.len() {
+            return Err(format!(
+                "Length mismatch: entity_to_index={}, components={}",
+                self.entity_to_index.len(),
+                self.components.len()
+            ));
+        }
+
+        // Check bidirectional mapping
+        for (entity, &index) in &self.entity_to_index {
+            if index >= self.index_to_entity.len() {
+                return Err(format!(
+                    "Entity {:?} maps to out-of-bounds index {}",
+                    entity, index
+                ));
+            }
+            if self.index_to_entity[index] != *entity {
+                return Err(format!(
+                    "Mapping inconsistency: entity {:?} -> index {}, but index {} -> entity {:?}",
+                    entity, index, index, self.index_to_entity[index]
+                ));
+            }
+        }
+
+        // Check no duplicate entities in index_to_entity
+        for i in 0..self.index_to_entity.len() {
+            for j in (i + 1)..self.index_to_entity.len() {
+                if self.index_to_entity[i] == self.index_to_entity[j] {
+                    return Err(format!(
+                        "Duplicate entity {:?} at indices {} and {}",
+                        self.index_to_entity[i], i, j
+                    ));
+                }
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl<T: Component + Copy> Default for SoAStorage<T> {
@@ -264,7 +337,10 @@ impl<T: Component + Copy> ComponentStorage for SoAStorage<T> {
                 self.components.swap(index, last_index);
                 // Update the entity that was swapped
                 let swapped_entity = self.index_to_entity[last_index];
-                self.entity_to_index.insert(swapped_entity, index);
+                // Use get_mut to avoid potential HashMap reallocation
+                if let Some(idx) = self.entity_to_index.get_mut(&swapped_entity) {
+                    *idx = index;
+                }
                 self.index_to_entity.swap(index, last_index);
             }
             
@@ -591,5 +667,42 @@ mod tests {
             assert!(pos.is_valid());
             assert!(vel.is_valid());
         }
+    }
+
+    #[test]
+    fn test_soa_storage_invariants() {
+        let mut storage = SoAStorage::<TestComponent>::new();
+        
+        // Initially empty, invariants should hold
+        assert!(storage.check_invariants().is_ok());
+        
+        // Add some entities
+        for i in 0..10 {
+            let entity = Entity::new(i, 0);
+            storage.insert(entity, TestComponent { x: i as f32, y: i as f32 * 2.0 });
+            assert!(storage.check_invariants().is_ok(), 
+                "Invariants violated after inserting entity {}", i);
+        }
+        
+        // Remove some entities
+        for i in (0..10).step_by(2) {
+            let entity = Entity::new(i, 0);
+            storage.remove(entity);
+            assert!(storage.check_invariants().is_ok(), 
+                "Invariants violated after removing entity {}", i);
+        }
+        
+        // Update some entities
+        for i in (1..10).step_by(2) {
+            let entity = Entity::new(i, 0);
+            storage.insert(entity, TestComponent { x: 100.0, y: 200.0 });
+            assert!(storage.check_invariants().is_ok(), 
+                "Invariants violated after updating entity {}", i);
+        }
+        
+        // Clear and check
+        storage.clear();
+        assert!(storage.check_invariants().is_ok());
+        assert_eq!(storage.len(), 0);
     }
 }
