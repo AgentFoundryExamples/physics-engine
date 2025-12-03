@@ -510,7 +510,8 @@ fn main() {
             force_registry.accumulate_for_entity(*entity);
         }
 
-        // Apply forces to compute accelerations
+        // Apply forces to compute accelerations at current positions
+        // Note: The Verlet integrator will recompute accelerations at new positions internally
         apply_forces_to_acceleration(
             entity_vec.iter(),
             &force_registry,
@@ -520,6 +521,8 @@ fn main() {
         );
         
         // Use the integrator to update positions and velocities
+        // The force_registry retains its registered providers, allowing the integrator
+        // to recompute forces at the updated positions (needed for Verlet algorithm)
         integrator.integrate(
             entity_vec.iter(),
             &mut positions,
