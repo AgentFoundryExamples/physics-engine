@@ -24,6 +24,7 @@
   ├── examples
     ├── basic.rs
     ├── particle_collision.rs
+    ├── soa_demo.rs
     └── solar_system.rs
   ├── src
     ├── ecs

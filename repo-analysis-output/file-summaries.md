@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 31
+Total files: 32
 
 ## physics-engine/benches/integration.rs
 **Language:** Rust  
@@ -101,6 +101,23 @@ Total files: 31
   - fn print_state
   - ... and 12 more
 
+## physics-engine/examples/soa_demo.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 8.51 KB  
+**LOC:** 154  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 7  
+**Top-level declarations:**
+  - fn main
+  - fn demonstrate_storage_types
+  - fn demonstrate_field_arrays
+  - fn demonstrate_bulk_operations
+  - fn performance_comparison
+  - const ENTITY_COUNT
+  - const ITERATIONS
+
 ## physics-engine/examples/solar_system.rs
 **Language:** Rust  
 **Role:** implementation  
@@ -126,10 +143,10 @@ Total files: 31
 **Language:** Rust  
 **Role:** component  
 **Role Justification:** filename contains 'component'  
-**Size:** 23.84 KB  
-**LOC:** 411  
+**Size:** 57.73 KB  
+**LOC:** 1060  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 60  
+**Declarations:** 157  
 **Top-level declarations:**
   - fn type_id
   - fn insert
@@ -138,10 +155,10 @@ Total files: 31
   - fn get_mut
   - fn contains
   - fn clear
-  - fn new
-  - fn default
-  - fn insert
-  - ... and 50 more
+  - fn field_arrays
+  - fn field_arrays_mut
+  - fn as_position_arrays
+  - ... and 147 more
 
 ## physics-engine/src/ecs/components.rs
 **Language:** Rust  
@@ -189,8 +206,8 @@ Total files: 31
 **Language:** Rust  
 **Role:** module-init  
 **Role Justification:** module initialization file 'mod'  
-**Size:** 1.72 KB  
-**LOC:** 24  
+**Size:** 1.84 KB  
+**LOC:** 28  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 2  
 **Top-level declarations:**

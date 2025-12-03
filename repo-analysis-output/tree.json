@@ -110,6 +110,10 @@
             },
             {
               "type": "file",
+              "name": "soa_demo.rs"
+            },
+            {
+              "type": "file",
               "name": "solar_system.rs"
             }
           ]

@@ -73,6 +73,20 @@
       }
     },
     {
+      "id": "physics-engine/examples/soa_demo.rs",
+      "path": "physics-engine/examples/soa_demo.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::time::Instant"
+        ],
+        "third-party": [
+          "physics_engine::ecs::",
+          "physics_engine::ecs::components::"
+        ]
+      }
+    },
+    {
       "id": "physics-engine/examples/solar_system.rs",
       "path": "physics-engine/examples/solar_system.rs",
       "type": "file",
