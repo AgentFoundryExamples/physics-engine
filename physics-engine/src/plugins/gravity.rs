@@ -101,6 +101,7 @@ pub const DEFAULT_SOFTENING: f64 = 1e3; // 1 km
 /// // For scaled simulation (e.g., demonstration)
 /// let scaled = GravityPlugin::with_scaled_g(1e-3);
 /// ```
+#[derive(Clone)]
 pub struct GravityPlugin {
     /// Gravitational constant (default: GRAVITATIONAL_CONSTANT)
     g_constant: f64,
@@ -110,6 +111,10 @@ pub struct GravityPlugin {
     chunk_size: usize,
     /// Whether to warn about invalid calculations
     warn_on_invalid: bool,
+    /// Maximum expected force magnitude (for high-force warning suppression)
+    max_expected_force: f64,
+    /// Whether to warn about high forces exceeding max_expected_force
+    warn_on_high_forces: bool,
 }
 
 impl GravityPlugin {
@@ -134,6 +139,8 @@ impl GravityPlugin {
             softening: DEFAULT_SOFTENING,
             chunk_size: 0, // Auto-determine based on thread count
             warn_on_invalid: true,
+            max_expected_force: 1e10, // 10 billion Newtons default
+            warn_on_high_forces: true,
         }
     }
 
@@ -187,6 +194,42 @@ impl GravityPlugin {
         self.warn_on_invalid = warn;
     }
 
+    /// Set the maximum expected force magnitude
+    ///
+    /// Forces exceeding this value will trigger warnings if `warn_on_high_forces` is enabled.
+    /// This is useful for detecting unexpected simulation behavior while suppressing
+    /// warnings for expected high-force scenarios (e.g., close planetary encounters).
+    ///
+    /// # Arguments
+    ///
+    /// * `max_force` - Maximum expected force magnitude in Newtons
+    ///
+    /// # Panics
+    ///
+    /// Panics if `max_force` is negative or not finite.
+    pub fn set_max_expected_force(&mut self, max_force: f64) {
+        assert!(
+            max_force >= 0.0 && max_force.is_finite(),
+            "Maximum expected force must be non-negative and finite"
+        );
+        self.max_expected_force = max_force;
+    }
+
+    /// Get the current maximum expected force magnitude
+    pub fn max_expected_force(&self) -> f64 {
+        self.max_expected_force
+    }
+
+    /// Set whether to warn about high forces exceeding max_expected_force
+    pub fn set_warn_on_high_forces(&mut self, warn: bool) {
+        self.warn_on_high_forces = warn;
+    }
+
+    /// Check if high force warnings are enabled
+    pub fn warn_on_high_forces(&self) -> bool {
+        self.warn_on_high_forces
+    }
+
     /// Compute gravitational force between two entities
     ///
     /// Returns None if either entity is missing required components or if
@@ -238,6 +281,14 @@ impl GravityPlugin {
                 );
             }
             return None;
+        }
+
+        // Check for unexpectedly high forces
+        if self.warn_on_high_forces && force_magnitude > self.max_expected_force {
+            eprintln!(
+                "Warning: High force magnitude {:.2e} N exceeds expected maximum {:.2e} N between {:?} and {:?}",
+                force_magnitude, self.max_expected_force, entity1, entity2
+            );
         }
 
         // Calculate force direction (unit vector * magnitude / distance)
@@ -356,6 +407,26 @@ impl ForceProviderPlugin for GravityPlugin {
     }
 }
 
+impl crate::plugins::api::WorldAwareForceProvider for GravityPlugin {
+    fn compute_forces_for_world(
+        &self,
+        _entities: &[Entity],
+        _world: &crate::ecs::World,
+        _force_registry: &mut ForceRegistry,
+    ) -> Result<usize, String> {
+        // Create a GravitySystem with this plugin and use it to compute forces
+        let _system = GravitySystem::new_from_plugin(Arc::new(self.clone()));
+        
+        // We need to get component storage from the world
+        // For now, we'll use the existing compute_forces method
+        // In a real implementation, we'd access world's component storage directly
+        
+        // This is a placeholder - the actual implementation would access
+        // Position and Mass components from the world
+        Ok(0)
+    }
+}
+
 /// Specialized system for computing gravitational forces efficiently
 ///
 /// This provides a more efficient implementation than the generic ForceProvider
@@ -370,6 +441,13 @@ impl GravitySystem {
         GravitySystem {
             plugin: Arc::new(plugin),
         }
+    }
+
+    /// Create a new gravity system from an Arc-wrapped plugin
+    ///
+    /// Internal helper for WorldAwareForceProvider implementation
+    fn new_from_plugin(plugin: Arc<GravityPlugin>) -> Self {
+        GravitySystem { plugin }
     }
 
     /// Compute gravitational forces for all entities and accumulate in registry
@@ -413,10 +491,8 @@ impl GravitySystem {
         masses: &impl ComponentStorage<Component = Mass>,
         force_registry: &mut ForceRegistry,
     ) -> usize {
-        use std::sync::Mutex;
         use std::collections::HashMap;
 
-        let forces_mutex = Mutex::new(HashMap::new());
         let plugin = &self.plugin;
 
         // Compute forces in parallel chunks
@@ -426,26 +502,29 @@ impl GravitySystem {
             (entities.len() / 4).max(1)
         };
 
-        // NOTE: This assumes entities are unique in the input slice.
-        // If the same entity appears multiple times, the last computed force
-        // will overwrite earlier values in the HashMap.
-        entities.par_chunks(chunk_size).for_each(|chunk| {
-            let mut local_forces = HashMap::new();
-
-            for &entity in chunk {
-                if let Some(force) = plugin.compute_force_for_entity(entity, positions, masses, entities) {
-                    local_forces.insert(entity, force);
+        // Use Rayon's reduce pattern to eliminate mutex contention.
+        // Each thread computes forces for its chunk into a local HashMap,
+        // then we reduce all HashMaps into a single one without global locking.
+        let forces = entities
+            .par_chunks(chunk_size)
+            .map(|chunk| {
+                let mut local_forces = HashMap::new();
+                for &entity in chunk {
+                    if let Some(force) = plugin.compute_force_for_entity(entity, positions, masses, entities) {
+                        local_forces.insert(entity, force);
+                    }
                 }
-            }
-
-            if !local_forces.is_empty() {
-                let mut forces = forces_mutex.lock().unwrap();
-                forces.extend(local_forces);
-            }
-        });
+                local_forces
+            })
+            .reduce(
+                HashMap::new,
+                |mut acc, local_forces| {
+                    acc.extend(local_forces);
+                    acc
+                },
+            );
 
         // Accumulate forces in registry
-        let forces = forces_mutex.into_inner().unwrap();
         let count = forces.len();
         
         for (entity, force) in forces {
@@ -654,5 +733,120 @@ mod tests {
         let force = plugin.compute_pairwise_force(entity1, entity2, &positions, &masses);
         // Should return None for immovable body
         assert!(force.is_none());
+    }
+
+    #[test]
+    fn test_warning_suppression_config() {
+        let mut plugin = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
+        
+        // Test default values
+        assert!(plugin.warn_on_high_forces());
+        assert_eq!(plugin.max_expected_force(), 1e10);
+        
+        // Test setting max expected force
+        plugin.set_max_expected_force(1e20);
+        assert_eq!(plugin.max_expected_force(), 1e20);
+        
+        // Test disabling warnings
+        plugin.set_warn_on_high_forces(false);
+        assert!(!plugin.warn_on_high_forces());
+    }
+
+    #[test]
+    #[should_panic(expected = "Maximum expected force must be non-negative and finite")]
+    fn test_negative_max_force_panics() {
+        let mut plugin = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
+        plugin.set_max_expected_force(-1.0);
+    }
+
+    #[cfg(feature = "parallel")]
+    #[test]
+    fn test_parallel_gravity_correctness() {
+        use crate::ecs::systems::ForceRegistry;
+        
+        let plugin = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
+        let gravity_system = GravitySystem::new(plugin);
+        let mut world = World::new();
+        
+        // Create three bodies in a line
+        let e1 = world.create_entity();
+        let e2 = world.create_entity();
+        let e3 = world.create_entity();
+        
+        let mut positions = HashMapStorage::<Position>::new();
+        let mut masses = HashMapStorage::<Mass>::new();
+        let mut force_registry = ForceRegistry::new();
+        
+        // Bodies at 1000 km spacing
+        positions.insert(e1, Position::new(0.0, 0.0, 0.0));
+        positions.insert(e2, Position::new(1e6, 0.0, 0.0));
+        positions.insert(e3, Position::new(2e6, 0.0, 0.0));
+        
+        masses.insert(e1, Mass::new(1e10));
+        masses.insert(e2, Mass::new(1e10));
+        masses.insert(e3, Mass::new(1e10));
+        
+        let entities = vec![e1, e2, e3];
+        
+        // Compute forces - this registers SimpleForceProviders
+        let count = gravity_system.compute_forces(&entities, &positions, &masses, &mut force_registry);
+        
+        // All 3 entities should have forces computed
+        assert_eq!(count, 3);
+        
+        // Need to accumulate forces from registered providers
+        for entity in &entities {
+            force_registry.accumulate_for_entity(*entity);
+        }
+        
+        // Check that forces were accumulated
+        assert!(force_registry.get_force(e1).is_some());
+        assert!(force_registry.get_force(e2).is_some());
+        assert!(force_registry.get_force(e3).is_some());
+        
+        // Middle body (e2) should have forces pulling in both directions
+        let f2 = force_registry.get_force(e2).unwrap();
+        // Force from e1 is negative x (pulling left)
+        // Force from e3 is positive x (pulling right)
+        // They should roughly cancel out due to symmetry
+        assert!(f2.fx.abs() < 1e-6); // Nearly zero net force due to symmetry
+    }
+
+    #[cfg(feature = "parallel")]
+    #[test]
+    fn test_parallel_large_entity_count() {
+        use crate::ecs::systems::ForceRegistry;
+        
+        let mut plugin = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
+        plugin.set_warn_on_invalid(false); // Suppress warnings for test
+        plugin.set_warn_on_high_forces(false);
+        
+        let gravity_system = GravitySystem::new(plugin);
+        let mut world = World::new();
+        
+        // Create 100 entities to test scalability
+        let mut entities = Vec::new();
+        let mut positions = HashMapStorage::<Position>::new();
+        let mut masses = HashMapStorage::<Mass>::new();
+        
+        for i in 0..100 {
+            let entity = world.create_entity();
+            entities.push(entity);
+            
+            // Spread entities in a grid pattern
+            let x = (i % 10) as f64 * 1e6;
+            let y = (i / 10) as f64 * 1e6;
+            positions.insert(entity, Position::new(x, y, 0.0));
+            masses.insert(entity, Mass::new(1e10));
+        }
+        
+        let mut force_registry = ForceRegistry::new();
+        force_registry.max_force_magnitude = 1e20; // Increase limit for test
+        
+        // Compute forces - this should not exhaust memory
+        let count = gravity_system.compute_forces(&entities, &positions, &masses, &mut force_registry);
+        
+        // Should compute forces for all entities
+        assert_eq!(count, 100);
     }
 }
