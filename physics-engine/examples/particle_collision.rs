@@ -411,11 +411,6 @@ fn main() {
     gravity_plugin.set_warn_on_invalid(false);
     let gravity_system = GravitySystem::new(gravity_plugin);
 
-    // Create force registry with appropriate limits for particle simulations
-    let mut force_registry = ForceRegistry::new();
-    force_registry.max_force_magnitude = 1e10; // Suitable for scaled gravity
-    force_registry.warn_on_missing_components = false;
-
     // Create integrator
     enum IntegratorWrapper {
         Verlet(VelocityVerletIntegrator),
@@ -482,6 +477,11 @@ fn main() {
     for step in 0..num_steps {
         let step_start = Instant::now();
 
+        // Create fresh force registry for this step
+        let mut force_registry = ForceRegistry::new();
+        force_registry.max_force_magnitude = 1e10;
+        force_registry.warn_on_missing_components = false;
+
         // Compute gravitational forces at current positions
         gravity_system.compute_forces(&entities, &positions, &masses, &mut force_registry);
         
@@ -528,8 +528,12 @@ fn main() {
             }
         }
 
+        // Create fresh force registry for recomputing at new positions
+        let mut force_registry = ForceRegistry::new();
+        force_registry.max_force_magnitude = 1e10;
+        force_registry.warn_on_missing_components = false;
+
         // Recompute gravitational forces at new positions
-        force_registry.clear_forces();
         gravity_system.compute_forces(&entities, &positions, &masses, &mut force_registry);
         
         // Accumulate forces from registered providers
@@ -568,9 +572,6 @@ fn main() {
                 vel.set_dz(new_dz);
             }
         }
-
-        // Clear forces for next step
-        force_registry.clear_forces();
 
         time += config.timestep;
         step_times.push(step_start.elapsed().as_secs_f64());

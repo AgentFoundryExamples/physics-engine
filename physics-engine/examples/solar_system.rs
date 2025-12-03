@@ -127,7 +127,9 @@ fn create_solar_system(
     masses: &mut HashMapStorage<Mass>,
 ) -> Vec<(Entity, &'static str)> {
     let mut entities = Vec::new();
+    let mut entity_data = Vec::new();
 
+    // First pass: create entities with initial velocities
     for body in SOLAR_BODIES {
         let entity = world.create_entity();
         
@@ -136,7 +138,7 @@ fn create_solar_system(
         let pos = Position::new(body.distance, 0.0, 0.0);
         
         // Initial velocity in y-direction for circular orbit
-        // v = sqrt(G*M_sun/r) for circular orbit
+        // v = sqrt(G*M_sun/r) for circular orbit (approximate)
         let vel = Velocity::new(0.0, body.orbital_velocity, 0.0);
         
         let mass = Mass::new(body.mass);
@@ -145,11 +147,51 @@ fn create_solar_system(
         velocities.insert(entity, vel);
         masses.insert(entity, mass);
 
+        entity_data.push((entity, body.name, body.mass, body.orbital_velocity));
         entities.push((entity, body.name));
-        
-        println!("Created {} - Mass: {:.3e} kg, Distance: {:.3e} m ({:.3} AU), Velocity: {:.0} m/s",
-                 body.name, body.mass, body.distance, body.distance / AU, body.orbital_velocity);
     }
+
+    // Calculate total momentum to enforce conservation
+    let mut total_momentum_x = 0.0;
+    let mut total_momentum_y = 0.0;
+    let mut total_momentum_z = 0.0;
+    let mut total_mass = 0.0;
+    
+    for (entity, _, mass_val, _) in &entity_data {
+        if let Some(vel) = velocities.get(*entity) {
+            total_momentum_x += mass_val * vel.dx();
+            total_momentum_y += mass_val * vel.dy();
+            total_momentum_z += mass_val * vel.dz();
+            total_mass += mass_val;
+        }
+    }
+    
+    // Calculate center of mass velocity
+    let cm_vx = total_momentum_x / total_mass;
+    let cm_vy = total_momentum_y / total_mass;
+    let cm_vz = total_momentum_z / total_mass;
+    
+    // Adjust all velocities to make the system's center of mass stationary
+    for (entity, _) in &entities {
+        if let Some(vel) = velocities.get_mut(*entity) {
+            vel.set_dx(vel.dx() - cm_vx);
+            vel.set_dy(vel.dy() - cm_vy);
+            vel.set_dz(vel.dz() - cm_vz);
+        }
+    }
+    
+    // Print adjusted values
+    for (entity, name) in &entities {
+        if let (Some(pos), Some(vel), Some(mass)) = (positions.get(*entity), velocities.get(*entity), masses.get(*entity)) {
+            let r = (pos.x() * pos.x() + pos.y() * pos.y() + pos.z() * pos.z()).sqrt();
+            let v = (vel.dx() * vel.dx() + vel.dy() * vel.dy() + vel.dz() * vel.dz()).sqrt();
+            println!("Created {} - Mass: {:.3e} kg, Distance: {:.3e} m ({:.3} AU), Velocity: {:.1} m/s",
+                     name, mass.value(), r, r / AU, v);
+        }
+    }
+
+    println!("\nAdjusted for center-of-mass frame: CM velocity = ({:.1}, {:.1}, {:.1}) m/s",
+             cm_vx, cm_vy, cm_vz);
 
     entities
 }
@@ -382,11 +424,6 @@ fn main() {
     gravity_plugin.set_warn_on_high_forces(false);
     let gravity_system = GravitySystem::new(gravity_plugin);
 
-    // Create force registry with appropriate limits
-    let mut force_registry = ForceRegistry::new();
-    force_registry.max_force_magnitude = 1e24; // Allow large forces for planetary masses
-    force_registry.warn_on_missing_components = false; // Suppress warnings for cleaner output
-
     // Create integrator
     enum IntegratorWrapper {
         Verlet(VelocityVerletIntegrator),
@@ -456,6 +493,11 @@ fn main() {
     for step in 0..num_steps {
         let entity_vec: Vec<Entity> = entities.iter().map(|(e, _)| *e).collect();
         
+        // Create fresh force registry for this step
+        let mut force_registry = ForceRegistry::new();
+        force_registry.max_force_magnitude = 1e24;
+        force_registry.warn_on_missing_components = false;
+        
         // Compute gravitational forces at current positions
         gravity_system.compute_forces(&entity_vec, &positions, &masses, &mut force_registry);
         
@@ -502,8 +544,12 @@ fn main() {
             }
         }
 
+        // Create fresh force registry for recomputing at new positions
+        let mut force_registry = ForceRegistry::new();
+        force_registry.max_force_magnitude = 1e24;
+        force_registry.warn_on_missing_components = false;
+        
         // Recompute gravitational forces at new positions
-        force_registry.clear_forces();
         gravity_system.compute_forces(&entity_vec, &positions, &masses, &mut force_registry);
         
         // Accumulate forces from registered providers
@@ -542,9 +588,6 @@ fn main() {
                 vel.set_dz(new_dz);
             }
         }
-
-        // Clear forces for next step
-        force_registry.clear_forces();
 
         time += config.timestep;
 
