@@ -129,22 +129,33 @@ where
     /// If the pool is empty, allocates a new buffer. The buffer is
     /// automatically returned to the pool when the guard is dropped.
     pub fn acquire(&self) -> HashMapGuard<K, V> {
-        let mut pool = self.pool.lock().unwrap();
-        let mut stats = self.stats.lock().unwrap();
-
-        let buffer = if let Some(mut buf) = pool.pop() {
-            stats.hits += 1;
-            buf.clear();
-            buf
-        } else {
-            stats.misses += 1;
-            if self.config.log_resize_events {
-                eprintln!("HashMapPool: Allocating new buffer (hit rate: {:.1}%)", stats.hit_rate());
+        // LOCK ORDERING: Acquire pool lock, get buffer, release lock, then update stats
+        let (buffer, was_hit, pool_len) = {
+            let mut pool = self.pool.lock().unwrap();
+            let was_hit = !pool.is_empty();
+            let buf = if let Some(mut b) = pool.pop() {
+                b.clear();
+                b
+            } else {
+                HashMap::with_capacity(self.config.initial_capacity)
+            };
+            let len = pool.len();
+            (buf, was_hit, len)
+        }; // pool lock released here
+        
+        // Update stats with separate lock (no overlap with pool lock)
+        {
+            let mut stats = self.stats.lock().unwrap();
+            if was_hit {
+                stats.hits += 1;
+            } else {
+                stats.misses += 1;
+                if self.config.log_resize_events {
+                    eprintln!("HashMapPool: Allocating new buffer (hit rate: {:.1}%)", stats.hit_rate());
+                }
             }
-            HashMap::with_capacity(self.config.initial_capacity)
-        };
-
-        stats.pool_size = pool.len();
+            stats.pool_size = pool_len;
+        } // stats lock released here
 
         HashMapGuard {
             buffer: Some(buffer),
@@ -161,10 +172,16 @@ where
 
     /// Clear all buffers from the pool (useful for shutdown)
     pub fn clear(&self) {
-        let mut pool = self.pool.lock().unwrap();
-        pool.clear();
-        let mut stats = self.stats.lock().unwrap();
-        stats.pool_size = 0;
+        // LOCK ORDERING: Acquire pool lock, clear, release, then update stats
+        {
+            let mut pool = self.pool.lock().unwrap();
+            pool.clear();
+        } // pool lock released here
+        
+        {
+            let mut stats = self.stats.lock().unwrap();
+            stats.pool_size = 0;
+        } // stats lock released here
     }
 
     /// Get the current number of buffers in the pool

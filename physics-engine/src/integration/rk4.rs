@@ -251,6 +251,8 @@ impl Integrator for RK4Integrator {
         let mut k4_velocities = self.velocity_pool.acquire();
 
         // Store initial state for all entities
+        // Note: These could be pooled but are small and short-lived (within one integration call)
+        // The k1-k4 buffers are more important to pool as they're larger and accessed multiple times
         let mut initial_positions = HashMap::new();
         let mut initial_velocities = HashMap::new();
 
