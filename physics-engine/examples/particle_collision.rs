@@ -54,6 +54,9 @@ struct SimpleRng {
     state: u64,
 }
 
+/// Maximum value for 53-bit mantissa (2^53) used in float conversion
+const F64_MANTISSA_MAX: f64 = 9007199254740992.0;
+
 impl SimpleRng {
     fn new(seed: u64) -> Self {
         SimpleRng { state: seed }
@@ -73,7 +76,7 @@ impl SimpleRng {
         // Shift right by 11 to get 53 bits (64 - 11 = 53)
         // Divide by 2^53 to normalize to [0, 1)
         // This ensures uniform distribution across the entire [0, 1) range
-        (self.next_u64() >> 11) as f64 / 9007199254740992.0 // 2^53 = 9007199254740992
+        (self.next_u64() >> 11) as f64 / F64_MANTISSA_MAX
     }
 
     fn next_f64_range(&mut self, min: f64, max: f64) -> f64 {

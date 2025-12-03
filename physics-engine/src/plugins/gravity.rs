@@ -426,6 +426,9 @@ impl GravitySystem {
             (entities.len() / 4).max(1)
         };
 
+        // NOTE: This assumes entities are unique in the input slice.
+        // If the same entity appears multiple times, the last computed force
+        // will overwrite earlier values in the HashMap.
         entities.par_chunks(chunk_size).for_each(|chunk| {
             let mut local_forces = HashMap::new();
 
