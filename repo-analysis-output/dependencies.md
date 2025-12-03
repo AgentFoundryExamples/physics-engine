@@ -8,16 +8,16 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 29
+- **Total files**: 31
 - **Intra-repo dependencies**: 10
-- **External stdlib dependencies**: 10
-- **External third-party dependencies**: 13
+- **External stdlib dependencies**: 12
+- **External third-party dependencies**: 14
 
 ## External Dependencies
 
 ### Standard Library / Core Modules
 
-Total: 10 unique modules
+Total: 12 unique modules
 
 - `std::any::Any`
 - `std::any::TypeId`
@@ -26,13 +26,15 @@ Total: 10 unique modules
 - `std::collections::BTreeMap`
 - `std::collections::HashMap`
 - `std::fmt`
+- `std::sync::`
 - `std::sync::Arc`
 - `std::sync::OnceLock`
+- `std::thread`
 - `std::time::Instant`
 
 ### Third-Party Packages
 
-Total: 13 unique packages
+Total: 14 unique packages
 
 - `criterion::`
 - `physics_engine::ecs::`
@@ -42,6 +44,7 @@ Total: 13 unique packages
 - `physics_engine::ecs::systems::ForceRegistry`
 - `physics_engine::integration::`
 - `physics_engine::plugins::gravity::`
+- `physics_engine::pool::PoolConfig`
 - `raw_cpuid::CpuId`
 - `rayon::ThreadPool`
 - `rayon::prelude::`

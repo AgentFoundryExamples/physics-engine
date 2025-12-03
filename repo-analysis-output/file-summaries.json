@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 29,
+  "total_files": 31,
   "files": [
     {
       "schema_version": "2.0",
@@ -26,6 +26,40 @@
           "fn bench_simd_operations",
           "struct SpringForce",
           "impl SpringForce",
+          "impl ForceProvider"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/benches/pooling.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 6483,
+        "loc": 156,
+        "todo_count": 0,
+        "declaration_count": 9
+      },
+      "structure": {
+        "declarations": [
+          "fn compute_force",
+          "fn name",
+          "fn setup_simulation",
+          "fn bench_rk4_default_pools",
+          "fn bench_rk4_custom_pools",
+          "fn bench_world_preallocation",
+          "fn bench_pool_stats_overhead",
+          "struct ConstantForce",
           "impl ForceProvider"
         ]
       },
@@ -630,14 +664,16 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 5466,
-        "loc": 113,
+        "size_bytes": 7507,
+        "loc": 144,
         "todo_count": 0,
-        "declaration_count": 15
+        "declaration_count": 19
       },
       "structure": {
         "declarations": [
           "fn new",
+          "fn with_capacity",
+          "fn reserve",
           "fn create_entity",
           "fn destroy_entity",
           "fn is_entity_alive",
@@ -649,6 +685,8 @@
           "fn test_entity_generation",
           "fn test_world_clear",
           "fn test_entity_id_reuse",
+          "fn test_world_with_capacity",
+          "fn test_world_reserve",
           "struct World",
           "impl World",
           "impl Default"
@@ -712,15 +750,17 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 21426,
+        "size_bytes": 22478,
         "loc": 422,
         "todo_count": 0,
-        "declaration_count": 15
+        "declaration_count": 17
       },
       "structure": {
         "declarations": [
           "fn new",
-          "fn clear_buffers",
+          "fn with_pool_config",
+          "fn pool_stats",
+          "fn clear_pools",
           "fn compute_derivative",
           "fn name",
           "fn timestep",
@@ -784,7 +824,7 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 13517,
+        "size_bytes": 13615,
         "loc": 227,
         "todo_count": 0,
         "declaration_count": 20
@@ -829,8 +869,8 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 1834,
-        "loc": 5,
+        "size_bytes": 1898,
+        "loc": 6,
         "todo_count": 0
       },
       "structure": {
@@ -1077,6 +1117,74 @@
           "impl Default",
           "impl TestPlugin",
           "impl Plugin"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/pool.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 13348,
+        "loc": 300,
+        "todo_count": 0,
+        "declaration_count": 43
+      },
+      "structure": {
+        "declarations": [
+          "fn default",
+          "fn new",
+          "fn with_logging",
+          "fn with_growth_factor",
+          "fn hit_rate",
+          "fn new",
+          "fn with_config",
+          "fn acquire",
+          "fn stats",
+          "fn clear",
+          "fn len",
+          "fn is_empty",
+          "fn default",
+          "fn clone",
+          "fn as_hashmap",
+          "fn as_hashmap_mut",
+          "fn deref",
+          "fn deref_mut",
+          "fn drop",
+          "fn test_pool_config_defaults",
+          "fn test_pool_config_custom",
+          "fn test_hashmap_pool_creation",
+          "fn test_hashmap_pool_acquire_and_return",
+          "fn test_hashmap_pool_reuse",
+          "fn test_hashmap_pool_max_size",
+          "fn test_hashmap_pool_concurrent_access",
+          "fn test_hashmap_pool_clear",
+          "fn test_pool_stats_tracking",
+          "fn test_guard_deref",
+          "struct PoolConfig",
+          "struct PoolStats",
+          "struct HashMapPool",
+          "struct HashMapGuard",
+          "impl Default",
+          "impl PoolConfig",
+          "impl PoolStats",
+          "impl HashMapPool<K, V>",
+          "impl Default",
+          "impl Clone",
+          "impl HashMapGuard<K, V>",
+          "impl std::ops::Deref",
+          "impl std::ops::DerefMut",
+          "impl Drop"
         ]
       },
       "dependencies": {

@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 29
+Total files: 31
 
 ## physics-engine/benches/integration.rs
 **Language:** Rust  
@@ -26,6 +26,25 @@ Total files: 29
   - struct SpringForce
   - impl SpringForce
   - ... and 1 more
+
+## physics-engine/benches/pooling.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 6.33 KB  
+**LOC:** 156  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 9  
+**Top-level declarations:**
+  - fn compute_force
+  - fn name
+  - fn setup_simulation
+  - fn bench_rk4_default_pools
+  - fn bench_rk4_custom_pools
+  - fn bench_world_preallocation
+  - fn bench_pool_stats_overhead
+  - struct ConstantForce
+  - impl ForceProvider
 
 ## physics-engine/benches/storage.rs
 **Language:** Rust  
@@ -245,12 +264,14 @@ Total files: 29
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 5.34 KB  
-**LOC:** 113  
+**Size:** 7.33 KB  
+**LOC:** 144  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 15  
+**Declarations:** 19  
 **Top-level declarations:**
   - fn new
+  - fn with_capacity
+  - fn reserve
   - fn create_entity
   - fn destroy_entity
   - fn is_entity_alive
@@ -258,9 +279,7 @@ Total files: 29
   - fn clear
   - fn entities
   - fn default
-  - fn test_world_entity_lifecycle
-  - fn test_entity_generation
-  - ... and 5 more
+  - ... and 9 more
 
 ## physics-engine/src/integration/mod.rs
 **Language:** Rust  
@@ -287,22 +306,22 @@ Total files: 29
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 20.92 KB  
+**Size:** 21.95 KB  
 **LOC:** 422  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 15  
+**Declarations:** 17  
 **Top-level declarations:**
   - fn new
-  - fn clear_buffers
+  - fn with_pool_config
+  - fn pool_stats
+  - fn clear_pools
   - fn compute_derivative
   - fn name
   - fn timestep
   - fn set_timestep
   - fn integrate
   - fn test_rk4_creation
-  - fn test_rk4_invalid_timestep
-  - fn test_rk4_set_timestep
-  - ... and 5 more
+  - ... and 7 more
 
 ## physics-engine/src/integration/simd_helpers.rs
 **Language:** Rust  
@@ -325,7 +344,7 @@ Total files: 29
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 13.20 KB  
+**Size:** 13.30 KB  
 **LOC:** 227  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 20  
@@ -346,8 +365,8 @@ Total files: 29
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 1.79 KB  
-**LOC:** 5  
+**Size:** 1.85 KB  
+**LOC:** 6  
 **TODOs/FIXMEs:** 0  
 
 ## physics-engine/src/plugins/api.rs
@@ -423,6 +442,27 @@ Total files: 29
   - fn plugin_count
   - fn is_initialized
   - ... and 32 more
+
+## physics-engine/src/pool.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 13.04 KB  
+**LOC:** 300  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 43  
+**Top-level declarations:**
+  - fn default
+  - fn new
+  - fn with_logging
+  - fn with_growth_factor
+  - fn hit_rate
+  - fn new
+  - fn with_config
+  - fn acquire
+  - fn stats
+  - fn clear
+  - ... and 33 more
 
 ## physics-engine/src/simd/avx2.rs
 **Language:** Rust  

@@ -16,6 +16,22 @@
       }
     },
     {
+      "id": "physics-engine/benches/pooling.rs",
+      "path": "physics-engine/benches/pooling.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "criterion::",
+          "physics_engine::ecs::",
+          "physics_engine::ecs::components::",
+          "physics_engine::ecs::systems::",
+          "physics_engine::integration::",
+          "physics_engine::pool::PoolConfig"
+        ]
+      }
+    },
+    {
       "id": "physics-engine/benches/storage.rs",
       "path": "physics-engine/benches/storage.rs",
       "type": "file",
@@ -282,6 +298,21 @@
       }
     },
     {
+      "id": "physics-engine/src/pool.rs",
+      "path": "physics-engine/src/pool.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::collections::HashMap",
+          "std::sync::",
+          "std::thread"
+        ],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
       "id": "physics-engine/src/simd/avx2.rs",
       "path": "physics-engine/src/simd/avx2.rs",
       "type": "file",
@@ -425,8 +456,10 @@
       "std::collections::BTreeMap",
       "std::collections::HashMap",
       "std::fmt",
+      "std::sync::",
       "std::sync::Arc",
       "std::sync::OnceLock",
+      "std::thread",
       "std::time::Instant"
     ],
     "third-party": [
@@ -438,13 +471,14 @@
       "physics_engine::ecs::systems::ForceRegistry",
       "physics_engine::integration::",
       "physics_engine::plugins::gravity::",
+      "physics_engine::pool::PoolConfig",
       "raw_cpuid::CpuId",
       "rayon::ThreadPool",
       "rayon::prelude::",
       "semver::Version",
       "tests"
     ],
-    "stdlib_count": 10,
-    "third-party_count": 13
+    "stdlib_count": 12,
+    "third-party_count": 14
   }
 }

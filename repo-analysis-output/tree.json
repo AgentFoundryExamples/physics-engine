@@ -88,6 +88,10 @@
             },
             {
               "type": "file",
+              "name": "pooling.rs"
+            },
+            {
+              "type": "file",
               "name": "storage.rs"
             }
           ]
@@ -221,6 +225,10 @@
             {
               "type": "file",
               "name": "lib.rs"
+            },
+            {
+              "type": "file",
+              "name": "pool.rs"
             }
           ]
         },
