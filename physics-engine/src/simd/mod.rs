@@ -56,6 +56,7 @@ pub use avx512::Avx512Backend;
 
 /// SIMD width for different instruction sets
 pub const AVX2_WIDTH: usize = 4;  // 256-bit / 64-bit per f64
+/// AVX-512 SIMD width: 8 f64 values per vector
 pub const AVX512_WIDTH: usize = 8; // 512-bit / 64-bit per f64
 
 /// Backend for vectorized physics computations
@@ -320,18 +321,19 @@ mod tests {
         let mut velocities = vec![1.0];
         let accelerations = vec![0.5];
         let dt = 0.1;
+        let element_count = 1;
         
         let backend = select_backend();
         let width = backend.width();
         
         unsafe {
             // Since count (1) < width, no SIMD processing happens
-            let simd_count = (1 / width) * width;
+            let simd_count = (element_count / width) * width;
             assert_eq!(simd_count, 0, "Single element should not use SIMD path");
             
             // Must handle the single element with scalar code
             backend.update_velocity_vectorized(&mut velocities[..simd_count], &accelerations[..simd_count], dt);
-            for i in simd_count..1 {
+            for i in simd_count..element_count {
                 velocities[i] += accelerations[i] * dt;
             }
         }
