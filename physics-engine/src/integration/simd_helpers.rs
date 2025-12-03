@@ -25,7 +25,7 @@ use crate::simd::{select_backend, SimdBackend};
 ///
 /// Uses SIMD when available and entity count is sufficient. Falls back to
 /// scalar processing for remainder elements or when SIMD is not available.
-#[allow(unused_variables)]
+#[cfg_attr(not(feature = "simd"), allow(unused_variables))]
 pub fn simd_update_velocities(
     vx: &mut [f64],
     vy: &mut [f64],
@@ -77,7 +77,7 @@ pub fn simd_update_velocities(
 ///
 /// Uses SIMD when available and entity count is sufficient. Falls back to
 /// scalar processing for remainder elements or when SIMD is not available.
-#[allow(unused_variables)]
+#[cfg_attr(not(feature = "simd"), allow(unused_variables))]
 pub fn simd_update_positions(
     px: &mut [f64],
     py: &mut [f64],
@@ -152,7 +152,7 @@ pub fn simd_update_positions(
 ///
 /// Uses SIMD when available and entity count is sufficient. Falls back to
 /// scalar processing for remainder elements or when SIMD is not available.
-#[allow(unused_variables)]
+#[cfg_attr(not(feature = "simd"), allow(unused_variables))]
 pub fn simd_accumulate_forces(
     total_fx: &mut [f64],
     total_fy: &mut [f64],

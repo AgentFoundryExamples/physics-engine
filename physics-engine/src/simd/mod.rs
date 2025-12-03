@@ -154,8 +154,8 @@ mod tests {
         // Basic sanity check
         #[cfg(target_arch = "x86_64")]
         {
-            // Most modern x86_64 CPUs support at least SSE2
-            assert!(features.has_sse || features.has_sse2);
+            // x86_64 architecture requires SSE2
+            assert!(features.has_sse2);
         }
     }
 }

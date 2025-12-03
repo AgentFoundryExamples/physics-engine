@@ -169,7 +169,7 @@ impl SimdBackend for Avx2Backend {
         _accelerations: &[f64],
         _dt: f64,
     ) {
-        panic!("AVX2 backend not available on non-x86_64 platforms");
+        panic!("AVX2 backend is not available on non-x86_64 platforms. Use ScalarBackend instead or check is_supported() before use.");
     }
     
     #[cfg(not(target_arch = "x86_64"))]
@@ -181,7 +181,7 @@ impl SimdBackend for Avx2Backend {
         _dt: f64,
         _dt_sq_half: f64,
     ) {
-        panic!("AVX2 backend not available on non-x86_64 platforms");
+        panic!("AVX2 backend is not available on non-x86_64 platforms. Use ScalarBackend instead or check is_supported() before use.");
     }
     
     #[cfg(not(target_arch = "x86_64"))]
@@ -190,7 +190,7 @@ impl SimdBackend for Avx2Backend {
         _total_forces: &mut [f64],
         _forces: &[f64],
     ) {
-        panic!("AVX2 backend not available on non-x86_64 platforms");
+        panic!("AVX2 backend is not available on non-x86_64 platforms. Use ScalarBackend instead or check is_supported() before use.");
     }
 }
 
