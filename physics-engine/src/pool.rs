@@ -256,17 +256,27 @@ impl<K, V> std::ops::DerefMut for HashMapGuard<K, V> {
 impl<K, V> Drop for HashMapGuard<K, V> {
     fn drop(&mut self) {
         if let Some(buffer) = self.buffer.take() {
-            let mut pool = self.pool.lock().unwrap();
-            if pool.len() < self.max_pool_size {
-                pool.push(buffer);
-                
+            // LOCK ORDERING: Acquire pool lock, return buffer, release, then update stats
+            // This matches the ordering in acquire() to prevent deadlock
+            let (returned, pool_len, should_update_peak) = {
+                let mut pool = self.pool.lock().unwrap();
+                let returned = pool.len() < self.max_pool_size;
+                if returned {
+                    pool.push(buffer);
+                }
+                let len = pool.len();
+                (returned, len, returned)
+            }; // pool lock released here
+            
+            // Update stats with separate lock (no overlap with pool lock)
+            if returned {
                 let mut stats = self.stats.lock().unwrap();
-                stats.pool_size = pool.len();
-                if stats.pool_size > stats.peak_size {
+                stats.pool_size = pool_len;
+                if should_update_peak && stats.pool_size > stats.peak_size {
                     stats.peak_size = stats.pool_size;
                 }
-            }
-            // If pool is full, buffer is dropped (deallocated)
+            } // stats lock released here
+            // If pool is full, buffer was not returned and is dropped (deallocated)
         }
     }
 }
