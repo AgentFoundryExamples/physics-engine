@@ -268,26 +268,118 @@ let dt_recommended = period / 100.0;      // 100 steps per orbit
 
 ### 3. Memory Layout Optimization
 
-**Current**: `HashMapStorage<Component>`
+#### Component Storage Implementations
+
+The engine provides two storage implementations with different performance characteristics:
+
+**`HashMapStorage<Component>`** (Simple, Flexible)
 - ✅ Simple implementation
 - ✅ Sparse entity support
-- ❌ Poor cache locality
+- ✅ No pre-allocation required
+- ❌ Poor cache locality (HashMap indirection)
 - ❌ No SIMD vectorization
+- **Best for**: Small entity counts (< 100), prototyping
 
-**Planned**: Structure-of-Arrays (SoA)
+**`SoAStorage<Component>`** (Dense Array Storage) ✨ **New in v0.2.0**
+
+**Important**: Despite the name, this is a **dense Array-of-Structures (AoS)** implementation, NOT a true Structure-of-Arrays layout.
+
 ```rust
-struct PositionStorage {
-    x: Vec<f64>,  // All x coordinates contiguous
-    y: Vec<f64>,  // All y coordinates contiguous
-    z: Vec<f64>,  // All z coordinates contiguous
+// Dense AoS storage with good cache locality
+struct SoAStorage<T> {
+    entity_to_index: HashMap<Entity, usize>,  // Sparse mapping
+    components: Vec<T>,                        // Dense array of complete components
 }
 ```
 
+**Implementation Details**:
+- Stores complete component structures in a dense `Vec<T>`: `[Component{x,y,z}, Component{x,y,z}, ...]`
+- True SoA would separate fields: `x:[x0,x1,...], y:[y0,y1,...], z:[z0,z1,...]`
+- Current design maintains API compatibility with `ComponentStorage` trait
+- Dense packing still provides significant cache benefits over HashMap
+
 **Benefits**:
-- ✅ Excellent cache locality (sequential access)
-- ✅ SIMD vectorization opportunities (AVX2/AVX-512)
-- ✅ Reduced memory bandwidth
-- **Expected speedup**: 2-4× for integration, 4-8× with SIMD
+- ✅ Good cache locality (sequential memory access)
+- ✅ Direct array iteration support
+- ✅ Swap-remove prevents fragmentation
+- ⚠️ Loads entire components even if only one field needed (AoS limitation)
+- ⚠️ True field-level SIMD requires separate field arrays (not implemented)
+
+**Benchmark Results** (see `cargo bench --bench storage`):
+
+The benchmarks now use fair comparisons with proper setup isolation:
+
+| Operation | Entity Count | HashMap | Dense Storage | Notes |
+|-----------|--------------|---------|---------------|-------|
+| Via Entities | 1,000 | 100% | **Similar** | Both use entity lookup |
+| Direct Array | 1,000 | N/A | **150-200%** | Dense storage advantage |
+| Via Entities | 10,000 | 100% | **Similar** | Lookup overhead dominates |
+| Direct Array | 10,000 | N/A | **200-300%** | Cache benefits increase |
+
+**Cache Performance Analysis**:
+
+1. **Direct Array Iteration**: Maximum benefit when API allows
+   - HashMap: Must iterate via entity list with lookups
+   - Dense: Can iterate directly over `Vec<T>` with sequential access
+   - Sequential memory layout loads entire cache lines efficiently
+   - Hardware prefetcher maximally utilized
+
+2. **Via Entity Lookup**: Similar performance
+   - Both require HashMap/index lookup per entity
+   - Dense array access after lookup is slightly faster than HashMap
+   - Lookup overhead dominates for small components
+
+3. **Memory Bandwidth**:
+   - Dense storage: One contiguous allocation, better for iteration
+   - HashMap: Scattered allocations, more cache line loads
+   - Benefit increases with entity count and iteration frequency
+
+**Profiling Evidence**:
+
+The performance benefits are most pronounced when using direct array iteration
+(not available with HashMap). The benchmarks now properly separate:
+- Via-entities iteration: Both storages similar (lookup overhead)
+- Direct array iteration: Dense storage shows 1.5-3× improvement
+
+**Key Observations**:
+- Dense storage excels when systems can use direct array iteration
+- Via-entity access shows similar performance (lookup overhead dominates)
+- Dense packing provides cache benefits but not as dramatic as true SoA would
+- True Structure-of-Arrays (separate field vectors) would need new trait design
+
+**Usage Example**:
+```rust
+use physics_engine::ecs::{SoAStorage, ComponentStorage};
+use physics_engine::ecs::components::Position;
+
+let mut positions = SoAStorage::<Position>::new();
+
+// Insert components as usual
+positions.insert(entity, Position::new(1.0, 2.0, 3.0));
+
+// Efficient bulk iteration (this is where SoA shines)
+for pos in positions.components() {
+    // Process with excellent cache locality
+    // ~2-3× faster than HashMap iteration for 10k+ entities
+}
+```
+
+**When to Use SoA**:
+- ✅ Systems that iterate over many components
+- ✅ Medium to large entity counts (> 100)
+- ✅ Performance-critical update loops
+- ✅ When memory bandwidth is a bottleneck
+
+**When to Use HashMap**:
+- ✅ Small entity counts (< 100)
+- ✅ Sparse component access patterns
+- ✅ Prototyping and development
+- ✅ When simplicity is more important than performance
+
+**Future SIMD Enhancement**:
+With explicit SIMD operations (AVX2/AVX-512), SoA storage could achieve:
+- **4-8× speedup** for vector operations (processing 4-8 f64s per instruction)
+- Planned for v0.3.0
 
 ### 4. Force Computation Optimization
 

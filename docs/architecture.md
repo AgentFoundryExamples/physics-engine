@@ -144,29 +144,83 @@ Key characteristics:
 
 ### Cache Locality Considerations
 
-The current `HashMapStorage` implementation prioritizes simplicity over optimal cache performance. Future optimizations include:
+The engine now provides two component storage implementations with different performance characteristics:
 
-1. **Structure-of-Arrays (SoA)**: Store each field separately in packed arrays
-   - Better cache utilization when processing specific fields
-   - Enables SIMD operations across multiple entities
-   - Reduces memory bandwidth by loading only needed fields
+#### HashMapStorage (Simple, Flexible)
 
-2. **Archetype-based storage**: Group entities by component composition
-   - Entities with identical components stored together
-   - Eliminates sparse component access patterns
-   - Improves iteration performance
+The `HashMapStorage` implementation prioritizes simplicity and flexibility:
+- ✅ Simple implementation, easy to understand
+- ✅ No pre-allocation required
+- ✅ Sparse entity support with minimal overhead
+- ❌ Poor cache locality due to HashMap indirection
+- ❌ No SIMD vectorization opportunities
 
-3. **Memory pooling**: Pre-allocate component storage
-   - Reduces allocation overhead
-   - Improves cache locality through contiguous allocation
-   - Enables better prediction of memory access patterns
+**Best for**: Small entity counts (< 100), prototyping, or when flexibility is more important than raw performance.
+
+#### SoAStorage (Dense Array Storage, Cache-Friendly)
+
+**Important Note**: Despite the name `SoAStorage`, this implementation uses a **dense Array-of-Structures (AoS)** layout, NOT a true Structure-of-Arrays layout. The name is retained for API compatibility.
+
+The storage optimizes for cache performance through dense packing:
+
+1. **Dense component arrays**: All components stored contiguously in a `Vec<T>`
+   - Better cache utilization when iterating over components
+   - Eliminates HashMap pointer chasing
+   - Sequential memory access patterns maximize cache line utilization
+   - **Layout**: `[Component{x,y,z}, Component{x,y,z}, ...]` (all contiguous)
+
+2. **Direct array access**: Systems can iterate over component arrays directly
+   ```rust
+   let positions = soa_storage.components(); // &[Position]
+   for pos in positions.iter() {
+       // Efficient, cache-friendly iteration
+   }
+   ```
+
+3. **Entity-to-index mapping**: Maintains sparse entity support
+   - HashMap maps Entity → dense array index
+   - Swap-remove for O(1) removal without fragmentation
+   - No gaps in the dense component array
+
+4. **True SoA not implemented**: A true Structure-of-Arrays layout would separate fields:
+   ```rust
+   // True SoA (not implemented):
+   x_values: [x0, x1, x2, ...]
+   y_values: [y0, y1, y2, ...]
+   z_values: [z0, z1, z2, ...]
+   ```
+   This is incompatible with the `ComponentStorage` trait which requires returning `&T`.
+   The current dense AoS provides most cache benefits while maintaining API compatibility.
+
+**Best for**: Medium to large entity counts (> 100), systems that iterate over many components, performance-critical paths.
+
+**Benchmark Results** (see [`benches/storage.rs`](../physics-engine/benches/storage.rs)):
+- **Sequential iteration**: Dense storage shows improvement over HashMap for 1000+ entities
+- **Direct array iteration**: Provides best performance when API allows it
+- **Memory bandwidth**: Dense layout reduces bandwidth compared to HashMap
+
+**Usage Example**:
+```rust
+use physics_engine::ecs::{SoAStorage, ComponentStorage};
+use physics_engine::ecs::components::Position;
+
+let mut positions = SoAStorage::<Position>::new();
+let entity = world.create_entity();
+positions.insert(entity, Position::new(1.0, 2.0, 3.0));
+
+// Efficient bulk iteration
+for pos in positions.components() {
+    // Process all positions with excellent cache locality
+}
+```
 
 ### Future Optimizations
 
-- **Structure-of-Arrays (SoA)**: Replace HashMap storage with packed arrays
-- **Archetypes**: Group entities by component composition for better iteration
-- **Query DSL**: Ergonomic component queries with filtering
-- **Advanced integrators**: Verlet, RK4 for improved accuracy and stability
+- ✅ **Dense Array Storage**: Implemented in v0.2.0 with `SoAStorage` (dense AoS layout)
+- **True Structure-of-Arrays**: Would require new trait design to support field-level access (planned v0.3.0)
+- **Archetypes**: Group entities by component composition for better iteration (planned v0.3.0)
+- **Query DSL**: Ergonomic component queries with filtering (planned v0.3.0)
+- **SIMD vectorization**: Explicit SIMD operations for dense arrays (planned v0.3.0)
 
 ## Newtonian Mechanics Framework
 
