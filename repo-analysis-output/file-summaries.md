@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 21
+Total files: 22
 
 ## physics-engine/benches/integration.rs
 **Language:** Rust  
@@ -49,10 +49,10 @@ Total files: 21
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 18.49 KB  
-**LOC:** 385  
+**Size:** 20.27 KB  
+**LOC:** 431  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 20  
+**Declarations:** 22  
 **Top-level declarations:**
   - fn new
   - fn next_u64
@@ -64,28 +64,28 @@ Total files: 21
   - fn calculate_center_of_mass
   - fn calculate_spread
   - fn print_state
-  - ... and 10 more
+  - ... and 12 more
 
 ## physics-engine/examples/solar_system.rs
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 15.79 KB  
-**LOC:** 333  
+**Size:** 18.36 KB  
+**LOC:** 392  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 17  
+**Declarations:** 19  
 **Top-level declarations:**
   - fn default
   - fn create_solar_system
   - fn calculate_kinetic_energy
   - fn calculate_potential_energy
   - fn print_state
+  - fn print_diagnostics
   - fn main
   - fn name
   - fn integrate
   - struct CelestialBody
-  - struct SimulationConfig
-  - ... and 7 more
+  - ... and 9 more
 
 ## physics-engine/src/ecs/component.rs
 **Language:** Rust  
@@ -411,3 +411,22 @@ Total files: 21
   - fn compute_force
   - fn name
   - ... and 6 more
+
+## physics-engine/tests/integration_failures.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 13.62 KB  
+**LOC:** 289  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 9  
+**Top-level declarations:**
+  - fn compute_force
+  - fn name
+  - fn calculate_potential_energy_two_body
+  - fn test_verlet_kinetic_energy_changes_under_constant_force
+  - fn test_rk4_kinetic_energy_changes_under_constant_force
+  - fn test_verlet_circular_orbit_stability
+  - fn test_verlet_energy_conservation_gravity
+  - struct ConstantForce
+  - impl ForceProvider

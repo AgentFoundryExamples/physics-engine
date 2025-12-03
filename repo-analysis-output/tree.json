@@ -46,7 +46,15 @@
         },
         {
           "type": "file",
+          "name": "DIAGNOSTICS_README.md"
+        },
+        {
+          "type": "file",
           "name": "examples.md"
+        },
+        {
+          "type": "file",
+          "name": "FAILURE_ANALYSIS.md"
         },
         {
           "type": "file",
@@ -193,6 +201,10 @@
             {
               "type": "file",
               "name": "conservation.rs"
+            },
+            {
+              "type": "file",
+              "name": "integration_failures.rs"
             }
           ]
         },

@@ -9,7 +9,9 @@
     └── af_maintenance.yml
 ├── docs
   ├── architecture.md
+  ├── DIAGNOSTICS_README.md
   ├── examples.md
+  ├── FAILURE_ANALYSIS.md
   ├── integration.md
   ├── performance.md
   ├── plugins.md
@@ -42,7 +44,8 @@
       └── registry.rs
     └── lib.rs
   ├── tests
-    └── conservation.rs
+    ├── conservation.rs
+    └── integration_failures.rs
   └── Cargo.toml
 ├── repo-analysis-output
   ├── dependencies.json
