@@ -286,15 +286,14 @@ impl<T: Component + Copy> SoAStorage<T> {
             }
         }
 
-        // Check no duplicate entities in index_to_entity
-        for i in 0..self.index_to_entity.len() {
-            for j in (i + 1)..self.index_to_entity.len() {
-                if self.index_to_entity[i] == self.index_to_entity[j] {
-                    return Err(format!(
-                        "Duplicate entity {:?} at indices {} and {}",
-                        self.index_to_entity[i], i, j
-                    ));
-                }
+        // Check no duplicate entities in index_to_entity (O(n) with HashSet)
+        let mut seen = std::collections::HashSet::new();
+        for (i, entity) in self.index_to_entity.iter().enumerate() {
+            if !seen.insert(*entity) {
+                return Err(format!(
+                    "Duplicate entity {:?} at index {}",
+                    entity, i
+                ));
             }
         }
 
@@ -337,10 +336,10 @@ impl<T: Component + Copy> ComponentStorage for SoAStorage<T> {
                 self.components.swap(index, last_index);
                 // Update the entity that was swapped
                 let swapped_entity = self.index_to_entity[last_index];
-                // Use get_mut to avoid potential HashMap reallocation
-                if let Some(idx) = self.entity_to_index.get_mut(&swapped_entity) {
-                    *idx = index;
-                }
+                // This must succeed - if it doesn't, our internal state is corrupted
+                let idx = self.entity_to_index.get_mut(&swapped_entity)
+                    .expect("Internal invariant violated: entity in index_to_entity but not in entity_to_index");
+                *idx = index;
                 self.index_to_entity.swap(index, last_index);
             }
             
