@@ -166,6 +166,10 @@
                 },
                 {
                   "type": "file",
+                  "name": "simd_helpers.rs"
+                },
+                {
+                  "type": "file",
                   "name": "verlet.rs"
                 }
               ]
@@ -189,6 +193,28 @@
                 {
                   "type": "file",
                   "name": "registry.rs"
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "simd",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "avx2.rs"
+                },
+                {
+                  "type": "file",
+                  "name": "dispatch.rs"
+                },
+                {
+                  "type": "file",
+                  "name": "mod.rs"
+                },
+                {
+                  "type": "file",
+                  "name": "scalar.rs"
                 }
               ]
             },

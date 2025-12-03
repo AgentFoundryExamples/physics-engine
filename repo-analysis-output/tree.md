@@ -37,12 +37,18 @@
     ├── integration
       ├── mod.rs
       ├── rk4.rs
+      ├── simd_helpers.rs
       └── verlet.rs
     ├── plugins
       ├── api.rs
       ├── gravity.rs
       ├── mod.rs
       └── registry.rs
+    ├── simd
+      ├── avx2.rs
+      ├── dispatch.rs
+      ├── mod.rs
+      └── scalar.rs
     └── lib.rs
   ├── tests
     ├── conservation.rs

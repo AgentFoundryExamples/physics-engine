@@ -4,16 +4,16 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 24
+Total files: 29
 
 ## physics-engine/benches/integration.rs
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 9.90 KB  
-**LOC:** 204  
+**Size:** 13.41 KB  
+**LOC:** 289  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 10  
+**Declarations:** 11  
 **Top-level declarations:**
   - fn new
   - fn compute_force
@@ -22,9 +22,10 @@ Total files: 24
   - fn bench_integrator_throughput
   - fn bench_integrator_accuracy
   - fn bench_free_motion
+  - fn bench_simd_operations
   - struct SpringForce
   - impl SpringForce
-  - impl ForceProvider
+  - ... and 1 more
 
 ## physics-engine/benches/storage.rs
 **Language:** Rust  
@@ -265,8 +266,8 @@ Total files: 24
 **Language:** Rust  
 **Role:** module-init  
 **Role Justification:** module initialization file 'mod'  
-**Size:** 7.84 KB  
-**LOC:** 120  
+**Size:** 7.89 KB  
+**LOC:** 122  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 17  
 **Top-level declarations:**
@@ -303,6 +304,23 @@ Total files: 24
   - fn test_rk4_set_timestep
   - ... and 5 more
 
+## physics-engine/src/integration/simd_helpers.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 9.08 KB  
+**LOC:** 186  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 7  
+**Top-level declarations:**
+  - fn simd_update_velocities
+  - fn simd_update_positions
+  - fn simd_accumulate_forces
+  - fn test_simd_update_velocities
+  - fn test_simd_update_positions
+  - fn test_simd_accumulate_forces
+  - fn test_non_aligned_counts
+
 ## physics-engine/src/integration/verlet.rs
 **Language:** Rust  
 **Role:** implementation  
@@ -328,8 +346,8 @@ Total files: 24
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 1.72 KB  
-**LOC:** 4  
+**Size:** 1.79 KB  
+**LOC:** 5  
 **TODOs/FIXMEs:** 0  
 
 ## physics-engine/src/plugins/api.rs
@@ -405,6 +423,90 @@ Total files: 24
   - fn plugin_count
   - fn is_initialized
   - ... and 32 more
+
+## physics-engine/src/simd/avx2.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 9.14 KB  
+**LOC:** 166  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 15  
+**Top-level declarations:**
+  - fn name
+  - fn width
+  - fn is_supported
+  - fn update_velocity_vectorized
+  - fn update_position_vectorized
+  - fn accumulate_forces_vectorized
+  - fn update_velocity_vectorized
+  - fn update_position_vectorized
+  - fn accumulate_forces_vectorized
+  - fn test_avx2_detection
+  - ... and 5 more
+
+## physics-engine/src/simd/dispatch.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 5.81 KB  
+**LOC:** 116  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 16  
+**Top-level declarations:**
+  - fn default
+  - fn none
+  - fn with_avx2
+  - fn detect_cpu_features
+  - fn detect_cpu_features_impl
+  - fn detect_cpu_features_impl
+  - fn has_avx2
+  - fn has_avx512
+  - fn test_feature_detection
+  - fn test_feature_caching
+  - ... and 6 more
+
+## physics-engine/src/simd/mod.rs
+**Language:** Rust  
+**Role:** module-init  
+**Role Justification:** module initialization file 'mod'  
+**Size:** 5.66 KB  
+**LOC:** 58  
+**TODOs/FIXMEs:** 1  
+**Declarations:** 13  
+**Top-level declarations:**
+  - fn name
+  - fn width
+  - fn is_supported
+  - fn update_velocity_vectorized
+  - fn update_position_vectorized
+  - fn accumulate_forces_vectorized
+  - fn select_backend
+  - fn test_backend_selection
+  - fn test_scalar_backend_always_supported
+  - fn test_cpu_feature_detection
+  - ... and 3 more
+
+## physics-engine/src/simd/scalar.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 4.44 KB  
+**LOC:** 97  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 12  
+**Top-level declarations:**
+  - fn name
+  - fn width
+  - fn is_supported
+  - fn update_velocity_vectorized
+  - fn update_position_vectorized
+  - fn accumulate_forces_vectorized
+  - fn test_scalar_backend_always_supported
+  - fn test_scalar_update_velocity
+  - fn test_scalar_update_position
+  - fn test_scalar_accumulate_forces
+  - ... and 2 more
 
 ## physics-engine/tests/conservation.rs
 **Language:** Rust  

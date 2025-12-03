@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 24,
+  "total_files": 29,
   "files": [
     {
       "schema_version": "2.0",
@@ -9,10 +9,10 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 10134,
-        "loc": 204,
+        "size_bytes": 13734,
+        "loc": 289,
         "todo_count": 0,
-        "declaration_count": 10
+        "declaration_count": 11
       },
       "structure": {
         "declarations": [
@@ -23,6 +23,7 @@
           "fn bench_integrator_throughput",
           "fn bench_integrator_accuracy",
           "fn bench_free_motion",
+          "fn bench_simd_operations",
           "struct SpringForce",
           "impl SpringForce",
           "impl ForceProvider"
@@ -669,8 +670,8 @@
       "role": "module-init",
       "role_justification": "module initialization file 'mod'",
       "metrics": {
-        "size_bytes": 8033,
-        "loc": 120,
+        "size_bytes": 8076,
+        "loc": 122,
         "todo_count": 0,
         "declaration_count": 17
       },
@@ -746,6 +747,38 @@
     },
     {
       "schema_version": "2.0",
+      "path": "physics-engine/src/integration/simd_helpers.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 9297,
+        "loc": 186,
+        "todo_count": 0,
+        "declaration_count": 7
+      },
+      "structure": {
+        "declarations": [
+          "fn simd_update_velocities",
+          "fn simd_update_positions",
+          "fn simd_accumulate_forces",
+          "fn test_simd_update_velocities",
+          "fn test_simd_update_positions",
+          "fn test_simd_accumulate_forces",
+          "fn test_non_aligned_counts"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
       "path": "physics-engine/src/integration/verlet.rs",
       "language": "Rust",
       "role": "implementation",
@@ -796,8 +829,8 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 1763,
-        "loc": 4,
+        "size_bytes": 1834,
+        "loc": 5,
         "todo_count": 0
       },
       "structure": {
@@ -1044,6 +1077,162 @@
           "impl Default",
           "impl TestPlugin",
           "impl Plugin"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/simd/avx2.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 9358,
+        "loc": 166,
+        "todo_count": 0,
+        "declaration_count": 15
+      },
+      "structure": {
+        "declarations": [
+          "fn name",
+          "fn width",
+          "fn is_supported",
+          "fn update_velocity_vectorized",
+          "fn update_position_vectorized",
+          "fn accumulate_forces_vectorized",
+          "fn update_velocity_vectorized",
+          "fn update_position_vectorized",
+          "fn accumulate_forces_vectorized",
+          "fn test_avx2_detection",
+          "fn test_avx2_update_velocity",
+          "fn test_avx2_update_position",
+          "fn test_avx2_accumulate_forces",
+          "struct Avx2Backend",
+          "impl SimdBackend"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/simd/dispatch.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 5953,
+        "loc": 116,
+        "todo_count": 0,
+        "declaration_count": 16
+      },
+      "structure": {
+        "declarations": [
+          "fn default",
+          "fn none",
+          "fn with_avx2",
+          "fn detect_cpu_features",
+          "fn detect_cpu_features_impl",
+          "fn detect_cpu_features_impl",
+          "fn has_avx2",
+          "fn has_avx512",
+          "fn test_feature_detection",
+          "fn test_feature_caching",
+          "fn test_helper_functions",
+          "fn test_default_features",
+          "struct CpuFeatures",
+          "impl Default",
+          "impl CpuFeatures",
+          "const CPU_FEATURES"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/simd/mod.rs",
+      "language": "Rust",
+      "role": "module-init",
+      "role_justification": "module initialization file 'mod'",
+      "metrics": {
+        "size_bytes": 5794,
+        "loc": 58,
+        "todo_count": 1,
+        "declaration_count": 13
+      },
+      "structure": {
+        "declarations": [
+          "fn name",
+          "fn width",
+          "fn is_supported",
+          "fn update_velocity_vectorized",
+          "fn update_position_vectorized",
+          "fn accumulate_forces_vectorized",
+          "fn select_backend",
+          "fn test_backend_selection",
+          "fn test_scalar_backend_always_supported",
+          "fn test_cpu_feature_detection",
+          "trait SimdBackend",
+          "const AVX2_WIDTH",
+          "const AVX512_WIDTH"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/simd/scalar.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 4544,
+        "loc": 97,
+        "todo_count": 0,
+        "declaration_count": 12
+      },
+      "structure": {
+        "declarations": [
+          "fn name",
+          "fn width",
+          "fn is_supported",
+          "fn update_velocity_vectorized",
+          "fn update_position_vectorized",
+          "fn accumulate_forces_vectorized",
+          "fn test_scalar_backend_always_supported",
+          "fn test_scalar_update_velocity",
+          "fn test_scalar_update_position",
+          "fn test_scalar_accumulate_forces",
+          "struct ScalarBackend",
+          "impl SimdBackend"
         ]
       },
       "dependencies": {
