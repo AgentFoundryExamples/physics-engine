@@ -571,11 +571,10 @@ fn main() {
             if masses.get(*entity).map_or(true, |m| m.is_immovable()) {
                 continue;
             }
-            if let (Some(vel), Some(new_acc)) = (
-                velocities.get_mut(*entity),
-                accelerations.get(*entity),
-            ) {
+            if let Some(vel) = velocities.get_mut(*entity) {
                 let old_acc = old_accelerations.get(*entity).copied().unwrap_or_else(Acceleration::zero);
+                let new_acc = accelerations.get(*entity).copied().unwrap_or_else(Acceleration::zero);
+
                 let avg_ax = 0.5 * (old_acc.ax() + new_acc.ax());
                 let avg_ay = 0.5 * (old_acc.ay() + new_acc.ay());
                 let avg_az = 0.5 * (old_acc.az() + new_acc.az());
