@@ -76,12 +76,24 @@ pub trait ComponentStorage: Send + Sync {
     ///
     /// This provides traditional per-entity access. For bulk operations,
     /// prefer `field_arrays()` when available for better cache performance.
+    ///
+    /// # Note for SoA Storage Implementations
+    ///
+    /// True Structure-of-Arrays storage implementations (e.g., `PositionSoAStorage`)
+    /// return `None` from this method because they store fields in separate arrays
+    /// and cannot construct temporary component references. Systems working with
+    /// SoA storage must use `field_arrays()` for bulk operations instead.
     fn get(&self, entity: Entity) -> Option<&Self::Component>;
 
     /// Get a mutable reference to a component for the given entity
     ///
     /// This provides traditional per-entity access. For bulk operations,
     /// prefer `field_arrays_mut()` when available for better cache performance.
+    ///
+    /// # Note for SoA Storage Implementations
+    ///
+    /// True Structure-of-Arrays storage implementations return `None` from this
+    /// method. Use `field_arrays_mut()` for bulk field mutations instead.
     fn get_mut(&mut self, entity: Entity) -> Option<&mut Self::Component>;
 
     /// Check if an entity has this component
@@ -250,23 +262,7 @@ impl<'a, T: Component> FieldArraysMut<'a, T> {
     /// Panics if this is not a Position field array
     pub fn as_position_arrays_mut(&mut self) -> (&mut [f64], &mut [f64], &mut [f64]) {
         match self {
-            FieldArraysMut::Position(x, y, z) => {
-                // Safety: We need to split the mutable references
-                // Use raw pointers to avoid lifetime issues
-                let x_ptr = x.as_mut_ptr();
-                let y_ptr = y.as_mut_ptr();
-                let z_ptr = z.as_mut_ptr();
-                let x_len = x.len();
-                let y_len = y.len();
-                let z_len = z.len();
-                unsafe {
-                    (
-                        std::slice::from_raw_parts_mut(x_ptr, x_len),
-                        std::slice::from_raw_parts_mut(y_ptr, y_len),
-                        std::slice::from_raw_parts_mut(z_ptr, z_len),
-                    )
-                }
-            }
+            FieldArraysMut::Position(x, y, z) => (x, y, z),
             _ => panic!("Expected Position field arrays"),
         }
     }
@@ -278,21 +274,7 @@ impl<'a, T: Component> FieldArraysMut<'a, T> {
     /// Panics if this is not a Velocity field array
     pub fn as_velocity_arrays_mut(&mut self) -> (&mut [f64], &mut [f64], &mut [f64]) {
         match self {
-            FieldArraysMut::Velocity(dx, dy, dz) => {
-                let dx_ptr = dx.as_mut_ptr();
-                let dy_ptr = dy.as_mut_ptr();
-                let dz_ptr = dz.as_mut_ptr();
-                let dx_len = dx.len();
-                let dy_len = dy.len();
-                let dz_len = dz.len();
-                unsafe {
-                    (
-                        std::slice::from_raw_parts_mut(dx_ptr, dx_len),
-                        std::slice::from_raw_parts_mut(dy_ptr, dy_len),
-                        std::slice::from_raw_parts_mut(dz_ptr, dz_len),
-                    )
-                }
-            }
+            FieldArraysMut::Velocity(dx, dy, dz) => (dx, dy, dz),
             _ => panic!("Expected Velocity field arrays"),
         }
     }
@@ -304,21 +286,7 @@ impl<'a, T: Component> FieldArraysMut<'a, T> {
     /// Panics if this is not an Acceleration field array
     pub fn as_acceleration_arrays_mut(&mut self) -> (&mut [f64], &mut [f64], &mut [f64]) {
         match self {
-            FieldArraysMut::Acceleration(ax, ay, az) => {
-                let ax_ptr = ax.as_mut_ptr();
-                let ay_ptr = ay.as_mut_ptr();
-                let az_ptr = az.as_mut_ptr();
-                let ax_len = ax.len();
-                let ay_len = ay.len();
-                let az_len = az.len();
-                unsafe {
-                    (
-                        std::slice::from_raw_parts_mut(ax_ptr, ax_len),
-                        std::slice::from_raw_parts_mut(ay_ptr, ay_len),
-                        std::slice::from_raw_parts_mut(az_ptr, az_len),
-                    )
-                }
-            }
+            FieldArraysMut::Acceleration(ax, ay, az) => (ax, ay, az),
             _ => panic!("Expected Acceleration field arrays"),
         }
     }
@@ -777,15 +745,17 @@ impl ComponentStorage for PositionSoAStorage {
     }
 
     fn get(&self, entity: Entity) -> Option<&Self::Component> {
-        // Cannot return reference to temporary - need to use thread-local cache
-        // For now, this is not efficiently implementable. Systems should use field_arrays() instead.
-        // Return None to indicate this method is not optimal for SoA storage.
+        // True SoA storage cannot return references to individual components
+        // because fields are stored in separate arrays. Systems should use
+        // field_arrays() instead for SIMD-friendly bulk operations.
+        let _ = entity; // Suppress unused warning
         None
     }
 
     fn get_mut(&mut self, entity: Entity) -> Option<&mut Self::Component> {
-        // Cannot return mutable reference to temporary
-        // Systems should use field_arrays_mut() instead.
+        // True SoA storage cannot return mutable references to individual components.
+        // Use field_arrays_mut() for bulk field mutations.
+        let _ = entity; // Suppress unused warning
         None
     }
 
