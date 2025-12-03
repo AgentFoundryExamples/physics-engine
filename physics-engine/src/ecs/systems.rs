@@ -270,6 +270,9 @@ where
 /// This method is more stable than explicit Euler for physics simulations.
 /// More sophisticated integrators (Verlet, RK4) can be added as alternative systems.
 ///
+/// Immovable bodies (zero or near-zero mass) are skipped entirely to prevent
+/// numerical drift.
+///
 /// # Arguments
 ///
 /// * `entities` - Iterator over entities to process
@@ -277,6 +280,7 @@ where
 /// * `positions` - Storage for position components
 /// * `velocities` - Storage for velocity components
 /// * `accelerations` - Storage for acceleration components
+/// * `masses` - Storage for mass components (to check for immovable bodies)
 /// * `warn_on_missing` - Whether to log warnings for entities without required components
 ///
 /// # Returns
@@ -288,6 +292,7 @@ pub fn integrate_motion<'a, I>(
     positions: &mut impl ComponentStorage<Component = crate::ecs::components::Position>,
     velocities: &mut impl ComponentStorage<Component = Velocity>,
     accelerations: &impl ComponentStorage<Component = Acceleration>,
+    masses: &impl ComponentStorage<Component = Mass>,
     warn_on_missing: bool,
 ) -> usize
 where
@@ -296,6 +301,13 @@ where
     let mut updated_count = 0;
 
     for entity in entities {
+        // Skip immovable bodies
+        if let Some(mass) = masses.get(*entity) {
+            if mass.is_immovable() {
+                continue;
+            }
+        }
+
         // Get acceleration (may not exist if no forces applied)
         let acc = accelerations.get(*entity);
 
@@ -524,6 +536,9 @@ mod tests {
         let mut accelerations = HashMapStorage::<Acceleration>::new();
         accelerations.insert(entity, Acceleration::new(2.0, 0.0, 0.0));
 
+        let mut masses = HashMapStorage::<Mass>::new();
+        masses.insert(entity, Mass::new(1.0));
+
         let dt = 0.1; // 0.1 seconds
         let entities = vec![entity];
         let count = integrate_motion(
@@ -532,6 +547,7 @@ mod tests {
             &mut positions,
             &mut velocities,
             &accelerations,
+            &masses,
             false,
         );
 
@@ -558,6 +574,9 @@ mod tests {
 
         let accelerations = HashMapStorage::<Acceleration>::new(); // No acceleration
 
+        let mut masses = HashMapStorage::<Mass>::new();
+        masses.insert(entity, Mass::new(1.0));
+
         let dt = 0.1;
         let entities = vec![entity];
         let count = integrate_motion(
@@ -566,6 +585,7 @@ mod tests {
             &mut positions,
             &mut velocities,
             &accelerations,
+            &masses,
             false,
         );
 
@@ -578,6 +598,44 @@ mod tests {
         // Position should update: p' = p + v*dt = 0 + 5*0.1 = 0.5
         let pos = positions.get(entity).unwrap();
         assert!((pos.x() - 0.5).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_integrate_motion_skips_immovable() {
+        let entity = Entity::new(1, 0);
+
+        let mut positions = HashMapStorage::<Position>::new();
+        positions.insert(entity, Position::new(0.0, 0.0, 0.0));
+
+        let mut velocities = HashMapStorage::<Velocity>::new();
+        velocities.insert(entity, Velocity::new(5.0, 0.0, 0.0));
+
+        let mut accelerations = HashMapStorage::<Acceleration>::new();
+        accelerations.insert(entity, Acceleration::new(10.0, 0.0, 0.0));
+
+        let mut masses = HashMapStorage::<Mass>::new();
+        masses.insert(entity, Mass::immovable());
+
+        let dt = 0.1;
+        let entities = vec![entity];
+        let count = integrate_motion(
+            entities.iter(),
+            dt,
+            &mut positions,
+            &mut velocities,
+            &accelerations,
+            &masses,
+            false,
+        );
+
+        // Should skip immovable entity
+        assert_eq!(count, 0);
+
+        // Position and velocity should not change
+        let vel = velocities.get(entity).unwrap();
+        assert_eq!(vel.dx(), 5.0);
+        let pos = positions.get(entity).unwrap();
+        assert_eq!(pos.x(), 0.0);
     }
 
     #[test]

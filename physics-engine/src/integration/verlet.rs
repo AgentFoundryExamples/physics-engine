@@ -124,6 +124,13 @@ impl Integrator for VelocityVerletIntegrator {
         // Step 1: Update positions using current velocities and accelerations
         // x(t + dt) = x(t) + v(t)*dt + 0.5*a(t)*dt²
         for entity in &entities_vec {
+            // Skip immovable bodies
+            if let Some(mass) = masses.get(*entity) {
+                if mass.is_immovable() {
+                    continue;
+                }
+            }
+
             let pos = match positions.get_mut(*entity) {
                 Some(p) => p,
                 None => {
@@ -184,6 +191,13 @@ impl Integrator for VelocityVerletIntegrator {
         // Step 3: Update velocities using average of old and new accelerations
         // v(t + dt) = v(t) + 0.5*(a(t) + a(t + dt))*dt
         for entity in &entities_vec {
+            // Skip immovable bodies
+            if let Some(mass) = masses.get(*entity) {
+                if mass.is_immovable() {
+                    continue;
+                }
+            }
+
             let vel = match velocities.get_mut(*entity) {
                 Some(v) => v,
                 None => continue,

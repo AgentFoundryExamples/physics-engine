@@ -257,6 +257,8 @@ fn test_verlet_circular_orbit_stability() {
     let gravity_plugin = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
     let gravity_system = GravitySystem::new(gravity_plugin);
     let mut force_registry = ForceRegistry::new();
+    force_registry.max_force_magnitude = 1e30; // Allow large gravitational forces
+    force_registry.warn_on_missing_components = false; // Reduce noise in tests
 
     // Integrate for 1 year with 1-day timestep
     let dt = 86400.0; // 1 day in seconds
@@ -349,6 +351,8 @@ fn test_verlet_energy_conservation_gravity() {
     let gravity_plugin = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
     let gravity_system = GravitySystem::new(gravity_plugin);
     let mut force_registry = ForceRegistry::new();
+    force_registry.max_force_magnitude = 1e30; // Allow large gravitational forces
+    force_registry.warn_on_missing_components = false; // Reduce noise in tests
 
     // Calculate initial energy
     let initial_ke = 0.5 * m_earth * v_circular * v_circular;
