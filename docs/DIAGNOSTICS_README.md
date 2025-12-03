@@ -85,7 +85,7 @@ python3 << 'EOF'
 import matplotlib.pyplot as plt
 import numpy as np
 
-data = np.loadtxt('data.csv', delimiter=',', usecols=(1,6), skiprows=0)
+data = np.loadtxt('data.csv', delimiter=',', usecols=(2,7), skiprows=0)
 time_years = data[:,0] / 31557600.0  # Convert seconds to years
 drift_pct = data[:,1] * 100.0
 

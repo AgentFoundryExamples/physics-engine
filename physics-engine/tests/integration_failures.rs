@@ -118,8 +118,8 @@ fn test_verlet_kinetic_energy_changes_under_constant_force() {
 
     // Calculate final kinetic energy
     let vel = velocities.get(entity).unwrap();
-    let v_final = vel.dx();
-    let final_ke = 0.5 * m * v_final * v_final;
+    let v_sq = vel.dx() * vel.dx() + vel.dy() * vel.dy() + vel.dz() * vel.dz();
+    let final_ke = 0.5 * m * v_sq;
 
     // With constant acceleration, velocity should be: v = v0 + a*t
     let t = dt * steps as f64;
@@ -137,7 +137,8 @@ fn test_verlet_kinetic_energy_changes_under_constant_force() {
     );
 
     // Check velocity change
-    let velocity_error = (v_final - expected_v).abs() / expected_v;
+    let v_mag = v_sq.sqrt();
+    let velocity_error = (v_mag - expected_v).abs() / expected_v;
     assert!(
         velocity_error < 0.01,
         "Velocity should change under constant force. Error: {:.3}%",
@@ -191,8 +192,8 @@ fn test_rk4_kinetic_energy_changes_under_constant_force() {
     }
 
     let vel = velocities.get(entity).unwrap();
-    let v_final = vel.dx();
-    let final_ke = 0.5 * m * v_final * v_final;
+    let v_sq = vel.dx() * vel.dx() + vel.dy() * vel.dy() + vel.dz() * vel.dz();
+    let final_ke = 0.5 * m * v_sq;
 
     let t = dt * steps as f64;
     let expected_v = v0 + a * t;
@@ -207,7 +208,8 @@ fn test_rk4_kinetic_energy_changes_under_constant_force() {
         expected_ke
     );
 
-    let velocity_error = (v_final - expected_v).abs() / expected_v;
+    let v_mag = v_sq.sqrt();
+    let velocity_error = (v_mag - expected_v).abs() / expected_v;
     assert!(
         velocity_error < 0.01,
         "Velocity should change under constant force. Error: {:.3}%",

@@ -270,8 +270,8 @@ fn print_diagnostics(
     let ke = calculate_kinetic_energy(entities, velocities, masses);
     let cm = calculate_center_of_mass(entities, positions, masses);
     let spread = calculate_spread(entities, positions, cm);
-    let ke_change = if initial_ke != 0.0 {
-        ((ke - initial_ke) / initial_ke).abs()
+    let ke_change = if initial_ke.abs() > 1e-9 {
+        (ke - initial_ke) / initial_ke
     } else {
         0.0
     };
