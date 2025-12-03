@@ -46,6 +46,10 @@
         },
         {
           "type": "file",
+          "name": "examples.md"
+        },
+        {
+          "type": "file",
           "name": "integration.md"
         },
         {
@@ -75,6 +79,14 @@
             {
               "type": "file",
               "name": "basic.rs"
+            },
+            {
+              "type": "file",
+              "name": "particle_collision.rs"
+            },
+            {
+              "type": "file",
+              "name": "solar_system.rs"
             }
           ]
         },
@@ -145,6 +157,10 @@
                 {
                   "type": "file",
                   "name": "api.rs"
+                },
+                {
+                  "type": "file",
+                  "name": "gravity.rs"
                 },
                 {
                   "type": "file",

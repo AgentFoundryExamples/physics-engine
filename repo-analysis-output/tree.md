@@ -9,13 +9,16 @@
     └── af_maintenance.yml
 ├── docs
   ├── architecture.md
+  ├── examples.md
   ├── integration.md
   └── plugins.md
 ├── physics-engine
   ├── benches
     └── integration.rs
   ├── examples
-    └── basic.rs
+    ├── basic.rs
+    ├── particle_collision.rs
+    └── solar_system.rs
   ├── src
     ├── ecs
       ├── component.rs
@@ -32,6 +35,7 @@
       └── verlet.rs
     ├── plugins
       ├── api.rs
+      ├── gravity.rs
       ├── mod.rs
       └── registry.rs
     └── lib.rs
