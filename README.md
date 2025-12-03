@@ -626,18 +626,20 @@ The project enforces:
 
 See [`docs/roadmap.md`](docs/roadmap.md) for comprehensive future plans. Highlights include:
 
-**Version 0.2.0 - Performance & Memory** (Current - In Progress):
+**Version 0.2.0 - Performance & Memory** (Released 2025-12-03):
 - [x] Structure-of-Arrays (SoA) component storage for 1.5-3× iteration speedup
 - [x] Storage benchmarks comparing HashMap vs SoA
 - [x] SIMD vectorization (AVX2) for explicit parallel computation
 - [x] Memory pooling to reduce allocation overhead
-- [ ] Adaptive chunk sizing for optimal parallelism
-- [ ] Query DSL for ergonomic component access
 
-**Version 0.3.0 - Spatial Acceleration** (Q3-Q4 2025):
+**Version 0.3.0 - Spatial Acceleration & Query Improvements** (Q3-Q4 2025):
+- [ ] Query DSL for ergonomic component access (deferred from v0.2.0)
+- [ ] Adaptive chunk sizing for optimal parallelism (deferred from v0.2.0)
+- [ ] True Structure-of-Arrays storage evolution
 - [ ] Barnes-Hut tree for O(N log N) gravitational forces
 - [ ] Octree spatial partitioning for collision detection
 - [ ] Broad-phase collision detection (sweep-and-prune or spatial hashing)
+- [ ] Profiling integration and performance analysis tools
 
 **Version 0.4.0 - Collision & Constraints** (Q4 2025 - Q1 2026):
 - [ ] Narrow-phase collision detection (sphere, box, convex polyhedra)
