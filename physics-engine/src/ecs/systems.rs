@@ -301,11 +301,9 @@ where
     let mut updated_count = 0;
 
     for entity in entities {
-        // Skip immovable bodies
-        if let Some(mass) = masses.get(*entity) {
-            if mass.is_immovable() {
-                continue;
-            }
+        // Skip immovable bodies or entities without a mass component
+        if masses.get(*entity).map_or(true, |m| m.is_immovable()) {
+            continue;
         }
 
         // Get acceleration (may not exist if no forces applied)

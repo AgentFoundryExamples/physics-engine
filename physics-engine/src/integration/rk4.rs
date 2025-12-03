@@ -250,11 +250,9 @@ impl Integrator for RK4Integrator {
                 None => continue,
             };
 
-            // Skip immovable bodies
-            if let Some(mass) = masses.get(*entity) {
-                if mass.is_immovable() {
-                    continue;
-                }
+            // Skip immovable bodies or entities without a mass component
+            if masses.get(*entity).map_or(true, |m| m.is_immovable()) {
+                continue;
             }
 
             if let Some((_k1_vel, k1_acc)) = self.compute_derivative(

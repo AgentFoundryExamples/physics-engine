@@ -252,6 +252,51 @@ fn test_rk4_buffer_reuse_thread_safety() {
 }
 
 #[test]
+fn test_entity_without_mass_treated_as_immovable() {
+    // Test that entities without mass components are treated as immovable
+    let entity = Entity::new(1, 0);
+
+    let mut positions = HashMapStorage::<Position>::new();
+    positions.insert(entity, Position::new(0.0, 0.0, 0.0));
+
+    let mut velocities = HashMapStorage::<Velocity>::new();
+    velocities.insert(entity, Velocity::new(10.0, 0.0, 0.0));
+
+    let mut accelerations = HashMapStorage::<Acceleration>::new();
+    accelerations.insert(entity, Acceleration::new(5.0, 0.0, 0.0));
+
+    // No mass component inserted - entity should be treated as immovable
+    let masses = HashMapStorage::<Mass>::new();
+
+    let mut force_registry = ForceRegistry::new();
+    let mut integrator = VelocityVerletIntegrator::new(0.01);
+
+    let entities = vec![entity];
+    let initial_pos = *positions.get(entity).unwrap();
+    let initial_vel = *velocities.get(entity).unwrap();
+
+    let count = integrator.integrate(
+        entities.iter(),
+        &mut positions,
+        &mut velocities,
+        &accelerations,
+        &masses,
+        &mut force_registry,
+        false,
+    );
+
+    // Should skip entity without mass
+    assert_eq!(count, 0, "Entity without mass should be skipped");
+
+    let final_pos = positions.get(entity).unwrap();
+    let final_vel = velocities.get(entity).unwrap();
+
+    // Position and velocity should not change
+    assert_eq!(final_pos.x(), initial_pos.x(), "Entity without mass should not move");
+    assert_eq!(final_vel.dx(), initial_vel.dx(), "Entity without mass velocity should not change");
+}
+
+#[test]
 fn test_extreme_velocity() {
     // Test that integrators handle very large velocities without overflow
     let entity = Entity::new(1, 0);

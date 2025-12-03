@@ -123,12 +123,13 @@ impl Integrator for VelocityVerletIntegrator {
 
         // Step 1: Update positions using current velocities and accelerations
         // x(t + dt) = x(t) + v(t)*dt + 0.5*a(t)*dt²
+        // Track which entities were updated for use in step 3
+        let mut updated_entities = Vec::with_capacity(entities_vec.len());
+        
         for entity in &entities_vec {
-            // Skip immovable bodies
-            if let Some(mass) = masses.get(*entity) {
-                if mass.is_immovable() {
-                    continue;
-                }
+            // Skip immovable bodies or entities without a mass component
+            if masses.get(*entity).map_or(true, |m| m.is_immovable()) {
+                continue;
             }
 
             let pos = match positions.get_mut(*entity) {
@@ -169,6 +170,9 @@ impl Integrator for VelocityVerletIntegrator {
                 }
                 continue;
             }
+            
+            // Track this entity for velocity update
+            updated_entities.push(*entity);
         }
 
         // Step 2: Compute new accelerations at new positions
@@ -190,14 +194,8 @@ impl Integrator for VelocityVerletIntegrator {
 
         // Step 3: Update velocities using average of old and new accelerations
         // v(t + dt) = v(t) + 0.5*(a(t) + a(t + dt))*dt
-        for entity in &entities_vec {
-            // Skip immovable bodies
-            if let Some(mass) = masses.get(*entity) {
-                if mass.is_immovable() {
-                    continue;
-                }
-            }
-
+        // Only update entities that had their positions updated
+        for entity in &updated_entities {
             let vel = match velocities.get_mut(*entity) {
                 Some(v) => v,
                 None => continue,
