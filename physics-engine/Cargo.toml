@@ -22,6 +22,14 @@ criterion = "0.5.1"
 name = "basic"
 path = "examples/basic.rs"
 
+[[example]]
+name = "solar_system"
+path = "examples/solar_system.rs"
+
+[[example]]
+name = "particle_collision"
+path = "examples/particle_collision.rs"
+
 [[bench]]
 name = "integration"
 harness = false

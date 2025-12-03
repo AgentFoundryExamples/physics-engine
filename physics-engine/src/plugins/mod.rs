@@ -216,12 +216,14 @@
 
 pub mod api;
 pub mod registry;
+pub mod gravity;
 
 pub use api::{
     Plugin, PluginContext, ObjectFactory, ForceProviderPlugin,
     ConstraintSystem, PLUGIN_API_VERSION,
 };
 pub use registry::PluginRegistry;
+pub use gravity::{GravityPlugin, GravitySystem, GRAVITATIONAL_CONSTANT};
 
 #[cfg(test)]
 mod tests {

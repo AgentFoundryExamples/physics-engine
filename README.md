@@ -42,46 +42,65 @@ cargo build --release
 # Run tests
 cargo test
 
-# Run the basic example
-cargo run --example basic
+# Run examples
+cargo run --example basic          # Basic ECS demonstration
+cargo run --example solar_system --release   # Solar system N-body simulation
+cargo run --example particle_collision --release   # Particle dynamics
 ```
 
-### Example Usage
+### Example: Solar System Simulation
+
+```bash
+# Simulate 1 Earth year with default settings
+cargo run --example solar_system --release
+
+# Compare Verlet vs RK4 integrators
+cargo run --example solar_system --release -- --integrator rk4
+
+# Simulate 10 years with hourly timesteps
+cargo run --example solar_system --release -- --years 10 --timestep 3600
+```
+
+### Example: Gravitational N-Body Plugin
 
 ```rust
-use physics_engine::ecs::{World, Entity, Component, ComponentStorage, HashMapStorage};
+use physics_engine::ecs::{World, Entity, ComponentStorage, HashMapStorage};
 use physics_engine::ecs::components::{Position, Velocity, Mass};
-use physics_engine::ecs::systems::{ForceRegistry, ForceProvider, Force};
-use physics_engine::ecs::scheduler::{Scheduler, stages};
-use physics_engine::integration::{VelocityVerletIntegrator, Integrator};
+use physics_engine::ecs::systems::ForceRegistry;
+use physics_engine::integration::VelocityVerletIntegrator;
+use physics_engine::plugins::gravity::{GravityPlugin, GravitySystem, GRAVITATIONAL_CONSTANT};
 
 fn main() {
-    // Create a world and entities
+    // Create world and entities
     let mut world = World::new();
     let entity = world.create_entity();
     
-    // Add Newtonian physics components
+    // Add physics components
     let mut positions = HashMapStorage::<Position>::new();
     positions.insert(entity, Position::new(0.0, 0.0, 0.0));
     
     let mut velocities = HashMapStorage::<Velocity>::new();
-    velocities.insert(entity, Velocity::new(1.0, 0.0, 0.0));
+    velocities.insert(entity, Velocity::new(1000.0, 0.0, 0.0));
     
     let mut masses = HashMapStorage::<Mass>::new();
-    masses.insert(entity, Mass::new(10.0)); // 10 kg
+    masses.insert(entity, Mass::new(5.972e24)); // Earth mass
     
-    // Create a force registry for force accumulation
+    // Create gravity plugin with realistic G
+    let gravity_plugin = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
+    let gravity_system = GravitySystem::new(gravity_plugin);
+    
+    // Compute gravitational forces
     let mut force_registry = ForceRegistry::new();
-    // Register custom force providers (gravity, springs, etc.)
+    let entities = vec![entity];
+    gravity_system.compute_forces(&entities, &positions, &masses, &mut force_registry);
     
-    // Create an integrator for physics simulation
-    let mut integrator = VelocityVerletIntegrator::new(1.0 / 60.0); // 60 FPS
-    
-    // Use the scheduler for deterministic staged execution
-    let mut scheduler = Scheduler::new();
-    // Add systems to appropriate stages
+    // Integrate with Verlet
+    let mut integrator = VelocityVerletIntegrator::new(1.0 / 60.0);
+    // ... integration loop
 }
 ```
+
+See [`docs/examples.md`](docs/examples.md) for detailed usage instructions and parameter tuning.
 
 ## Configuration
 
@@ -216,11 +235,11 @@ See the **[Plugin Guide](docs/plugins.md)** for detailed documentation, examples
 
 Comprehensive documentation is available:
 
+- **[Examples Guide](docs/examples.md)**: Detailed walkthroughs of solar system, particle collision, and basic ECS examples
 - **[Architecture Guide](docs/architecture.md)**: Detailed design overview, ECS concepts, and parallelization strategy
 - **[Integration Methods](docs/integration.md)**: Guide to numerical integrators, timestep selection, and accuracy considerations
 - **[Plugin Guide](docs/plugins.md)**: Plugin system architecture, API reference, and extension examples
 - **API Documentation**: Generate with `cargo doc --open --all-features`
-- **Examples**: See the `examples/` directory for practical usage
 
 ### Key Concepts
 
@@ -259,15 +278,19 @@ physics-engine/
 │   │   └── plugins/      # Plugin system
 │   │       ├── mod.rs         # Plugin module root
 │   │       ├── api.rs         # Plugin traits and context
-│   │       └── registry.rs    # Plugin registry and loader
+│   │       ├── registry.rs    # Plugin registry and loader
+│   │       └── gravity.rs     # Gravitational N-body plugin
 │   ├── benches/          # Performance benchmarks
 │   │   └── integration.rs # Integrator benchmarks
 │   └── examples/         # Example programs
-│       └── basic.rs      # Basic ECS demonstration
+│       ├── basic.rs      # Basic ECS demonstration
+│       ├── solar_system.rs    # Solar system N-body simulation
+│       └── particle_collision.rs  # N-body particle dynamics
 ├── docs/                 # Documentation
 │   ├── architecture.md   # Architecture overview
 │   ├── integration.md    # Integration methods guide
-│   └── plugins.md        # Plugin system guide
+│   ├── plugins.md        # Plugin system guide
+│   └── examples.md       # Examples usage guide
 ├── .env.example         # Environment configuration template
 ├── Cargo.toml           # Workspace configuration
 └── README.md            # This file
