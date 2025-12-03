@@ -104,6 +104,7 @@ struct SimulationConfig {
     timestep: f64,      // seconds
     duration: f64,      // seconds
     output_interval: f64, // seconds
+    diagnostic_mode: bool, // Enable detailed per-step diagnostics
 }
 
 impl Default for SimulationConfig {
@@ -113,6 +114,7 @@ impl Default for SimulationConfig {
             timestep: 86400.0,  // 1 day
             duration: YEAR,     // 1 year
             output_interval: 30.0 * DAY, // Once per month
+            diagnostic_mode: false,
         }
     }
 }
@@ -209,7 +211,7 @@ fn calculate_potential_energy(
     pe
 }
 
-/// Print system state
+/// Print system state with optional diagnostics
 fn print_state(
     time: f64,
     entities: &[(Entity, &str)],
@@ -231,6 +233,48 @@ fn print_state(
         if let Some(pos) = positions.get(*entity) {
             let r = (pos.x() * pos.x() + pos.y() * pos.y() + pos.z() * pos.z()).sqrt();
             println!("Earth distance from Sun: {:.3e} m ({:.3} AU)", r, r / AU);
+        }
+    }
+}
+
+/// CSV header for diagnostic output
+const DIAG_HEADER: &str = "DIAG,step,time_s,dt_s,KE_J,PE_J,E_total_J,drift_frac,earth_AU,earth_v_ms,earth_a_ms2";
+
+/// Print detailed diagnostic information for failure analysis
+fn print_diagnostics(
+    step: usize,
+    time: f64,
+    dt: f64,
+    entities: &[(Entity, &str)],
+    positions: &HashMapStorage<Position>,
+    velocities: &HashMapStorage<Velocity>,
+    accelerations: &HashMapStorage<Acceleration>,
+    masses: &HashMapStorage<Mass>,
+    initial_energy: f64,
+) {
+    let ke = calculate_kinetic_energy(entities, velocities, masses);
+    let pe = calculate_potential_energy(entities, positions, masses);
+    let total_energy = ke + pe;
+    let energy_drift = if initial_energy != 0.0 {
+        ((total_energy - initial_energy) / initial_energy).abs()
+    } else {
+        0.0
+    };
+    
+    // Find Earth for detailed tracking
+    if let Some((entity, _)) = entities.iter().find(|(_, name)| *name == "Earth") {
+        if let (Some(pos), Some(vel), Some(acc)) = (
+            positions.get(*entity),
+            velocities.get(*entity),
+            accelerations.get(*entity),
+        ) {
+            let r = (pos.x() * pos.x() + pos.y() * pos.y() + pos.z() * pos.z()).sqrt();
+            let v_mag = (vel.dx() * vel.dx() + vel.dy() * vel.dy() + vel.dz() * vel.dz()).sqrt();
+            let a_mag = (acc.ax() * acc.ax() + acc.ay() * acc.ay() + acc.az() * acc.az()).sqrt();
+            
+            // Format: step,time_s,dt_s,KE_J,PE_J,E_total_J,drift_frac,earth_AU,earth_v_ms,earth_a_ms2
+            println!("DIAG,{},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e},{:.6e}",
+                     step, time, dt, ke, pe, total_energy, energy_drift, r / AU, v_mag, a_mag);
         }
     }
 }
@@ -296,6 +340,10 @@ fn main() {
                     eprintln!("Error: --years requires an argument");
                     std::process::exit(1);
                 }
+            }
+            "--diagnostics" => {
+                config.diagnostic_mode = true;
+                i += 1;
             }
             _ => {
                 i += 1;
@@ -382,6 +430,14 @@ fn main() {
 
     print_state(0.0, &entities, &positions, &velocities, &masses);
 
+    // Diagnostic mode header
+    if config.diagnostic_mode {
+        println!();
+        println!("=== DIAGNOSTIC MODE ENABLED ===");
+        println!("CSV Header: {}", DIAG_HEADER);
+        println!();
+    }
+
     // Simulation loop
     let mut time = 0.0;
     let mut next_output_time = config.output_interval;
@@ -391,7 +447,7 @@ fn main() {
     println!("Running {} steps...", num_steps);
     println!();
 
-    for _step in 0..num_steps {
+    for step in 0..num_steps {
         // Compute gravitational forces
         let entity_vec: Vec<Entity> = entities.iter().map(|(e, _)| *e).collect();
         gravity_system.compute_forces(&entity_vec, &positions, &masses, &mut force_registry);
@@ -420,6 +476,21 @@ fn main() {
         force_registry.clear_forces();
 
         time += config.timestep;
+
+        // Diagnostic logging (every 10 steps to avoid explosion)
+        if config.diagnostic_mode && step % 10 == 0 {
+            print_diagnostics(
+                step,
+                time,
+                config.timestep,
+                &entities,
+                &positions,
+                &velocities,
+                &accelerations,
+                &masses,
+                initial_energy,
+            );
+        }
 
         // Output at intervals
         if time >= next_output_time {

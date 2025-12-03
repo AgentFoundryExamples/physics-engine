@@ -180,6 +180,153 @@ This is crucial for:
 
 ---
 
+## ⚠️ Known Issues (Version 0.1.0)
+
+**CRITICAL**: The current version has known accuracy issues with the integrators. Please read this section before using the examples for scientific or production work.
+
+### Issue: Massive Energy Drift and Orbital Instability
+
+**Severity**: CRITICAL  
+**Affects**: Both Velocity Verlet and RK4 integrators  
+**Status**: Under Investigation  
+**Details**: See `docs/FAILURE_ANALYSIS.md`
+
+#### Symptoms
+
+When running the examples, you may observe:
+
+1. **Solar System Example**:
+   - Earth's orbit expands from 1.0 AU to 6.4 AU over 1 year ❌
+   - Total energy drifts by 175% ❌
+   - Kinetic energy remains constant (frozen) ❌
+   - Velocity magnitude doesn't change ❌
+   
+2. **Particle Collision Example**:
+   - Kinetic energy grows exponentially (triples in 5 seconds) ❌
+   - System becomes increasingly unstable ❌
+
+#### Expected vs. Actual Behavior
+
+**What SHOULD happen** (based on physics and algorithm theory):
+- ✅ Stable circular orbits remain stable (< 1% radius variation)
+- ✅ Energy conserved to within < 1% for reasonable timesteps
+- ✅ Velocity changes as gravitational forces act
+- ✅ Acceleration non-zero when forces present
+
+**What ACTUALLY happens** (version 0.1.0):
+- ❌ Orbits expand dramatically (540% radius increase)
+- ❌ Energy drifts by 175%
+- ❌ Velocity magnitude frozen at initial values
+- ❌ Acceleration remains at zero
+
+#### Root Cause
+
+Diagnostic analysis indicates that **acceleration is not being properly applied to velocities** during integration. This is a bug in the integration implementation, not a fundamental limitation of the algorithms.
+
+Diagnostic evidence:
+```bash
+# Run solar system with diagnostics enabled
+cargo run --release --example solar_system -- --diagnostics --years 0.1
+
+# Sample output shows constant velocity and zero acceleration:
+# DIAG,0,8.640e4,8.640e4,6.197e33,-1.240e34,-6.202e33,0.0008,1.000,29780.0,0.0
+# DIAG,10,9.504e5,8.640e4,6.197e33,-1.188e34,-5.687e33,0.0838,1.018,29780.0,0.0
+#                                                                  ^^^^^^^  ^^^
+#                                                                  constant zero
+```
+
+#### Impact on Example Usage
+
+**DO NOT rely on examples for**:
+- ❌ Learning correct orbital mechanics behavior
+- ❌ Energy conservation validation
+- ❌ Long-term simulation stability
+- ❌ Published scientific results
+- ❌ Production physics simulations
+
+**Examples ARE suitable for**:
+- ✅ Testing the build system
+- ✅ Exploring the API structure
+- ✅ Understanding ECS architecture patterns
+- ✅ Performance profiling (throughput, not accuracy)
+- ✅ Demonstrating parallel execution
+
+#### Workarounds
+
+There are **NO workarounds** for the accuracy issues:
+- ❌ Smaller timesteps do not help
+- ❌ Different integrators show same behavior
+- ❌ Adjusting parameters doesn't fix the root cause
+
+#### What to Do
+
+1. **For Development**: Use the examples to explore the API and architecture, but don't trust the physical results
+2. **For Investigation**: Run with `--diagnostics` flag to generate CSV data for analysis
+3. **For Testing**: Use the provided regression tests:
+   ```bash
+   cargo test --test integration_failures -- --ignored
+   ```
+4. **For Updates**: Watch the repository for version 0.1.1 which will include fixes
+
+#### Running Diagnostics
+
+Both examples support a `--diagnostics` flag that outputs detailed CSV data for failure analysis:
+
+```bash
+# Solar system diagnostics (logs every 10 steps)
+cargo run --release --example solar_system -- --diagnostics --years 1 > solar_diag.csv
+
+# Particle collision diagnostics (logs every 50 steps)
+cargo run --release --example particle_collision -- --diagnostics --duration 5 > particle_diag.csv
+```
+
+CSV columns:
+- **Solar System**: step, time_s, dt_s, KE_J, PE_J, E_total_J, drift_frac, earth_AU, earth_v_ms, earth_a_ms2
+- **Particle Collision**: step, time_s, dt_s, KE_J, ke_change_frac, cm_x_m, cm_y_m, cm_z_m, spread_m
+
+#### Expected Resolution
+
+- **Target**: Version 0.1.1 (next patch release)
+- **Timeline**: TBD pending root cause confirmation
+- **Fix**: Correct acceleration → velocity integration pipeline
+
+### Deterministic Simulation
+
+Despite the accuracy issues, simulations ARE deterministic:
+
+✅ **Same parameters = Same results**
+```bash
+# These produce identical output
+cargo run --release --example particle_collision -- --seed 42
+cargo run --release --example particle_collision -- --seed 42
+```
+
+This property is preserved and useful for:
+- Debugging the integrator issues
+- Regression testing
+- Comparing different parameter choices
+
+### Temporary Usage Guidelines
+
+Until version 0.1.1:
+
+1. **Use examples for**: API exploration, architecture learning, performance profiling
+2. **Don't use for**: Physical accuracy, energy conservation, orbital mechanics
+3. **Validate externally**: Cross-check any results against known analytical solutions
+4. **Monitor energy**: If energy drift > 10%, simulation is unreliable
+5. **Keep runs short**: Long simulations will accumulate errors rapidly
+
+### References for Correct Behavior
+
+To understand what SHOULD happen:
+
+- **Orbital Mechanics**: Goldstein, H. (2002). *Classical Mechanics* (3rd ed.)
+- **N-Body Simulation**: Aarseth, S. J. (2003). *Gravitational N-Body Simulations*
+- **Numerical Integration**: Hairer, E. et al. (2006). *Geometric Numerical Integration*
+- **NASA Data**: [Planetary Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/)
+
+---
+
 ## General Tips
 
 ### Building for Performance

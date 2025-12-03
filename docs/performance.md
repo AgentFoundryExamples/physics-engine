@@ -394,6 +394,121 @@ valgrind --tool=cachegrind target/release/examples/particle_collision
 cargo build --no-default-features
 ```
 
+## ⚠️ Critical Known Issues (Version 0.1.0)
+
+**IMPORTANT**: The current version has known correctness issues with the integrators that are under investigation. These issues affect the accuracy of simulations and must be addressed before production use.
+
+### Issue #1: Massive Energy Drift in Orbital Mechanics
+
+**Severity**: CRITICAL  
+**Status**: Under Investigation  
+**Tracking**: See `docs/FAILURE_ANALYSIS.md`
+
+**Description**: 
+Both Velocity Verlet and RK4 integrators exhibit massive energy conservation violations in gravitational N-body simulations. Total energy can drift by >100% over short timescales, and stable circular orbits become unstable and expand dramatically.
+
+**Observed Behavior** (Solar System Example, 1 year simulation, dt=1 day):
+- Energy drift: **174.9%** (expected < 1%)
+- Earth's orbital radius: grows from 1.0 AU to **6.4 AU** (expected < 1% variation)
+- Kinetic energy: **remains constant** (should vary)
+- Velocity magnitude: **constant at 29780 m/s** (should vary as orbit changes)
+- Acceleration: **always 0** (should be non-zero due to gravitational forces)
+
+**Root Cause Hypothesis**:
+Diagnostic evidence suggests acceleration is not being properly applied to velocities during integration. Positions change (indicating some integration is occurring), but velocities remain frozen at initial values.
+
+**Impact**:
+- Orbital mechanics simulations are **unreliable**
+- Long-term stability not achievable
+- Energy-based validation fails
+- N-body simulations produce incorrect results
+
+**Workarounds**:
+- None currently available
+- Smaller timesteps do NOT fix the issue
+- Both integrators exhibit identical failure modes
+
+**Investigation Status**:
+- ✅ Failure modes documented with reproducible test cases
+- ✅ Diagnostic instrumentation added to examples
+- ✅ Regression tests created (marked with `#[ignore]`)
+- 🔄 Root cause analysis in progress
+- ❌ Fix not yet implemented
+
+**Running Diagnostics**:
+```bash
+# Generate detailed CSV diagnostics for analysis
+cargo run --release --example solar_system -- --diagnostics --years 1 > solar_diagnostics.csv
+
+# Run failing regression tests
+cargo test --test integration_failures -- --ignored
+```
+
+**Expected Resolution**: Next patch release (0.1.1)
+
+### Issue #2: Exponential Energy Growth in Particle Systems
+
+**Severity**: HIGH  
+**Status**: Under Investigation  
+**Related to**: Issue #1
+
+**Description**:
+Particle collision simulations show exponential kinetic energy growth, with energy tripling over 5 seconds of simulation time. This is consistent with the orbital mechanics failure and likely shares the same root cause.
+
+**Observed Behavior** (100 particles, 5 seconds, dt=0.01s):
+- Kinetic energy: grows from 2.88e4 J to **9.13e4 J** (+217%)
+- Expected: Some energy increase due to gravitational attraction, but not exponential
+- Pattern: Monotonic, accelerating growth
+
+**Impact**:
+- Particle simulations become unstable
+- Energy-based termination conditions won't work
+- Long simulations will overflow or diverge
+
+**Workaround**:
+- Use very short simulation durations
+- Monitor energy manually and halt if growth exceeds threshold
+
+## Accuracy Expectations vs. Reality
+
+### Expected Performance (Based on Literature)
+
+For solar system simulation with dt = 1 day:
+- **Verlet symplectic error**: O(dt²) ≈ 1.7e-7 per orbit
+- **Expected energy drift**: < 0.01% per year for stable integrator
+- **Orbital radius variation**: < 1% per year
+
+### Actual Performance (Version 0.1.0)
+
+**Current measurements show 10,000× worse accuracy than expected**, indicating a fundamental implementation issue rather than algorithmic limitations.
+
+| Metric | Expected | Observed | Ratio |
+|--------|----------|----------|-------|
+| Energy drift | < 0.01% | 174.9% | 17,000× worse |
+| Orbital stability | < 1% | 540% | 540× worse |
+| Velocity variation | Variable | Constant | Frozen |
+
+### Implications for Users
+
+**DO NOT use version 0.1.0 for**:
+- ❌ Production simulations
+- ❌ Scientific computing
+- ❌ Published results
+- ❌ Orbital mechanics
+- ❌ Long-term stability analysis
+
+**MAY use for**:
+- ✅ Architecture evaluation
+- ✅ API testing
+- ✅ Performance profiling (throughput, not accuracy)
+- ✅ Component storage benchmarks
+- ✅ ECS design validation
+
+**Migration Path**:
+- Wait for version 0.1.1 with integrator fixes
+- Subscribe to repository notifications for updates
+- See `docs/FAILURE_ANALYSIS.md` for technical details
+
 ## Future Performance Enhancements
 
 ### Near-Term (Next Release)
