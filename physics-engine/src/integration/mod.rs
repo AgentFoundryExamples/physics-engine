@@ -49,6 +49,40 @@ mod rk4;
 pub use verlet::VelocityVerletIntegrator;
 pub use rk4::RK4Integrator;
 
+/// Calculate kinetic energy for a single entity
+///
+/// KE = 0.5 * m * v²
+pub fn calculate_kinetic_energy(
+    velocity: &Velocity,
+    mass: &Mass,
+) -> f64 {
+    if mass.is_immovable() {
+        return 0.0;
+    }
+    let v_sq = velocity.dx() * velocity.dx() 
+             + velocity.dy() * velocity.dy() 
+             + velocity.dz() * velocity.dz();
+    0.5 * mass.value() * v_sq
+}
+
+/// Calculate total kinetic energy for multiple entities
+pub fn calculate_total_kinetic_energy<'a, I>(
+    entities: I,
+    velocities: &impl ComponentStorage<Component = Velocity>,
+    masses: &impl ComponentStorage<Component = Mass>,
+) -> f64
+where
+    I: Iterator<Item = &'a Entity>,
+{
+    let mut total = 0.0;
+    for entity in entities {
+        if let (Some(vel), Some(mass)) = (velocities.get(*entity), masses.get(*entity)) {
+            total += calculate_kinetic_energy(vel, mass);
+        }
+    }
+    total
+}
+
 /// Trait for numerical integration methods
 ///
 /// Integrators update position and velocity components based on forces

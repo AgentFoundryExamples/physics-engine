@@ -425,3 +425,173 @@ fn test_multiple_entities() {
     assert!((pos1.x() - 0.01).abs() < 1e-10, "Entity 1 should move");
     assert!((pos2.x() - 1.02).abs() < 1e-10, "Entity 2 should move");
 }
+
+#[test]
+fn test_verlet_long_run_free_particle() {
+    // Test that free particle conserves energy over long simulation
+    let entity = Entity::new(1, 0);
+
+    let mut positions = HashMapStorage::<Position>::new();
+    positions.insert(entity, Position::new(0.0, 0.0, 0.0));
+
+    let mut velocities = HashMapStorage::<Velocity>::new();
+    velocities.insert(entity, Velocity::new(100.0, 0.0, 0.0));
+
+    let accelerations = HashMapStorage::<Acceleration>::new();
+    let mut masses = HashMapStorage::<Mass>::new();
+    masses.insert(entity, Mass::new(1.0));
+
+    let mut force_registry = ForceRegistry::new();
+
+    let dt = 0.01;
+    let steps = 10000; // 100 seconds
+    let mut integrator = VelocityVerletIntegrator::new(dt);
+    let entities = vec![entity];
+
+    let initial_energy = physics_engine::integration::calculate_kinetic_energy(
+        velocities.get(entity).unwrap(),
+        masses.get(entity).unwrap(),
+    );
+
+    // Run integration
+    for _ in 0..steps {
+        integrator.integrate(
+            entities.iter(),
+            &mut positions,
+            &mut velocities,
+            &accelerations,
+            &masses,
+            &mut force_registry,
+            false,
+        );
+    }
+
+    let final_energy = physics_engine::integration::calculate_kinetic_energy(
+        velocities.get(entity).unwrap(),
+        masses.get(entity).unwrap(),
+    );
+
+    let energy_error = (final_energy - initial_energy).abs() / initial_energy;
+    assert!(
+        energy_error < 1e-10,
+        "Energy should be conserved for free particle over 10000 steps: error = {}",
+        energy_error
+    );
+}
+
+#[test]
+fn test_rk4_long_run_free_particle() {
+    // Test that free particle conserves energy over long simulation
+    let entity = Entity::new(1, 0);
+
+    let mut positions = HashMapStorage::<Position>::new();
+    positions.insert(entity, Position::new(0.0, 0.0, 0.0));
+
+    let mut velocities = HashMapStorage::<Velocity>::new();
+    velocities.insert(entity, Velocity::new(100.0, 0.0, 0.0));
+
+    let accelerations = HashMapStorage::<Acceleration>::new();
+    let mut masses = HashMapStorage::<Mass>::new();
+    masses.insert(entity, Mass::new(1.0));
+
+    let mut force_registry = ForceRegistry::new();
+
+    let dt = 0.01;
+    let steps = 10000; // 100 seconds
+    let mut integrator = RK4Integrator::new(dt);
+    let entities = vec![entity];
+
+    let initial_energy = physics_engine::integration::calculate_kinetic_energy(
+        velocities.get(entity).unwrap(),
+        masses.get(entity).unwrap(),
+    );
+
+    // Run integration
+    for _ in 0..steps {
+        integrator.integrate(
+            entities.iter(),
+            &mut positions,
+            &mut velocities,
+            &accelerations,
+            &masses,
+            &mut force_registry,
+            false,
+        );
+    }
+
+    let final_energy = physics_engine::integration::calculate_kinetic_energy(
+        velocities.get(entity).unwrap(),
+        masses.get(entity).unwrap(),
+    );
+
+    let energy_error = (final_energy - initial_energy).abs() / initial_energy;
+    assert!(
+        energy_error < 1e-10,
+        "Energy should be conserved for free particle over 10000 steps: error = {}",
+        energy_error
+    );
+}
+
+#[test]
+fn test_immovable_body_stays_fixed() {
+    // Test that immovable bodies don't move even with forces applied
+    let entity = Entity::new(1, 0);
+
+    let mut positions = HashMapStorage::<Position>::new();
+    positions.insert(entity, Position::new(0.0, 0.0, 0.0));
+
+    let mut velocities = HashMapStorage::<Velocity>::new();
+    velocities.insert(entity, Velocity::new(100.0, 0.0, 0.0));
+
+    let mut accelerations = HashMapStorage::<Acceleration>::new();
+    accelerations.insert(entity, Acceleration::new(10.0, 0.0, 0.0));
+
+    let mut masses = HashMapStorage::<Mass>::new();
+    masses.insert(entity, Mass::immovable());
+
+    // Add a force provider that tries to apply force to immovable body
+    struct TestForce;
+    impl physics_engine::ecs::systems::ForceProvider for TestForce {
+        fn compute_force(&self, _entity: Entity, _registry: &physics_engine::ecs::systems::ForceRegistry) -> Option<physics_engine::ecs::systems::Force> {
+            Some(physics_engine::ecs::systems::Force::new(1000.0, 0.0, 0.0))
+        }
+        fn name(&self) -> &str {
+            "TestForce"
+        }
+    }
+
+    let mut force_registry = ForceRegistry::new();
+    force_registry.register_provider(Box::new(TestForce));
+
+    let dt = 0.01;
+    let steps = 100;
+    let mut integrator = VelocityVerletIntegrator::new(dt);
+    let entities = vec![entity];
+
+    let initial_pos = *positions.get(entity).unwrap();
+    let initial_vel = *velocities.get(entity).unwrap();
+
+    // Run integration
+    for _ in 0..steps {
+        integrator.integrate(
+            entities.iter(),
+            &mut positions,
+            &mut velocities,
+            &accelerations,
+            &masses,
+            &mut force_registry,
+            false,
+        );
+    }
+
+    let final_pos = positions.get(entity).unwrap();
+    let final_vel = velocities.get(entity).unwrap();
+
+    // Immovable body should not have moved
+    assert_eq!(final_pos.x(), initial_pos.x(), "Immovable body moved in x");
+    assert_eq!(final_pos.y(), initial_pos.y(), "Immovable body moved in y");
+    assert_eq!(final_pos.z(), initial_pos.z(), "Immovable body moved in z");
+    assert_eq!(final_vel.dx(), initial_vel.dx(), "Immovable body velocity changed in x");
+    assert_eq!(final_vel.dy(), initial_vel.dy(), "Immovable body velocity changed in y");
+    assert_eq!(final_vel.dz(), initial_vel.dz(), "Immovable body velocity changed in z");
+}

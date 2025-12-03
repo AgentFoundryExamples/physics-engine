@@ -250,6 +250,11 @@ impl Integrator for RK4Integrator {
                 None => continue,
             };
 
+            // Skip immovable bodies or entities without a mass component
+            if masses.get(*entity).map_or(true, |m| m.is_immovable()) {
+                continue;
+            }
+
             if let Some((_k1_vel, k1_acc)) = self.compute_derivative(
                 *entity,
                 pos,
@@ -260,11 +265,13 @@ impl Integrator for RK4Integrator {
                 masses,
                 force_registry,
             ) {
-                // k1 for position is just velocity
+                // k1 for position derivative is velocity (dx/dt = v)
+                // We store velocity values in Position type for buffer reuse
                 self.k1_positions.insert(*entity, Position::new(
                     vel.dx(), vel.dy(), vel.dz()
                 ));
-                // k1 for velocity is acceleration
+                // k1 for velocity derivative is acceleration (dv/dt = a)
+                // We store acceleration values in Velocity type for buffer reuse
                 self.k1_velocities.insert(*entity, Velocity::new(
                     k1_acc.ax(), k1_acc.ay(), k1_acc.az()
                 ));
@@ -291,11 +298,13 @@ impl Integrator for RK4Integrator {
             };
 
             // Evaluate at y + k1*dt/2
+            // k1_pos contains velocity, so we advance position by velocity*dt/2
             let eval_pos = Position::new(
                 pos.x() + k1_pos.x() * dt_2,
                 pos.y() + k1_pos.y() * dt_2,
                 pos.z() + k1_pos.z() * dt_2,
             );
+            // k1_vel contains acceleration, so we advance velocity by acceleration*dt/2
             let eval_vel = Velocity::new(
                 vel.dx() + k1_vel.dx() * dt_2,
                 vel.dy() + k1_vel.dy() * dt_2,
@@ -312,9 +321,13 @@ impl Integrator for RK4Integrator {
                 masses,
                 force_registry,
             ) {
+                // k2 for position derivative is the velocity at the evaluation point
+                // We store velocity values in Position type for buffer reuse
                 self.k2_positions.insert(*entity, Position::new(
                     k2_vel.dx(), k2_vel.dy(), k2_vel.dz()
                 ));
+                // k2 for velocity derivative is the acceleration at the evaluation point
+                // We store acceleration values in Velocity type for buffer reuse
                 self.k2_velocities.insert(*entity, Velocity::new(
                     k2_acc.ax(), k2_acc.ay(), k2_acc.az()
                 ));
@@ -340,6 +353,7 @@ impl Integrator for RK4Integrator {
                 None => continue,
             };
 
+            // Evaluate at y + k2*dt/2
             let eval_pos = Position::new(
                 pos.x() + k2_pos.x() * dt_2,
                 pos.y() + k2_pos.y() * dt_2,
@@ -361,9 +375,13 @@ impl Integrator for RK4Integrator {
                 masses,
                 force_registry,
             ) {
+                // k3 for position derivative is velocity at evaluation point
+                // We store velocity values in Position type for buffer reuse
                 self.k3_positions.insert(*entity, Position::new(
                     k3_vel.dx(), k3_vel.dy(), k3_vel.dz()
                 ));
+                // k3 for velocity derivative is acceleration at evaluation point
+                // We store acceleration values in Velocity type for buffer reuse
                 self.k3_velocities.insert(*entity, Velocity::new(
                     k3_acc.ax(), k3_acc.ay(), k3_acc.az()
                 ));
@@ -389,6 +407,7 @@ impl Integrator for RK4Integrator {
                 None => continue,
             };
 
+            // Evaluate at y + k3*dt (full step)
             let eval_pos = Position::new(
                 pos.x() + k3_pos.x() * dt,
                 pos.y() + k3_pos.y() * dt,
@@ -410,9 +429,13 @@ impl Integrator for RK4Integrator {
                 masses,
                 force_registry,
             ) {
+                // k4 for position derivative is velocity at evaluation point
+                // We store velocity values in Position type for buffer reuse
                 self.k4_positions.insert(*entity, Position::new(
                     k4_vel.dx(), k4_vel.dy(), k4_vel.dz()
                 ));
+                // k4 for velocity derivative is acceleration at evaluation point
+                // We store acceleration values in Velocity type for buffer reuse
                 self.k4_velocities.insert(*entity, Velocity::new(
                     k4_acc.ax(), k4_acc.ay(), k4_acc.az()
                 ));
