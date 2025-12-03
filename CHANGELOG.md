@@ -232,7 +232,24 @@ let mut storage = SoAStorage::<Position>::with_capacity(1000);
 
 // Option 3: Use true SoA for maximum performance (requires field-level access)
 let mut storage = PositionSoAStorage::new();
-// Access via field arrays: storage.field_arrays()
+
+// Access via field arrays for batch operations
+if let Some(arrays) = storage.field_arrays() {
+    let (x, y, z) = arrays.as_position_arrays();
+    // Direct access to contiguous x, y, z arrays for SIMD operations
+    for i in 0..x.len() {
+        println!("Position {}: ({}, {}, {})", i, x[i], y[i], z[i]);
+    }
+}
+
+// Or mutate field arrays in bulk
+if let Some(mut arrays) = storage.field_arrays_mut() {
+    let (x, y, z) = arrays.as_position_arrays_mut();
+    // Update all x coordinates (SIMD-friendly)
+    for val in x.iter_mut() {
+        *val += 10.0;
+    }
+}
 ```
 
 **Detecting SIMD Backend** (for debugging and logging):

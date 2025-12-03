@@ -170,7 +170,7 @@ for (pos, vel) in positions.iter().zip(velocities.iter()) {
 - ✅ **ADDED** Pooling benchmark suite (`cargo bench --bench pooling`)
 - ✅ **ADDED** SIMD benchmark suite (`cargo bench --features simd`)
 
-### Breaking Changes
+#### Breaking Changes
 
 **None** - This is a fully backward-compatible minor version release:
 - All v0.1.x code continues to work unchanged

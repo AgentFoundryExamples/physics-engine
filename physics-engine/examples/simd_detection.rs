@@ -21,12 +21,18 @@
 //! # Usage
 //!
 //! ```bash
-//! # Build without SIMD (will always use scalar backend)
+//! # Build without SIMD (will show feature not enabled)
 //! cargo run --example simd_detection
 //!
-//! # Build with SIMD support (will use AVX2 if available)
+//! # Build with SIMD support (will detect and use AVX2 if available)
 //! cargo run --features simd --example simd_detection
 //! ```
+//!
+//! # Error Handling
+//!
+//! The `detect_cpu_features()` and `select_backend()` functions are infallible
+//! and always return valid results. If CPU features cannot be detected, they
+//! default to safe values (no SIMD support).
 
 #[cfg(feature = "simd")]
 use physics_engine::simd::{detect_cpu_features, select_backend};
@@ -37,6 +43,7 @@ fn main() {
     #[cfg(feature = "simd")]
     {
         // Detect available CPU features
+        // Note: These functions are infallible and default to safe values if detection fails
         let features = detect_cpu_features();
         println!("CPU Features Detected:");
         println!("  AVX2:       {}", features.has_avx2);
@@ -45,6 +52,7 @@ fn main() {
         println!();
 
         // Get the active SIMD backend
+        // Returns "Scalar" if no SIMD features are available
         let backend = select_backend();
         println!("Active SIMD Backend: {}", backend.name());
         println!();
@@ -66,11 +74,12 @@ fn main() {
             "Scalar" => {
                 println!("⚠️  Using scalar (non-SIMD) backend");
                 println!("   - No vectorization (processing one value at a time)");
-                println!("   - This is normal on older CPUs (pre-2013)");
-                println!("   - Or if CPU features couldn't be detected");
+                println!("   - This is normal on older CPUs (pre-2013) or if CPU features couldn't be detected.");
+                println!("   - Note: With --features simd enabled, detection failed or CPU lacks SIMD support");
             }
-            _ => {
-                println!("Unknown backend: {}", backend.name());
+            unknown => {
+                println!("⚠️  Unknown backend: {}", unknown);
+                println!("   - This shouldn't happen. Please report this as a bug.");
             }
         }
     }
@@ -80,7 +89,7 @@ fn main() {
         println!("⚠️  SIMD feature not enabled at compile time");
         println!();
         println!("The physics engine was built without SIMD support.");
-        println!("To enable SIMD acceleration:");
+        println!("To enable SIMD acceleration and see your CPU's capabilities:");
         println!("  cargo run --features simd --example simd_detection");
         println!();
         println!("Without the 'simd' feature, all computations use scalar code,");
