@@ -110,6 +110,10 @@
             },
             {
               "type": "file",
+              "name": "simd_detection.rs"
+            },
+            {
+              "type": "file",
               "name": "soa_demo.rs"
             },
             {

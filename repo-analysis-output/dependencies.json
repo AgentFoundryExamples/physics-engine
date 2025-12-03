@@ -73,6 +73,17 @@
       }
     },
     {
+      "id": "physics-engine/examples/simd_detection.rs",
+      "path": "physics-engine/examples/simd_detection.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "physics_engine::simd::"
+        ]
+      }
+    },
+    {
       "id": "physics-engine/examples/soa_demo.rs",
       "path": "physics-engine/examples/soa_demo.rs",
       "type": "file",
@@ -521,6 +532,7 @@
       "physics_engine::integration::",
       "physics_engine::plugins::gravity::",
       "physics_engine::pool::PoolConfig",
+      "physics_engine::simd::",
       "raw_cpuid::CpuId",
       "rayon::ThreadPool",
       "rayon::prelude::",
@@ -528,6 +540,6 @@
       "tests"
     ],
     "stdlib_count": 12,
-    "third-party_count": 14
+    "third-party_count": 15
   }
 }

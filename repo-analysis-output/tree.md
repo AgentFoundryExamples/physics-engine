@@ -24,6 +24,7 @@
   ├── examples
     ├── basic.rs
     ├── particle_collision.rs
+    ├── simd_detection.rs
     ├── soa_demo.rs
     └── solar_system.rs
   ├── src

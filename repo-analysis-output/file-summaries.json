@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 34,
+  "total_files": 35,
   "files": [
     {
       "schema_version": "2.0",
@@ -172,6 +172,32 @@
           "impl IntegratorWrapper",
           "const F64_MANTISSA_MAX",
           "const DIAG_HEADER"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/examples/simd_detection.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 5037,
+        "loc": 68,
+        "todo_count": 0,
+        "declaration_count": 1
+      },
+      "structure": {
+        "declarations": [
+          "fn main"
         ]
       },
       "dependencies": {

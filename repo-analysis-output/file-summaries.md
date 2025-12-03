@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 34
+Total files: 35
 
 ## physics-engine/benches/integration.rs
 **Language:** Rust  
@@ -100,6 +100,17 @@ Total files: 34
   - fn calculate_spread
   - fn print_state
   - ... and 12 more
+
+## physics-engine/examples/simd_detection.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 4.92 KB  
+**LOC:** 68  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 1  
+**Top-level declarations:**
+  - fn main
 
 ## physics-engine/examples/soa_demo.rs
 **Language:** Rust  
