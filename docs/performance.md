@@ -894,10 +894,52 @@ All SIMD functions automatically handle entity counts not divisible by SIMD widt
 #### Current Limitations
 
 ❌ **Not SIMD-Optimized:**
-- RK4 integrator (complex control flow)
-- Verlet integrator (not yet integrated)
-- Force computation (requires SoA layout)
+- RK4 integrator (requires global staging - see below)
+- Verlet integrator (not yet fully integrated with SoA buffers)
+- Force computation (requires SoA layout for batch processing)
 - HashMap-based component storage (non-contiguous data)
+
+✅ **SIMD Infrastructure Ready:**
+- SIMD helper functions available (`simd_update_velocities`, `simd_update_positions`, `simd_accumulate_forces`)
+- Runtime CPU detection and backend selection
+- Scalar fallback for non-SIMD CPUs
+- Comprehensive test coverage for SIMD operations
+
+#### RK4 Staging Implementation (v0.2.0+)
+
+**Global Staging for N-Body Systems:**
+
+The RK4 integrator has been updated to properly implement global staging for coupled N-body systems. For each RK4 stage (k1, k2, k3, k4), ALL entities are updated to their intermediate positions before computing forces:
+
+```rust
+// Stage 2 (k2): Update ALL entities to intermediate positions
+for entity in &entities {
+    let intermediate_pos = pos + k1_vel * dt/2;
+    positions.update(entity, intermediate_pos);
+}
+
+// NOW compute forces with all entities at intermediate state
+force_registry.clear_forces();
+for entity in &entities {
+    force_registry.accumulate_for_entity(entity);
+}
+
+// Compute k2 derivatives using forces at intermediate state
+```
+
+**Benefits:**
+- ✅ Forces are computed with entire system at correct intermediate state
+- ✅ Critical for gravitational and other coupled forces
+- ✅ Ensures proper 4th-order accuracy for N-body problems
+- ✅ Verified with comprehensive accuracy tests
+
+**SIMD Integration for RK4:**
+Due to the complex staging requirements (4 stages, each requiring global state updates), direct SIMD vectorization of RK4 requires careful handling of intermediate states. The current implementation prioritizes correctness and will benefit from SIMD indirectly when force computations are vectorized.
+
+**Future Work:**
+- Batch-process k1-k4 computations across all entities using SoA buffers
+- Integrate SIMD helpers for position/velocity updates within RK4 stages
+- Optimize memory access patterns for k-value storage
 
 ❌ **Platform Support:**
 - Only x86_64 CPUs supported

@@ -276,12 +276,17 @@ Debug builds are ~10-100x slower.
 - ✅ Higher accuracy for smooth forces
 - ✅ Fourth-order accurate (vs second-order for Verlet)
 - ✅ Better for nonlinear dynamics
+- ✅ **Proper staging** for N-body problems (v0.2.0+)
 - ⚠️ Not symplectic (energy may drift more)
 - ⚠️ 4 force evaluations per step (2x slower)
+
+**RK4 Implementation (v0.2.0)**:
+The RK4 integrator now correctly implements global staging for coupled N-body systems. For each stage (k1, k2, k3, k4), ALL entities are updated to their intermediate positions before computing forces. This ensures forces are evaluated with the entire system at the correct intermediate state, which is critical for gravitational and other coupled forces.
 
 **Recommendation**:
 - Solar system / orbital mechanics → Velocity Verlet
 - Smooth nonlinear forces → RK4
+- N-body coupled systems requiring high accuracy → RK4
 - When in doubt → Try both and compare
 
 ### Timestep Selection Guidelines
