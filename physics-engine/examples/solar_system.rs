@@ -374,12 +374,18 @@ fn main() {
         accelerations.insert(*entity, Acceleration::zero());
     }
 
-    // Create gravity system
-    let gravity_plugin = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
+    // Create gravity system with appropriate configuration for solar system
+    let mut gravity_plugin = GravityPlugin::new(GRAVITATIONAL_CONSTANT);
+    // Set expected force magnitude for planetary interactions (up to 2e23 N for close approaches)
+    gravity_plugin.set_max_expected_force(2.5e23);
+    // Disable warnings for cleaner output in demonstrations
+    gravity_plugin.set_warn_on_high_forces(false);
     let gravity_system = GravitySystem::new(gravity_plugin);
 
-    // Create force registry
+    // Create force registry with appropriate limits
     let mut force_registry = ForceRegistry::new();
+    force_registry.max_force_magnitude = 1e24; // Allow large forces for planetary masses
+    force_registry.warn_on_missing_components = false; // Suppress warnings for cleaner output
 
     // Create integrator
     enum IntegratorWrapper {
