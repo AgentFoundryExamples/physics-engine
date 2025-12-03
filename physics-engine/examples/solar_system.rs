@@ -457,7 +457,11 @@ fn main() {
 
     let mut integrator = match config.integrator_name.as_str() {
         "rk4" => IntegratorWrapper::RK4(RK4Integrator::new(config.timestep)),
-        "verlet" | _ => IntegratorWrapper::Verlet(VelocityVerletIntegrator::new(config.timestep)),
+        "verlet" => IntegratorWrapper::Verlet(VelocityVerletIntegrator::new(config.timestep)),
+        _ => {
+            eprintln!("Error: Unknown integrator '{}'. Valid options: verlet, rk4", config.integrator_name);
+            std::process::exit(1);
+        }
     };
 
     println!();
@@ -515,78 +519,16 @@ fn main() {
             false,
         );
         
-        // Store old accelerations for Verlet velocity update
-        let mut old_accelerations = HashMapStorage::<Acceleration>::new();
-        for (entity, _) in &entities {
-            if let Some(acc) = accelerations.get(*entity) {
-                old_accelerations.insert(*entity, *acc);
-            }
-        }
-
-        // Update positions: x(t+dt) = x(t) + v(t)*dt + 0.5*a(t)*dt²
-        let dt = config.timestep;
-        let dt_sq = dt * dt;
-        for (entity, _) in &entities {
-            if masses.get(*entity).map_or(true, |m| m.is_immovable()) {
-                continue;
-            }
-            if let (Some(pos), Some(vel), Some(acc)) = (
-                positions.get_mut(*entity),
-                velocities.get(*entity),
-                accelerations.get(*entity),
-            ) {
-                let new_x = pos.x() + vel.dx() * dt + 0.5 * acc.ax() * dt_sq;
-                let new_y = pos.y() + vel.dy() * dt + 0.5 * acc.ay() * dt_sq;
-                let new_z = pos.z() + vel.dz() * dt + 0.5 * acc.az() * dt_sq;
-                pos.set_x(new_x);
-                pos.set_y(new_y);
-                pos.set_z(new_z);
-            }
-        }
-
-        // Create fresh force registry for recomputing at new positions
-        let mut force_registry = ForceRegistry::new();
-        force_registry.max_force_magnitude = 1e24;
-        force_registry.warn_on_missing_components = false;
-        
-        // Recompute gravitational forces at new positions
-        gravity_system.compute_forces(&entity_vec, &positions, &masses, &mut force_registry);
-        
-        // Accumulate forces from registered providers
-        for entity in &entity_vec {
-            force_registry.accumulate_for_entity(*entity);
-        }
-
-        // Compute new accelerations
-        apply_forces_to_acceleration(
+        // Use the integrator to update positions and velocities
+        integrator.integrate(
             entity_vec.iter(),
-            &force_registry,
+            &mut positions,
+            &mut velocities,
+            &accelerations,
             &masses,
-            &mut accelerations,
+            &mut force_registry,
             false,
         );
-
-        // Update velocities: v(t+dt) = v(t) + 0.5*(a(t) + a(t+dt))*dt
-        for (entity, _) in &entities {
-            if masses.get(*entity).map_or(true, |m| m.is_immovable()) {
-                continue;
-            }
-            if let Some(vel) = velocities.get_mut(*entity) {
-                let old_acc = old_accelerations.get(*entity).copied().unwrap_or_else(Acceleration::zero);
-                let new_acc = accelerations.get(*entity).copied().unwrap_or_else(Acceleration::zero);
-
-                let avg_ax = 0.5 * (old_acc.ax() + new_acc.ax());
-                let avg_ay = 0.5 * (old_acc.ay() + new_acc.ay());
-                let avg_az = 0.5 * (old_acc.az() + new_acc.az());
-                
-                let new_dx = vel.dx() + avg_ax * dt;
-                let new_dy = vel.dy() + avg_ay * dt;
-                let new_dz = vel.dz() + avg_az * dt;
-                vel.set_dx(new_dx);
-                vel.set_dy(new_dy);
-                vel.set_dz(new_dz);
-            }
-        }
 
         time += config.timestep;
 
