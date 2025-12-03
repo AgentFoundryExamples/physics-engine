@@ -24,6 +24,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"  # 3.11+ is required; 3.12 is fine
+
+      - name: Install tree sitter
+        run: |
+          pip install tree-sitter
+      
       - name: Install Rust Tree Sitter
         run: |
           pip install tree-sitter-rust 
