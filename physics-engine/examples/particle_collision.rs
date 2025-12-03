@@ -68,8 +68,12 @@ impl SimpleRng {
     }
 
     fn next_f64(&mut self) -> f64 {
-        // Generate a float in [0, 1)
-        (self.next_u64() >> 11) as f64 / (1u64 << 53) as f64
+        // Generate a float in [0, 1) using upper 53 bits
+        // This follows the standard approach for converting uniform integers to floats
+        // Shift right by 11 to get 53 bits (64 - 11 = 53)
+        // Divide by 2^53 to normalize to [0, 1)
+        // This ensures uniform distribution across the entire [0, 1) range
+        (self.next_u64() >> 11) as f64 / 9007199254740992.0 // 2^53 = 9007199254740992
     }
 
     fn next_f64_range(&mut self, min: f64, max: f64) -> f64 {
@@ -259,7 +263,14 @@ fn main() {
         match args[i].as_str() {
             "--particles" => {
                 if i + 1 < args.len() {
-                    config.num_particles = args[i + 1].parse().unwrap_or(100);
+                    match args[i + 1].parse::<usize>() {
+                        Ok(value) => config.num_particles = value,
+                        Err(_) => {
+                            eprintln!("Warning: Invalid particles '{}', using default 100", 
+                                     args[i + 1]);
+                            config.num_particles = 100;
+                        }
+                    }
                     i += 2;
                 } else {
                     eprintln!("Error: --particles requires an argument");
@@ -277,7 +288,14 @@ fn main() {
             }
             "--timestep" => {
                 if i + 1 < args.len() {
-                    config.timestep = args[i + 1].parse().unwrap_or(0.01);
+                    match args[i + 1].parse::<f64>() {
+                        Ok(value) => config.timestep = value,
+                        Err(_) => {
+                            eprintln!("Warning: Invalid timestep '{}', using default 0.01 s", 
+                                     args[i + 1]);
+                            config.timestep = 0.01;
+                        }
+                    }
                     i += 2;
                 } else {
                     eprintln!("Error: --timestep requires an argument");
@@ -286,7 +304,14 @@ fn main() {
             }
             "--duration" => {
                 if i + 1 < args.len() {
-                    config.duration = args[i + 1].parse().unwrap_or(10.0);
+                    match args[i + 1].parse::<f64>() {
+                        Ok(value) => config.duration = value,
+                        Err(_) => {
+                            eprintln!("Warning: Invalid duration '{}', using default 10.0 s", 
+                                     args[i + 1]);
+                            config.duration = 10.0;
+                        }
+                    }
                     i += 2;
                 } else {
                     eprintln!("Error: --duration requires an argument");
@@ -295,7 +320,14 @@ fn main() {
             }
             "--seed" => {
                 if i + 1 < args.len() {
-                    config.seed = args[i + 1].parse().unwrap_or(12345);
+                    match args[i + 1].parse::<u64>() {
+                        Ok(value) => config.seed = value,
+                        Err(_) => {
+                            eprintln!("Warning: Invalid seed '{}', using default 12345", 
+                                     args[i + 1]);
+                            config.seed = 12345;
+                        }
+                    }
                     i += 2;
                 } else {
                     eprintln!("Error: --seed requires an argument");

@@ -44,7 +44,7 @@ use physics_engine::ecs::{World, Entity, ComponentStorage, HashMapStorage};
 use physics_engine::ecs::components::{Position, Velocity, Mass, Acceleration};
 use physics_engine::ecs::systems::{ForceRegistry, apply_forces_to_acceleration};
 use physics_engine::integration::{VelocityVerletIntegrator, RK4Integrator, Integrator};
-use physics_engine::plugins::gravity::{GravityPlugin, GravitySystem, GRAVITATIONAL_CONSTANT};
+use physics_engine::plugins::gravity::{GravityPlugin, GravitySystem, GRAVITATIONAL_CONSTANT, DEFAULT_SOFTENING};
 
 /// Astronomical Unit in meters (average Earth-Sun distance)
 const AU: f64 = 1.495978707e11;
@@ -177,7 +177,11 @@ fn calculate_potential_energy(
     let mut pe = 0.0;
     let n = entities.len();
     
-    // Sum pairwise potential energies: U = -G * m1 * m2 / r
+    // Sum pairwise potential energies: U = -G * m1 * m2 / sqrt(r² + ε²)
+    // Using the same softening as force calculation for consistency
+    // This ensures energy conservation is properly tracked
+    let softening_squared = DEFAULT_SOFTENING * DEFAULT_SOFTENING;
+    
     for i in 0..n {
         for j in (i + 1)..n {
             let entity1 = entities[i].0;
@@ -192,10 +196,11 @@ fn calculate_potential_energy(
                 let dx = pos2.x() - pos1.x();
                 let dy = pos2.y() - pos1.y();
                 let dz = pos2.z() - pos1.z();
-                let r = (dx * dx + dy * dy + dz * dz).sqrt();
+                let r_squared = dx * dx + dy * dy + dz * dz;
+                let softened_r = (r_squared + softening_squared).sqrt();
                 
-                if r > 0.0 {
-                    pe -= GRAVITATIONAL_CONSTANT * m1.value() * m2.value() / r;
+                if softened_r > 0.0 {
+                    pe -= GRAVITATIONAL_CONSTANT * m1.value() * m2.value() / softened_r;
                 }
             }
         }
@@ -262,7 +267,14 @@ fn main() {
             }
             "--timestep" => {
                 if i + 1 < args.len() {
-                    config.timestep = args[i + 1].parse().unwrap_or(DAY);
+                    match args[i + 1].parse::<f64>() {
+                        Ok(value) => config.timestep = value,
+                        Err(_) => {
+                            eprintln!("Warning: Invalid timestep '{}', using default {:.0} s", 
+                                     args[i + 1], DAY);
+                            config.timestep = DAY;
+                        }
+                    }
                     i += 2;
                 } else {
                     eprintln!("Error: --timestep requires an argument");
@@ -271,8 +283,14 @@ fn main() {
             }
             "--years" => {
                 if i + 1 < args.len() {
-                    let years: f64 = args[i + 1].parse().unwrap_or(1.0);
-                    config.duration = years * YEAR;
+                    match args[i + 1].parse::<f64>() {
+                        Ok(years) => config.duration = years * YEAR,
+                        Err(_) => {
+                            eprintln!("Warning: Invalid years '{}', using default 1.0 year", 
+                                     args[i + 1]);
+                            config.duration = YEAR;
+                        }
+                    }
                     i += 2;
                 } else {
                     eprintln!("Error: --years requires an argument");

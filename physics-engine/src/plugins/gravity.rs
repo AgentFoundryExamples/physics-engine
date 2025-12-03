@@ -242,7 +242,10 @@ impl GravityPlugin {
 
         // Calculate force direction (unit vector * magnitude / distance)
         // F_vec = F_mag * (r_vec / |r|) = F_mag * r_vec / |r|
-        // Since F_mag = G*m1*m2/r², we have F_vec = G*m1*m2 * r_vec / r³
+        // Since F_mag = G*m1*m2/(r²+ε²), we need the unit vector: r_vec/|r|
+        // Where |r| = sqrt(r²+ε²) when using softening
+        // So: F_vec = [G*m1*m2/(r²+ε²)] * r_vec / sqrt(r²+ε²)
+        //           = G*m1*m2 * r_vec / (r²+ε²)^(3/2)
         let r = softened_r_squared.sqrt();
         let force_scale = force_magnitude / r;
 
@@ -411,8 +414,9 @@ impl GravitySystem {
         force_registry: &mut ForceRegistry,
     ) -> usize {
         use std::sync::Mutex;
+        use std::collections::HashMap;
 
-        let forces_mutex = Mutex::new(Vec::new());
+        let forces_mutex = Mutex::new(HashMap::new());
         let plugin = &self.plugin;
 
         // Compute forces in parallel chunks
@@ -423,11 +427,11 @@ impl GravitySystem {
         };
 
         entities.par_chunks(chunk_size).for_each(|chunk| {
-            let mut local_forces = Vec::new();
+            let mut local_forces = HashMap::new();
 
             for &entity in chunk {
                 if let Some(force) = plugin.compute_force_for_entity(entity, positions, masses, entities) {
-                    local_forces.push((entity, force));
+                    local_forces.insert(entity, force);
                 }
             }
 
