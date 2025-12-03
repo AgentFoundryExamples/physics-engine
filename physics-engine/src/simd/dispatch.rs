@@ -111,6 +111,13 @@ fn detect_cpu_features_impl() -> CpuFeatures {
     use raw_cpuid::CpuId;
     
     let cpuid = CpuId::new();
+    
+    // Verify CPUID is working by checking vendor info
+    if cpuid.get_vendor_info().is_none() {
+        // CPUID not working properly, fall back to scalar
+        return CpuFeatures::default();
+    }
+    
     let mut features = CpuFeatures::default();
     
     // Check feature info

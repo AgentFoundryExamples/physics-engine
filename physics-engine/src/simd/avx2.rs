@@ -67,25 +67,25 @@ impl SimdBackend for Avx2Backend {
     ) {
         // v' = v + a * dt
         let dt_vec = _mm256_set1_pd(dt);
-        let len = velocities.len();
         
-        // Process 4 elements at a time
-        let mut i = 0;
-        while i + 4 <= len {
+        // Use chunks_exact for safer iteration (processes only complete 4-element chunks)
+        let mut vel_chunks = velocities.chunks_exact_mut(4);
+        let mut acc_chunks = accelerations.chunks_exact(4);
+        
+        // Process 4 elements at a time using iterators
+        while let (Some(v_chunk), Some(a_chunk)) = (vel_chunks.next(), acc_chunks.next()) {
             // Load 4 velocity values
-            let v = _mm256_loadu_pd(velocities.as_ptr().add(i));
+            let v = _mm256_loadu_pd(v_chunk.as_ptr());
             
             // Load 4 acceleration values
-            let a = _mm256_loadu_pd(accelerations.as_ptr().add(i));
+            let a = _mm256_loadu_pd(a_chunk.as_ptr());
             
             // Compute: v' = v + a * dt
             let a_dt = _mm256_mul_pd(a, dt_vec);
             let v_new = _mm256_add_pd(v, a_dt);
             
             // Store result
-            _mm256_storeu_pd(velocities.as_mut_ptr().add(i), v_new);
-            
-            i += 4;
+            _mm256_storeu_pd(v_chunk.as_mut_ptr(), v_new);
         }
     }
     
@@ -102,19 +102,23 @@ impl SimdBackend for Avx2Backend {
         // p' = p + v * dt + 0.5 * a * dt²
         let dt_vec = _mm256_set1_pd(dt);
         let dt_sq_half_vec = _mm256_set1_pd(dt_sq_half);
-        let len = positions.len();
         
-        // Process 4 elements at a time
-        let mut i = 0;
-        while i + 4 <= len {
+        // Use chunks_exact for safer iteration
+        let mut pos_chunks = positions.chunks_exact_mut(4);
+        let mut vel_chunks = velocities.chunks_exact(4);
+        let mut acc_chunks = accelerations.chunks_exact(4);
+        
+        // Process 4 elements at a time using iterators
+        while let (Some(p_chunk), Some(v_chunk), Some(a_chunk)) = 
+            (pos_chunks.next(), vel_chunks.next(), acc_chunks.next()) {
             // Load 4 position values
-            let p = _mm256_loadu_pd(positions.as_ptr().add(i));
+            let p = _mm256_loadu_pd(p_chunk.as_ptr());
             
             // Load 4 velocity values
-            let v = _mm256_loadu_pd(velocities.as_ptr().add(i));
+            let v = _mm256_loadu_pd(v_chunk.as_ptr());
             
             // Load 4 acceleration values
-            let a = _mm256_loadu_pd(accelerations.as_ptr().add(i));
+            let a = _mm256_loadu_pd(a_chunk.as_ptr());
             
             // Compute: v * dt
             let v_dt = _mm256_mul_pd(v, dt_vec);
@@ -127,9 +131,7 @@ impl SimdBackend for Avx2Backend {
             let p_new = _mm256_add_pd(p_new, a_term);
             
             // Store result
-            _mm256_storeu_pd(positions.as_mut_ptr().add(i), p_new);
-            
-            i += 4;
+            _mm256_storeu_pd(p_chunk.as_mut_ptr(), p_new);
         }
     }
     
@@ -141,24 +143,25 @@ impl SimdBackend for Avx2Backend {
         forces: &[f64],
     ) {
         // f_total += f
-        let len = total_forces.len();
         
-        // Process 4 elements at a time
-        let mut i = 0;
-        while i + 4 <= len {
+        // Use chunks_exact for safer iteration
+        let mut total_chunks = total_forces.chunks_exact_mut(4);
+        let mut force_chunks = forces.chunks_exact(4);
+        
+        // Process 4 elements at a time using iterators
+        while let (Some(f_total_chunk), Some(f_chunk)) = 
+            (total_chunks.next(), force_chunks.next()) {
             // Load 4 total force values
-            let f_total = _mm256_loadu_pd(total_forces.as_ptr().add(i));
+            let f_total = _mm256_loadu_pd(f_total_chunk.as_ptr());
             
             // Load 4 force values
-            let f = _mm256_loadu_pd(forces.as_ptr().add(i));
+            let f = _mm256_loadu_pd(f_chunk.as_ptr());
             
             // Add: f_total += f
             let f_new = _mm256_add_pd(f_total, f);
             
             // Store result
-            _mm256_storeu_pd(total_forces.as_mut_ptr().add(i), f_new);
-            
-            i += 4;
+            _mm256_storeu_pd(f_total_chunk.as_mut_ptr(), f_new);
         }
     }
     

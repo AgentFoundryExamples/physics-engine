@@ -17,7 +17,7 @@
 //! that work with contiguous component data.
 
 #[cfg(feature = "simd")]
-use crate::simd::{select_backend, SimdBackend};
+use crate::simd::select_backend;
 
 /// Process velocity updates with SIMD acceleration
 ///

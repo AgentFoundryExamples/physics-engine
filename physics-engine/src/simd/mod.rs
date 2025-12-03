@@ -68,13 +68,14 @@ pub trait SimdBackend: Send + Sync {
     
     /// Vectorized velocity update: v' = v + a * dt
     ///
-    /// Processes `width()` entities at a time. Requires aligned slices.
+    /// Processes `width()` entities at a time.
     ///
     /// # Safety
     ///
-    /// - `velocities`, `accelerations` must have length divisible by `width()`
-    /// - All pointers must be properly aligned for SIMD operations
+    /// - `velocities` and `accelerations` must have the same length
+    /// - Length should be divisible by `width()` for optimal performance
     /// - Caller must ensure CPU supports required instructions
+    /// - Implementation handles any length safely, processing full chunks only
     unsafe fn update_velocity_vectorized(
         &self,
         velocities: &mut [f64],
@@ -84,13 +85,14 @@ pub trait SimdBackend: Send + Sync {
     
     /// Vectorized position update: p' = p + v * dt + 0.5 * a * dt²
     ///
-    /// Processes `width()` entities at a time. Requires aligned slices.
+    /// Processes `width()` entities at a time.
     ///
     /// # Safety
     ///
-    /// - All slices must have length divisible by `width()`
-    /// - All pointers must be properly aligned for SIMD operations
+    /// - All slices must have the same length
+    /// - Length should be divisible by `width()` for optimal performance
     /// - Caller must ensure CPU supports required instructions
+    /// - Implementation handles any length safely, processing full chunks only
     unsafe fn update_position_vectorized(
         &self,
         positions: &mut [f64],
@@ -106,9 +108,10 @@ pub trait SimdBackend: Send + Sync {
     ///
     /// # Safety
     ///
-    /// - `total_forces`, `forces` must have length divisible by `width()`
-    /// - All pointers must be properly aligned for SIMD operations
+    /// - `total_forces` and `forces` must have the same length
+    /// - Length should be divisible by `width()` for optimal performance
     /// - Caller must ensure CPU supports required instructions
+    /// - Implementation handles any length safely, processing full chunks only
     unsafe fn accumulate_forces_vectorized(
         &self,
         total_forces: &mut [f64],
@@ -117,11 +120,22 @@ pub trait SimdBackend: Send + Sync {
 }
 
 /// Select the best available SIMD backend for the current CPU
+///
+/// Currently supports:
+/// - **AVX2**: If available (Intel Haswell 2013+, AMD Excavator 2015+)
+/// - **Scalar**: Always available as fallback
+///
+/// Future: AVX-512 support planned but not yet implemented.
 pub fn select_backend() -> Box<dyn SimdBackend> {
     let features = detect_cpu_features();
     
     #[cfg(target_arch = "x86_64")]
     {
+        // TODO: Add AVX-512 support in future version
+        // if features.has_avx512f && features.has_avx512dq {
+        //     return Box::new(Avx512Backend);
+        // }
+        
         if features.has_avx2 {
             return Box::new(Avx2Backend);
         }
