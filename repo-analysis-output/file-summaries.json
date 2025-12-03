@@ -78,8 +78,8 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 20761,
-        "loc": 431,
+        "size_bytes": 21149,
+        "loc": 435,
         "todo_count": 0,
         "declaration_count": 22
       },
@@ -125,8 +125,8 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 18800,
-        "loc": 392,
+        "size_bytes": 19323,
+        "loc": 396,
         "todo_count": 0,
         "declaration_count": 19
       },
@@ -752,10 +752,10 @@
       "role": "api",
       "role_justification": "filename contains 'api'",
       "metrics": {
-        "size_bytes": 13409,
-        "loc": 168,
+        "size_bytes": 16631,
+        "loc": 194,
         "todo_count": 0,
-        "declaration_count": 41
+        "declaration_count": 45
       },
       "structure": {
         "declarations": [
@@ -765,6 +765,7 @@
           "fn timestep",
           "fn thread_count",
           "fn is_parallel_enabled",
+          "fn get_entities",
           "fn name",
           "fn version",
           "fn api_version",
@@ -776,6 +777,7 @@
           "fn as_any_mut",
           "fn create_object",
           "fn as_force_provider",
+          "fn compute_forces_for_world",
           "fn apply_constraint",
           "fn priority",
           "fn new",
@@ -790,11 +792,13 @@
           "fn test_plugin_context",
           "fn test_plugin_initialization",
           "fn test_plugin_downcasting",
+          "fn test_plugin_context_get_entities",
           "struct PluginContext",
           "struct TestPlugin",
           "trait Plugin",
           "trait ObjectFactory",
           "trait ForceProviderPlugin",
+          "trait WorldAwareForceProvider",
           "trait ConstraintSystem",
           "impl PluginContext<'a>",
           "impl TestPlugin",
@@ -818,10 +822,10 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 22721,
-        "loc": 356,
-        "todo_count": 0,
-        "declaration_count": 45
+        "size_bytes": 31235,
+        "loc": 467,
+        "todo_count": 1,
+        "declaration_count": 55
       },
       "structure": {
         "declarations": [
@@ -832,6 +836,10 @@
           "fn softening",
           "fn set_chunk_size",
           "fn set_warn_on_invalid",
+          "fn set_max_expected_force",
+          "fn max_expected_force",
+          "fn set_warn_on_high_forces",
+          "fn warn_on_high_forces",
           "fn compute_pairwise_force",
           "fn compute_force_for_entity",
           "fn name",
@@ -842,6 +850,7 @@
           "fn compute_force",
           "fn name",
           "fn as_force_provider",
+          "fn compute_forces_for_world",
           "fn new",
           "fn compute_forces",
           "fn compute_forces_parallel",
@@ -858,6 +867,10 @@
           "fn test_zero_distance_handling",
           "fn test_softening_prevents_singularity",
           "fn test_immovable_bodies_ignored",
+          "fn test_warning_suppression_config",
+          "fn test_negative_max_force_panics",
+          "fn test_parallel_gravity_correctness",
+          "fn test_parallel_large_entity_count",
           "struct GravityPlugin",
           "struct GravitySystem",
           "struct SimpleForceProvider",
@@ -865,6 +878,7 @@
           "impl Plugin",
           "impl ForceProvider",
           "impl ForceProviderPlugin",
+          "impl crate::plugins::api::WorldAwareForceProvider",
           "impl GravitySystem",
           "impl SimpleForceProvider",
           "impl ForceProvider",

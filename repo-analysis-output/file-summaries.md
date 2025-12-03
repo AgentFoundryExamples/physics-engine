@@ -49,8 +49,8 @@ Total files: 23
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 20.27 KB  
-**LOC:** 431  
+**Size:** 20.65 KB  
+**LOC:** 435  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 22  
 **Top-level declarations:**
@@ -70,8 +70,8 @@ Total files: 23
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 18.36 KB  
-**LOC:** 392  
+**Size:** 18.87 KB  
+**LOC:** 396  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 19  
 **Top-level declarations:**
@@ -321,10 +321,10 @@ Total files: 23
 **Language:** Rust  
 **Role:** api  
 **Role Justification:** filename contains 'api'  
-**Size:** 13.09 KB  
-**LOC:** 168  
+**Size:** 16.24 KB  
+**LOC:** 194  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 41  
+**Declarations:** 45  
 **Top-level declarations:**
   - fn new
   - fn world
@@ -332,20 +332,20 @@ Total files: 23
   - fn timestep
   - fn thread_count
   - fn is_parallel_enabled
+  - fn get_entities
   - fn name
   - fn version
   - fn api_version
-  - fn dependencies
-  - ... and 31 more
+  - ... and 35 more
 
 ## physics-engine/src/plugins/gravity.rs
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 22.19 KB  
-**LOC:** 356  
-**TODOs/FIXMEs:** 0  
-**Declarations:** 45  
+**Size:** 30.50 KB  
+**LOC:** 467  
+**TODOs/FIXMEs:** 1  
+**Declarations:** 55  
 **Top-level declarations:**
   - fn new
   - fn with_scaled_g
@@ -354,10 +354,10 @@ Total files: 23
   - fn softening
   - fn set_chunk_size
   - fn set_warn_on_invalid
-  - fn compute_pairwise_force
-  - fn compute_force_for_entity
-  - fn name
-  - ... and 35 more
+  - fn set_max_expected_force
+  - fn max_expected_force
+  - fn set_warn_on_high_forces
+  - ... and 45 more
 
 ## physics-engine/src/plugins/mod.rs
 **Language:** Rust  

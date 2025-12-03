@@ -223,8 +223,7 @@
         "stdlib": [
           "std::any::Any",
           "std::collections::HashMap",
-          "std::sync::Arc",
-          "std::sync::Mutex"
+          "std::sync::Arc"
         ],
         "third-party": [
           "rayon::prelude::",
@@ -337,7 +336,6 @@
       "std::collections::HashMap",
       "std::fmt",
       "std::sync::Arc",
-      "std::sync::Mutex",
       "std::time::Instant"
     ],
     "third-party": [
@@ -353,7 +351,7 @@
       "semver::Version",
       "tests"
     ],
-    "stdlib_count": 9,
+    "stdlib_count": 8,
     "third-party_count": 11
   }
 }

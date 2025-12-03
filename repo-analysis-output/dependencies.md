@@ -10,14 +10,14 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 - **Total files**: 23
 - **Intra-repo dependencies**: 6
-- **External stdlib dependencies**: 9
+- **External stdlib dependencies**: 8
 - **External third-party dependencies**: 11
 
 ## External Dependencies
 
 ### Standard Library / Core Modules
 
-Total: 9 unique modules
+Total: 8 unique modules
 
 - `std::any::Any`
 - `std::any::TypeId`
@@ -26,7 +26,6 @@ Total: 9 unique modules
 - `std::collections::HashMap`
 - `std::fmt`
 - `std::sync::Arc`
-- `std::sync::Mutex`
 - `std::time::Instant`
 
 ### Third-Party Packages
