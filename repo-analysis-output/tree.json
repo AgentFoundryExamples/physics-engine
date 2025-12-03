@@ -54,7 +54,15 @@
         },
         {
           "type": "file",
+          "name": "performance.md"
+        },
+        {
+          "type": "file",
           "name": "plugins.md"
+        },
+        {
+          "type": "file",
+          "name": "roadmap.md"
         }
       ]
     },
@@ -235,6 +243,10 @@
     {
       "type": "file",
       "name": "Cargo.toml"
+    },
+    {
+      "type": "file",
+      "name": "CHANGELOG.md"
     },
     {
       "type": "file",

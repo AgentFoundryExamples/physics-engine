@@ -11,7 +11,9 @@
   ├── architecture.md
   ├── examples.md
   ├── integration.md
-  └── plugins.md
+  ├── performance.md
+  ├── plugins.md
+  └── roadmap.md
 ├── physics-engine
   ├── benches
     └── integration.rs
@@ -52,5 +54,6 @@
 ├── .gitignore
 ├── Cargo.lock
 ├── Cargo.toml
+├── CHANGELOG.md
 ├── LICENSE
 └── README.md
