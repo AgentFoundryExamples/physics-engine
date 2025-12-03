@@ -1,6 +1,8 @@
 # Integration Audit - Diagnostic Tools and Methodology
 
-This directory contains diagnostic tools and documentation for auditing the physics engine integrators and reproducing simulation failures.
+This directory contains diagnostic tools and documentation for auditing the physics engine integrators and reproducing simulation results.
+
+**Note**: As of version 0.1.1+, examples use the library's Integrator trait implementations directly, ensuring users exercise the shared integration code for both Velocity Verlet and RK4 integrators.
 
 ## Quick Links
 
@@ -9,6 +11,8 @@ This directory contains diagnostic tools and documentation for auditing the phys
 - **[examples.md](examples.md#known-issues-version-010)** - Usage warnings and limitations
 
 ## Running Diagnostics
+
+Both examples now support integrator selection via the `--integrator` flag (default: `verlet`).
 
 ### Solar System Simulation
 
@@ -21,9 +25,12 @@ cargo run --release --example solar_system -- --diagnostics --years 0.1
 # Full year with diagnostics (generates ~37 diagnostic lines)
 cargo run --release --example solar_system -- --diagnostics --years 1 > solar_diagnostics.csv
 
-# Compare integrators
+# Compare integrators (both now use library implementations)
 cargo run --release --example solar_system -- --diagnostics --integrator verlet --years 1 > verlet_diag.csv
 cargo run --release --example solar_system -- --diagnostics --integrator rk4 --years 1 > rk4_diag.csv
+
+# Test with different integrators for particle collision
+cargo run --release --example particle_collision -- --diagnostics --integrator rk4 --particles 50 > rk4_particles.csv
 ```
 
 **CSV Format**: `DIAG,step,time_s,dt_s,KE_J,PE_J,E_total_J,drift_frac,earth_AU,earth_v_ms,earth_a_ms2`

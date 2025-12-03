@@ -4,6 +4,8 @@ This guide provides detailed instructions for running and understanding the exam
 
 ## Available Examples
 
+All examples now use the library's Integrator trait implementations, ensuring users exercise the shared integration code. You can select between Velocity Verlet (default) and RK4 integrators using the `--integrator` flag.
+
 ### 1. Basic ECS Example (`basic.rs`)
 
 **Purpose**: Demonstrates the fundamental Entity Component System (ECS) architecture.
@@ -62,10 +64,12 @@ cargo run --example solar_system --release -- --integrator rk4 --years 5 --times
 ```
 
 **Command-Line Options**:
-- `--integrator <name>`: Choose integrator (`verlet` or `rk4`)
+- `--integrator <name>`: Choose integrator (`verlet` or `rk4`, default: `verlet`)
 - `--timestep <seconds>`: Set timestep in seconds (default: 3600 = 1 hour)
 - `--years <number>`: Duration in Earth years (default: 1.0)
 - `--diagnostics`: Enable detailed CSV diagnostic output (logs every 10 steps)
+
+**Note**: If an unknown integrator is specified, the program will exit with a clear error message listing valid options.
 
 **Expected Behavior**:
 - Planets should maintain stable orbits
@@ -144,11 +148,13 @@ cargo run --example particle_collision --release -- --seed 42 --particles 50
 
 **Command-Line Options**:
 - `--particles <n>`: Number of particles (default: 100)
-- `--integrator <name>`: Choose integrator (`verlet` or `rk4`)
+- `--integrator <name>`: Choose integrator (`verlet` or `rk4`, default: `verlet`)
 - `--timestep <seconds>`: Set timestep (default: 0.01 s)
 - `--duration <seconds>`: Simulation duration (default: 10 s)
 - `--seed <n>`: Random seed for reproducibility (default: 12345)
 - `--diagnostics`: Enable detailed CSV diagnostic output (logs every 50 steps)
+
+**Note**: If an unknown integrator is specified, the program will exit with a clear error message listing valid options.
 
 **Expected Behavior**:
 - Particles gravitate toward each other (attractive gravity)
@@ -387,6 +393,44 @@ plt.show()
 ---
 
 ## Troubleshooting
+
+### Unknown integrator error
+
+**Cause**: Invalid integrator name passed to `--integrator` flag.
+
+**Error message**: `Error: Unknown integrator 'xyz'. Valid options: verlet, rk4`
+
+**Solution**: Use one of the valid integrator names:
+- `verlet` - Velocity Verlet (symplectic, good energy conservation)
+- `rk4` - Runge-Kutta 4th order (high accuracy)
+
+Example:
+```bash
+cargo run --release --example solar_system -- --integrator verlet
+```
+
+### Switching integrators mid-simulation
+
+**Note**: Integrators cannot be switched during a running simulation. To compare integrators, run separate simulations:
+
+```bash
+# Run with Verlet
+cargo run --release --example solar_system -- --integrator verlet --years 1
+
+# Run with RK4 for comparison
+cargo run --release --example solar_system -- --integrator rk4 --years 1
+```
+
+### Empty simulation (zero entities)
+
+**Behavior**: Simulations with zero entities complete successfully without errors:
+
+```bash
+cargo run --release --example particle_collision -- --particles 0
+# Completes normally with zero interactions
+```
+
+This is intentional - the examples handle edge cases gracefully.
 
 ### "Force magnitude exceeds limit" warnings
 
