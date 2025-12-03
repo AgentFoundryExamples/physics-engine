@@ -68,12 +68,8 @@ impl SimdBackend for Avx2Backend {
         // v' = v + a * dt
         let dt_vec = _mm256_set1_pd(dt);
         
-        // Use chunks_exact for safer iteration (processes only complete 4-element chunks)
-        let mut vel_chunks = velocities.chunks_exact_mut(4);
-        let mut acc_chunks = accelerations.chunks_exact(4);
-        
-        // Process 4 elements at a time using iterators
-        while let (Some(v_chunk), Some(a_chunk)) = (vel_chunks.next(), acc_chunks.next()) {
+        // Process 4 elements at a time using zip for safety
+        for (v_chunk, a_chunk) in velocities.chunks_exact_mut(4).zip(accelerations.chunks_exact(4)) {
             // Load 4 velocity values
             let v = _mm256_loadu_pd(v_chunk.as_ptr());
             
@@ -103,14 +99,11 @@ impl SimdBackend for Avx2Backend {
         let dt_vec = _mm256_set1_pd(dt);
         let dt_sq_half_vec = _mm256_set1_pd(dt_sq_half);
         
-        // Use chunks_exact for safer iteration
-        let mut pos_chunks = positions.chunks_exact_mut(4);
-        let mut vel_chunks = velocities.chunks_exact(4);
-        let mut acc_chunks = accelerations.chunks_exact(4);
-        
-        // Process 4 elements at a time using iterators
-        while let (Some(p_chunk), Some(v_chunk), Some(a_chunk)) = 
-            (pos_chunks.next(), vel_chunks.next(), acc_chunks.next()) {
+        // Process 4 elements at a time using zip for safety
+        for ((p_chunk, v_chunk), a_chunk) in positions.chunks_exact_mut(4)
+            .zip(velocities.chunks_exact(4))
+            .zip(accelerations.chunks_exact(4))
+        {
             // Load 4 position values
             let p = _mm256_loadu_pd(p_chunk.as_ptr());
             
@@ -144,13 +137,8 @@ impl SimdBackend for Avx2Backend {
     ) {
         // f_total += f
         
-        // Use chunks_exact for safer iteration
-        let mut total_chunks = total_forces.chunks_exact_mut(4);
-        let mut force_chunks = forces.chunks_exact(4);
-        
-        // Process 4 elements at a time using iterators
-        while let (Some(f_total_chunk), Some(f_chunk)) = 
-            (total_chunks.next(), force_chunks.next()) {
+        // Process 4 elements at a time using zip for safety
+        for (f_total_chunk, f_chunk) in total_forces.chunks_exact_mut(4).zip(forces.chunks_exact(4)) {
             // Load 4 total force values
             let f_total = _mm256_loadu_pd(f_total_chunk.as_ptr());
             
