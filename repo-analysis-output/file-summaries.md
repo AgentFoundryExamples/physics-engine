@@ -49,8 +49,8 @@ Total files: 23
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 20.65 KB  
-**LOC:** 435  
+**Size:** 23.33 KB  
+**LOC:** 485  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 22  
 **Top-level declarations:**
@@ -70,8 +70,8 @@ Total files: 23
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 18.87 KB  
-**LOC:** 396  
+**Size:** 23.25 KB  
+**LOC:** 478  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 19  
 **Top-level declarations:**
