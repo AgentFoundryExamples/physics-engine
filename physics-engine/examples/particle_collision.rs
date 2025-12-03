@@ -478,13 +478,16 @@ fn main() {
     let start_time = Instant::now();
     let mut step_times = Vec::new();
 
+    // Create force registry once and reuse across iterations
+    let mut force_registry = ForceRegistry::new();
+    force_registry.max_force_magnitude = 1e10;
+    force_registry.warn_on_missing_components = false;
+
     for step in 0..num_steps {
         let step_start = Instant::now();
 
-        // Create fresh force registry for this step
-        let mut force_registry = ForceRegistry::new();
-        force_registry.max_force_magnitude = 1e10;
-        force_registry.warn_on_missing_components = false;
+        // Clear force registry for this step (avoids reallocation)
+        force_registry.clear();
 
         // Compute gravitational forces at current positions
         gravity_system.compute_forces(&entities, &positions, &masses, &mut force_registry);

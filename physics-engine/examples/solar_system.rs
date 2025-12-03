@@ -494,13 +494,16 @@ fn main() {
     println!("Running {} steps...", num_steps);
     println!();
 
+    // Create force registry once and reuse across iterations
+    let mut force_registry = ForceRegistry::new();
+    force_registry.max_force_magnitude = 1e24;
+    force_registry.warn_on_missing_components = false;
+
     for step in 0..num_steps {
         let entity_vec: Vec<Entity> = entities.iter().map(|(e, _)| *e).collect();
         
-        // Create fresh force registry for this step
-        let mut force_registry = ForceRegistry::new();
-        force_registry.max_force_magnitude = 1e24;
-        force_registry.warn_on_missing_components = false;
+        // Clear force registry for this step (avoids reallocation)
+        force_registry.clear();
         
         // Compute gravitational forces at current positions
         gravity_system.compute_forces(&entity_vec, &positions, &masses, &mut force_registry);
