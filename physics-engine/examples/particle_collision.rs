@@ -403,13 +403,18 @@ fn main() {
         accelerations.insert(*entity, Acceleration::zero());
     }
 
-    // Create gravity system with scaled G
+    // Create gravity system with scaled G and warning suppression
     let mut gravity_plugin = GravityPlugin::with_scaled_g(config.g_scale);
     gravity_plugin.set_softening(config.softening);
+    // Suppress warnings for expected high-force scenarios in dense particle clouds
+    gravity_plugin.set_warn_on_high_forces(false);
+    gravity_plugin.set_warn_on_invalid(false);
     let gravity_system = GravitySystem::new(gravity_plugin);
 
-    // Create force registry
+    // Create force registry with appropriate limits for particle simulations
     let mut force_registry = ForceRegistry::new();
+    force_registry.max_force_magnitude = 1e10; // Suitable for scaled gravity
+    force_registry.warn_on_missing_components = false;
 
     // Create integrator
     enum IntegratorWrapper {

@@ -122,6 +122,19 @@ impl<'a> PluginContext<'a> {
             false
         }
     }
+
+    /// Get a snapshot of all entities in the world
+    ///
+    /// Returns a vector containing all entity IDs currently in the world.
+    /// This is useful for N-body simulations where forces depend on all entities.
+    ///
+    /// # Performance Note
+    ///
+    /// This creates a snapshot allocation. For performance-critical code,
+    /// consider caching the entity list if it doesn't change frequently.
+    pub fn get_entities(&self) -> Vec<Entity> {
+        self.world.entities().copied().collect()
+    }
 }
 
 /// Lifecycle hooks for plugins
@@ -263,6 +276,62 @@ pub trait ForceProviderPlugin: Plugin + crate::ecs::systems::ForceProvider {
     ///
     /// This allows the plugin to be registered with the ForceRegistry.
     fn as_force_provider(&self) -> &dyn crate::ecs::systems::ForceProvider;
+}
+
+/// Provider for forces that depend on all entities in the world
+///
+/// WorldAwareForceProvider extends ForceProvider for cases where force computation
+/// requires knowledge of all entities, such as N-body gravitational simulations.
+/// This trait provides a specialized interface that can be more efficient than
+/// the per-entity ForceProvider interface.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// struct NBodyGravityPlugin {
+///     g_constant: f64,
+/// }
+///
+/// impl WorldAwareForceProvider for NBodyGravityPlugin {
+///     fn compute_forces_for_world(
+///         &self,
+///         entities: &[Entity],
+///         world: &World,
+///         force_registry: &mut ForceRegistry,
+///     ) -> Result<usize, String> {
+///         // Compute all pairwise gravitational forces efficiently
+///         // Register computed forces with the registry
+///         Ok(entities.len())
+///     }
+/// }
+/// ```
+pub trait WorldAwareForceProvider: Plugin {
+    /// Compute forces for all entities in the world
+    ///
+    /// This method is called to compute forces that depend on the global state
+    /// of all entities. The implementation should compute forces and register
+    /// them with the provided force registry.
+    ///
+    /// # Arguments
+    ///
+    /// * `entities` - Slice of all entities to consider
+    /// * `world` - Immutable reference to the world for component access
+    /// * `force_registry` - Mutable registry to accumulate computed forces
+    ///
+    /// # Returns
+    ///
+    /// Number of entities that had forces computed, or error message on failure
+    ///
+    /// # Performance
+    ///
+    /// Implementations should use parallel computation when possible via
+    /// `PluginContext::thread_count()` and `is_parallel_enabled()`.
+    fn compute_forces_for_world(
+        &self,
+        entities: &[Entity],
+        world: &World,
+        force_registry: &mut crate::ecs::systems::ForceRegistry,
+    ) -> Result<usize, String>;
 }
 
 /// System for applying custom constraints
@@ -437,5 +506,27 @@ mod tests {
         let any_mut = plugin.as_any_mut();
         let downcasted_mut = any_mut.downcast_mut::<TestPlugin>();
         assert!(downcasted_mut.is_some());
+    }
+
+    #[test]
+    fn test_plugin_context_get_entities() {
+        let mut world = World::new();
+        let e1 = world.create_entity();
+        let e2 = world.create_entity();
+        let e3 = world.create_entity();
+        
+        let integrator_name = "verlet";
+        let timestep = 0.016;
+
+        #[cfg(feature = "parallel")]
+        let context = PluginContext::new(&world, integrator_name, timestep, None);
+        #[cfg(not(feature = "parallel"))]
+        let context = PluginContext::new(&world, integrator_name, timestep);
+
+        let entities = context.get_entities();
+        assert_eq!(entities.len(), 3);
+        assert!(entities.contains(&e1));
+        assert!(entities.contains(&e2));
+        assert!(entities.contains(&e3));
     }
 }
