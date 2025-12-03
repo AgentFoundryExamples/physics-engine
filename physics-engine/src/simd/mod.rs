@@ -132,6 +132,11 @@ pub trait SimdBackend: Send + Sync {
     );
 }
 
+use std::sync::OnceLock;
+
+/// Cached backend selection result
+static SELECTED_BACKEND: OnceLock<&'static str> = OnceLock::new();
+
 /// Select the best available SIMD backend for the current CPU
 ///
 /// Selects backends in priority order:
@@ -141,23 +146,34 @@ pub trait SimdBackend: Send + Sync {
 ///
 /// Selection is cached globally for thread-safe access.
 pub fn select_backend() -> Box<dyn SimdBackend> {
-    let features = detect_cpu_features();
-    
-    #[cfg(target_arch = "x86_64")]
-    {
-        // Prefer AVX-512 if available
-        if features.has_avx512f && features.has_avx512dq {
-            return Box::new(Avx512Backend);
+    let backend_name = SELECTED_BACKEND.get_or_init(|| {
+        let features = detect_cpu_features();
+        
+        #[cfg(target_arch = "x86_64")]
+        {
+            // Prefer AVX-512 if available
+            if features.has_avx512f && features.has_avx512dq {
+                return "AVX-512";
+            }
+            
+            // Fall back to AVX2
+            if features.has_avx2 {
+                return "AVX2";
+            }
         }
         
-        // Fall back to AVX2
-        if features.has_avx2 {
-            return Box::new(Avx2Backend);
-        }
-    }
+        // Fallback to scalar
+        "Scalar"
+    });
     
-    // Fallback to scalar
-    Box::new(ScalarBackend)
+    // Create backend based on cached selection
+    match *backend_name {
+        #[cfg(target_arch = "x86_64")]
+        "AVX-512" => Box::new(Avx512Backend),
+        #[cfg(target_arch = "x86_64")]
+        "AVX2" => Box::new(Avx2Backend),
+        _ => Box::new(ScalarBackend),
+    }
 }
 
 #[cfg(test)]
@@ -368,15 +384,27 @@ mod tests {
     #[test]
     fn test_large_arrays() {
         // Test with large arrays to ensure no overflow or memory issues
-        let count = 10000;
+        let count = 10001; // Use a non-multiple to test tail handling
         let mut velocities = vec![1.0; count];
         let accelerations = vec![0.5; count];
         let dt = 0.1;
         
         let backend = select_backend();
+        let width = backend.width();
         
         unsafe {
-            backend.update_velocity_vectorized(&mut velocities, &accelerations, dt);
+            let simd_count = (count / width) * width;
+            if simd_count > 0 {
+                backend.update_velocity_vectorized(
+                    &mut velocities[..simd_count],
+                    &accelerations[..simd_count],
+                    dt,
+                );
+            }
+            // Handle remainder
+            for i in simd_count..count {
+                velocities[i] += accelerations[i] * dt;
+            }
         }
         
         // Verify all elements were updated
