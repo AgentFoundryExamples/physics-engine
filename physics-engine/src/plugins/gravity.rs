@@ -414,16 +414,16 @@ impl crate::plugins::api::WorldAwareForceProvider for GravityPlugin {
         _world: &crate::ecs::World,
         _force_registry: &mut ForceRegistry,
     ) -> Result<usize, String> {
-        // Create a GravitySystem with this plugin and use it to compute forces
-        let _system = GravitySystem::new_from_plugin(Arc::new(self.clone()));
+        // TODO: Complete implementation to access World's component storage
+        // For now, users should use GravitySystem::compute_forces() directly
+        // which provides the same functionality with explicit component storage access.
+        //
+        // Future implementation would:
+        // 1. Access Position and Mass components from world
+        // 2. Call GravitySystem with those components
+        // 3. Register computed forces with force_registry
         
-        // We need to get component storage from the world
-        // For now, we'll use the existing compute_forces method
-        // In a real implementation, we'd access world's component storage directly
-        
-        // This is a placeholder - the actual implementation would access
-        // Position and Mass components from the world
-        Ok(0)
+        Err("WorldAwareForceProvider not yet implemented for GravityPlugin - use GravitySystem::compute_forces() instead".to_string())
     }
 }
 
@@ -441,13 +441,6 @@ impl GravitySystem {
         GravitySystem {
             plugin: Arc::new(plugin),
         }
-    }
-
-    /// Create a new gravity system from an Arc-wrapped plugin
-    ///
-    /// Internal helper for WorldAwareForceProvider implementation
-    fn new_from_plugin(plugin: Arc<GravityPlugin>) -> Self {
-        GravitySystem { plugin }
     }
 
     /// Compute gravitational forces for all entities and accumulate in registry
