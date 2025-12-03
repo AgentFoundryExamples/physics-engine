@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 33
+Total files: 34
 
 ## physics-engine/benches/integration.rs
 **Language:** Rust  
@@ -323,22 +323,22 @@ Total files: 33
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 21.95 KB  
-**LOC:** 422  
+**Size:** 22.88 KB  
+**LOC:** 439  
 **TODOs/FIXMEs:** 0  
-**Declarations:** 17  
+**Declarations:** 16  
 **Top-level declarations:**
   - fn new
   - fn with_pool_config
   - fn pool_stats
   - fn clear_pools
-  - fn compute_derivative
   - fn name
   - fn timestep
   - fn set_timestep
   - fn integrate
   - fn test_rk4_creation
-  - ... and 7 more
+  - fn test_rk4_invalid_timestep
+  - ... and 6 more
 
 ## physics-engine/src/integration/simd_helpers.rs
 **Language:** Rust  
@@ -646,3 +646,24 @@ Total files: 33
   - fn test_verlet_energy_conservation_gravity
   - struct ConstantForce
   - impl ForceProvider
+
+## physics-engine/tests/rk4_accuracy.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 18.50 KB  
+**LOC:** 384  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 18  
+**Top-level declarations:**
+  - fn compute_force
+  - fn name
+  - fn test_rk4_constant_acceleration_accuracy
+  - fn test_rk4_long_term_accuracy
+  - fn test_rk4_multi_body_staging
+  - fn test_rk4_different_masses
+  - fn test_rk4_immovable_bodies
+  - fn test_rk4_free_motion
+  - fn new
+  - fn compute_force
+  - ... and 8 more

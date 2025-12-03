@@ -255,6 +255,10 @@
             {
               "type": "file",
               "name": "integration_failures.rs"
+            },
+            {
+              "type": "file",
+              "name": "rk4_accuracy.rs"
             }
           ]
         },

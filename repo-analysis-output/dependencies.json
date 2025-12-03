@@ -434,6 +434,20 @@
           "physics_engine::plugins::gravity::"
         ]
       }
+    },
+    {
+      "id": "physics-engine/tests/rk4_accuracy.rs",
+      "path": "physics-engine/tests/rk4_accuracy.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [],
+        "third-party": [
+          "physics_engine::ecs::",
+          "physics_engine::ecs::components::",
+          "physics_engine::ecs::systems::",
+          "physics_engine::integration::"
+        ]
+      }
     }
   ],
   "edges": [

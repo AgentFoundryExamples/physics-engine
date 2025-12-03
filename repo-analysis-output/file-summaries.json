@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 33,
+  "total_files": 34,
   "files": [
     {
       "schema_version": "2.0",
@@ -879,10 +879,10 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 22478,
-        "loc": 422,
+        "size_bytes": 23432,
+        "loc": 439,
         "todo_count": 0,
-        "declaration_count": 17
+        "declaration_count": 16
       },
       "structure": {
         "declarations": [
@@ -890,7 +890,6 @@
           "fn with_pool_config",
           "fn pool_stats",
           "fn clear_pools",
-          "fn compute_derivative",
           "fn name",
           "fn timestep",
           "fn set_timestep",
@@ -1645,6 +1644,49 @@
           "fn test_verlet_circular_orbit_stability",
           "fn test_verlet_energy_conservation_gravity",
           "struct ConstantForce",
+          "impl ForceProvider"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/tests/rk4_accuracy.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 18944,
+        "loc": 384,
+        "todo_count": 0,
+        "declaration_count": 18
+      },
+      "structure": {
+        "declarations": [
+          "fn compute_force",
+          "fn name",
+          "fn test_rk4_constant_acceleration_accuracy",
+          "fn test_rk4_long_term_accuracy",
+          "fn test_rk4_multi_body_staging",
+          "fn test_rk4_different_masses",
+          "fn test_rk4_immovable_bodies",
+          "fn test_rk4_free_motion",
+          "fn new",
+          "fn compute_force",
+          "fn name",
+          "fn test_rk4_position_dependent_spring_force",
+          "fn test_rk4_two_body_attraction_one_fixed",
+          "struct ConstantForce",
+          "struct PositionDependentForce",
+          "impl ForceProvider",
+          "impl PositionDependentForce",
           "impl ForceProvider"
         ]
       },
