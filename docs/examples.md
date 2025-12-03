@@ -6,7 +6,40 @@ This guide provides detailed instructions for running and understanding the exam
 
 All examples now use the library's Integrator trait implementations, ensuring users exercise the shared integration code. You can select between Velocity Verlet (default) and RK4 integrators using the `--integrator` flag.
 
-### 1. Basic ECS Example (`basic.rs`)
+### 1. SIMD Detection Example (`simd_detection.rs`) ⚡ NEW
+
+**Purpose**: Demonstrates how to detect and verify SIMD backend selection at runtime.
+
+**Topics Covered**:
+- Runtime CPU feature detection
+- Active SIMD backend identification
+- Performance expectations based on CPU capabilities
+- Troubleshooting SIMD configuration
+
+**Running**:
+```bash
+# Without SIMD feature (shows warning)
+cargo run --example simd_detection
+
+# With SIMD feature (shows detected backend)
+cargo run --features simd --example simd_detection
+```
+
+**Expected Output**:
+- CPU features detected (AVX2, AVX-512F, AVX-512DQ)
+- Active SIMD backend name ("AVX2", "AVX-512", or "Scalar")
+- Performance expectations and recommendations
+- Configuration guidance
+
+**Use Cases**:
+- Verifying SIMD is active on your CPU
+- Debugging performance issues
+- Understanding CPU capabilities
+- Testing in different environments (CI, containers, VMs)
+
+---
+
+### 2. Basic ECS Example (`basic.rs`)
 
 **Purpose**: Demonstrates the fundamental Entity Component System (ECS) architecture.
 
@@ -28,7 +61,7 @@ cargo run --example basic
 
 ---
 
-### 2. Solar System Simulation (`solar_system.rs`)
+### 3. Solar System Simulation (`solar_system.rs`)
 
 **Purpose**: Demonstrates gravitational N-body simulation with realistic solar system parameters.
 
@@ -116,7 +149,7 @@ evaluations per timestep for accurate energy conservation.
 
 ---
 
-### 3. Particle Collision Simulation (`particle_collision.rs`)
+### 4. Particle Collision Simulation (`particle_collision.rs`)
 
 **Purpose**: Demonstrates N-body simulation with many particles and performance characteristics.
 

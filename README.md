@@ -33,12 +33,13 @@ This release implements cache-friendly dense array component storage and SIMD ve
 
 - **SIMD Vectorization** ⚡ **NEW**
   - AVX2 support for x86_64 CPUs (Haswell 2013+)
-  - Runtime CPU feature detection with automatic dispatch
+  - **Automatic runtime CPU detection** - no configuration needed
   - Process 4 × f64 values per instruction (256-bit vectors)
   - 2-4× speedup for velocity updates, position updates, and force accumulation
-  - Scalar fallback for older CPUs - no compatibility issues
+  - **Scalar fallback for older CPUs** - works on all x86_64 systems, no compatibility issues
   - Enable with `--features simd` flag
   - Measured throughput: 1.2-2.1 Gelem/s on AMD EPYC 7763
+  - **Verify active backend**: Use `select_backend().name()` to check "AVX2" or "Scalar"
   
 - **Dense Array Component Storage**: New `SoAStorage<T>` implementation (name retained for API compatibility)
   - **Important**: This is a dense Array-of-Structures (AoS), not true Structure-of-Arrays
@@ -56,6 +57,19 @@ This release implements cache-friendly dense array component storage and SIMD ve
 - **Updated Documentation**: Architecture and performance docs explain design, trade-offs, and SIMD requirements
 
 **When to Use SIMD**: Targeting modern x86_64 CPUs (2013+), processing many entities (>100), performance-critical simulations.
+
+**SIMD Compatibility**: Works on all x86_64 systems. Automatically uses AVX2 on supported CPUs (Intel Haswell 2013+, AMD Excavator 2015+) and falls back to scalar code on older CPUs. No performance penalty on systems without SIMD support.
+
+**Detecting Active Backend**: Add this to your code to verify SIMD is active:
+```rust
+use physics_engine::simd::select_backend;
+println!("SIMD backend: {}", select_backend().name()); // "AVX2" or "Scalar"
+```
+
+**Example**: See `examples/simd_detection.rs` for a complete demonstration. Run with:
+```bash
+cargo run --features simd --example simd_detection
+```
 
 **When to Use Dense Storage**: Systems that can use direct array iteration, medium-large entity counts (>100), performance-critical paths.
 
@@ -389,8 +403,9 @@ The engine supports the following Cargo features:
   
   **SIMD Requirements:**
   - x86_64 CPU with AVX2 support (Intel Haswell 2013+, AMD Excavator 2015+)
-  - Runtime detection: Automatically falls back to scalar on older CPUs
-  - No user configuration needed - backend selected automatically
+  - **Runtime detection**: Automatically falls back to scalar on older CPUs - works everywhere!
+  - No user configuration needed - backend selected automatically at startup
+  - **Debugging**: Check active backend with `select_backend().name()`
   
   **SIMD Performance:**
   - Velocity updates: ~1.67 Gelem/s (1.67 billion f64 operations per second)

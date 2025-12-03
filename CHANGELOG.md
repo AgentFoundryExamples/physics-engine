@@ -210,6 +210,64 @@ println!("Position pool hit rate: {:.1}%", pos_stats.hit_rate());
 - To enable SIMD: Add `--features simd` to build commands
 - To configure pooling: Use `RK4Integrator::with_pool_config()` and `World::with_capacity()`
 
+### Upgrade Guide for Plugin Authors
+
+**Plugin Trait Compatibility**: All plugin traits remain unchanged:
+- `Plugin`, `ForceProvider`, `ConstraintSystem` signatures unchanged
+- No breaking changes to plugin API
+- Existing plugins work without modification
+
+**Force Provider Performance**: Plugins that implement `ForceProvider` automatically benefit from:
+- Dense storage when used with `SoAStorage` components
+- SIMD acceleration when feature flag is enabled (no code changes needed)
+- Memory pooling in RK4 integrator (transparent)
+
+**New Storage Options for Plugins**:
+```rust
+// Option 1: Continue using HashMap (works as-is)
+let mut storage = HashMapStorage::<Position>::new();
+
+// Option 2: Adopt SoA for better performance (drop-in replacement)
+let mut storage = SoAStorage::<Position>::with_capacity(1000);
+
+// Option 3: Use true SoA for maximum performance (requires field-level access)
+let mut storage = PositionSoAStorage::new();
+
+// Access via field arrays for batch operations
+if let Some(arrays) = storage.field_arrays() {
+    let (x, y, z) = arrays.as_position_arrays();
+    // Direct access to contiguous x, y, z arrays for SIMD operations
+    for i in 0..x.len() {
+        println!("Position {}: ({}, {}, {})", i, x[i], y[i], z[i]);
+    }
+}
+
+// Or mutate field arrays in bulk
+if let Some(mut arrays) = storage.field_arrays_mut() {
+    let (x, y, z) = arrays.as_position_arrays_mut();
+    // Update all x coordinates (SIMD-friendly)
+    for val in x.iter_mut() {
+        *val += 10.0;
+    }
+}
+```
+
+**Detecting SIMD Backend** (for debugging and logging):
+```rust
+use physics_engine::simd::{detect_cpu_features, select_backend};
+
+// Check CPU features at startup
+let features = detect_cpu_features();
+println!("SIMD support - AVX2: {}, AVX-512: {}", 
+         features.has_avx2, features.has_avx512f);
+
+// Get active backend name
+let backend = select_backend();
+println!("Active SIMD backend: {}", backend.name()); // "AVX2", "AVX-512", or "Scalar"
+```
+
+**No Breaking Changes**: Existing plugins compile and run without modification in v0.2.0
+
 **Current Status**:
 - ✅ Dense array storage: 1.5-3× iteration speedup
 - ✅ SIMD vectorization: 2-4× math speedup on AVX2 CPUs  
@@ -218,6 +276,22 @@ println!("Position pool hit rate: {:.1}%", pos_stats.hit_rate());
 - ✅ Documentation: Complete guides for new features
 - ⏸️ Query DSL: Deferred for better integration
 - ⏸️ Adaptive chunk sizing: Deferred pending real-world data
+
+**Verifying Your SIMD Setup**:
+```rust
+// Add this to your application startup to log the active SIMD backend:
+use physics_engine::simd::{detect_cpu_features, select_backend};
+
+let features = detect_cpu_features();
+let backend = select_backend();
+println!("CPU Features - AVX2: {}, AVX-512: {}", 
+         features.has_avx2, features.has_avx512f);
+println!("Active SIMD backend: {}", backend.name());
+// Expected output on modern CPUs: "Active SIMD backend: AVX2"
+// Expected output on older CPUs: "Active SIMD backend: Scalar"
+```
+
+**Example**: Run `cargo run --features simd --example simd_detection` to see detailed SIMD capabilities of your CPU.
 
 ## [0.1.1] - 2025-12-03
 

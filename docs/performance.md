@@ -845,6 +845,32 @@ println!("Using backend: {}", backend.name()); // "AVX2" or "Scalar"
 2. **AVX2** (if supported)
 3. **Scalar** (always available)
 
+**Debugging SIMD Detection**:
+If you're not seeing expected SIMD performance, verify the active backend:
+
+```rust
+// Add this at application startup:
+use physics_engine::simd::{detect_cpu_features, select_backend};
+
+let features = detect_cpu_features();
+println!("=== SIMD Debug Info ===");
+println!("AVX2 support: {}", features.has_avx2);
+println!("AVX-512F support: {}", features.has_avx512f);
+println!("AVX-512DQ support: {}", features.has_avx512dq);
+println!("Active backend: {}", select_backend().name());
+println!("======================");
+```
+
+**Expected Outputs**:
+- **Modern CPU (2013+)**: `Active backend: AVX2`
+- **Very modern CPU (2017+)**: `Active backend: AVX-512` (if fully supported)
+- **Older CPU (pre-2013)**: `Active backend: Scalar`
+
+**Common Issues**:
+- **Scalar on modern CPU**: Ensure you're building with `--features simd`
+- **No speedup**: Verify entity count > 100 (SIMD overhead dominates for small arrays)
+- **Crashes**: Check CPU actually supports detected features (VM/emulation issues)
+
 #### Vectorized Operations
 
 SIMD is currently applied to:
