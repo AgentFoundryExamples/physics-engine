@@ -47,6 +47,8 @@
 ├── repo-analysis-output
   ├── dependencies.json
   ├── dependencies.md
+  ├── file-summaries.json
+  ├── file-summaries.md
   ├── SUMMARY.md
   ├── tree.json
   └── tree.md

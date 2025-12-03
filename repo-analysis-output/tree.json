@@ -216,6 +216,14 @@
         },
         {
           "type": "file",
+          "name": "file-summaries.json"
+        },
+        {
+          "type": "file",
+          "name": "file-summaries.md"
+        },
+        {
+          "type": "file",
           "name": "SUMMARY.md"
         },
         {
