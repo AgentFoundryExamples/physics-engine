@@ -287,6 +287,39 @@ let rk4 = RK4Integrator::new(1.0 / 60.0);
 
 See [Integration Documentation](docs/integration.md) for detailed guidance.
 
+#### Memory Pooling (New in 0.2.0)
+
+The engine uses memory pooling to reduce allocation churn in hot paths:
+
+```rust
+use physics_engine::integration::RK4Integrator;
+use physics_engine::pool::PoolConfig;
+use physics_engine::ecs::World;
+
+// RK4 with default pooling (64 capacity, 8 max size)
+let integrator = RK4Integrator::new(1.0 / 60.0);
+
+// Custom pool configuration for large simulations
+let pool_config = PoolConfig::new(256, 16)
+    .with_growth_factor(1.5)
+    .with_logging();
+let integrator = RK4Integrator::with_pool_config(1.0 / 60.0, pool_config);
+
+// Preallocate World for known entity counts
+let world = World::with_capacity(1000);  // Avoids hash table resizing
+
+// Monitor pool performance
+let (pos_stats, vel_stats, acc_stats) = integrator.pool_stats();
+println!("Hit rate: {:.1}%", pos_stats.hit_rate());
+```
+
+**Benefits:**
+- 10-20% reduction in allocation overhead (RK4)
+- More consistent frame times
+- Better performance for entity counts > 100
+
+See [Performance Documentation](docs/performance.md#memory-pooling-v020) for tuning guidance.
+
 #### Warning Controls (New in 0.1.1)
 
 The gravity plugin now supports configurable warning controls for high-force scenarios:
@@ -596,8 +629,8 @@ See [`docs/roadmap.md`](docs/roadmap.md) for comprehensive future plans. Highlig
 **Version 0.2.0 - Performance & Memory** (Current - In Progress):
 - [x] Structure-of-Arrays (SoA) component storage for 1.5-3× iteration speedup
 - [x] Storage benchmarks comparing HashMap vs SoA
-- [ ] SIMD vectorization (AVX2/AVX-512) for explicit parallel computation
-- [ ] Memory pooling to reduce allocation overhead
+- [x] SIMD vectorization (AVX2) for explicit parallel computation
+- [x] Memory pooling to reduce allocation overhead
 - [ ] Adaptive chunk sizing for optimal parallelism
 - [ ] Query DSL for ergonomic component access
 

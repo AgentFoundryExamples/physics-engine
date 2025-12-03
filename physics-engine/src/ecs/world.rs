@@ -41,6 +41,41 @@ impl World {
         }
     }
 
+    /// Create a new world with preallocated capacity
+    ///
+    /// This preallocates storage for the expected number of entities,
+    /// reducing allocation churn during entity creation.
+    ///
+    /// # Arguments
+    ///
+    /// * `capacity` - Expected maximum number of entities
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use physics_engine::ecs::World;
+    ///
+    /// // Preallocate for 1000 entities
+    /// let mut world = World::with_capacity(1000);
+    /// ```
+    pub fn with_capacity(capacity: usize) -> Self {
+        World {
+            next_entity_id: 0,
+            free_ids: VecDeque::with_capacity(capacity / 4), // Estimate 25% turnover
+            entity_generations: Vec::with_capacity(capacity),
+            alive_entities: HashSet::with_capacity(capacity),
+        }
+    }
+
+    /// Reserve capacity for additional entities
+    ///
+    /// This ensures that at least `additional` more entities can be
+    /// created without reallocating.
+    pub fn reserve(&mut self, additional: usize) {
+        self.entity_generations.reserve(additional);
+        self.alive_entities.reserve(additional);
+    }
+
     /// Create a new entity
     pub fn create_entity(&mut self) -> Entity {
         let id = self.free_ids.pop_front().unwrap_or_else(|| {
@@ -181,5 +216,40 @@ mod tests {
         // Old entity reference should not be alive
         assert!(!world.is_entity_alive(e1));
         assert!(world.is_entity_alive(e2));
+    }
+
+    #[test]
+    fn test_world_with_capacity() {
+        let world = World::with_capacity(100);
+        assert_eq!(world.entity_count(), 0);
+        
+        // Capacity doesn't affect functionality, just performance
+        // We can still create entities
+        let mut world = world;
+        let e = world.create_entity();
+        assert!(world.is_entity_alive(e));
+    }
+
+    #[test]
+    fn test_world_reserve() {
+        let mut world = World::new();
+        
+        // Create some entities
+        for _ in 0..10 {
+            world.create_entity();
+        }
+        
+        // Reserve space for more
+        world.reserve(100);
+        
+        // Should still work correctly
+        assert_eq!(world.entity_count(), 10);
+        
+        // Create more entities
+        for _ in 0..90 {
+            world.create_entity();
+        }
+        
+        assert_eq!(world.entity_count(), 100);
     }
 }
