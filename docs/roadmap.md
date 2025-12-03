@@ -41,7 +41,7 @@ This document outlines the planned features, enhancements, and long-term vision 
 
 ## Version 0.2.0 - Performance & Memory (Planned)
 
-**Target**: Q1-Q2 2025 (aspirational)
+**Target**: Q2-Q3 2025 (aspirational)
 
 **Focus**: Memory layout optimization and cache efficiency improvements
 
@@ -131,7 +131,7 @@ world.query::<(&Position, &mut Velocity, &Mass)>()
 
 ## Version 0.3.0 - Spatial Acceleration (Planned)
 
-**Target**: Q2-Q3 2025 (aspirational)
+**Target**: Q3-Q4 2025 (aspirational)
 
 **Focus**: Scalability for large particle counts
 
@@ -192,7 +192,7 @@ world.query::<(&Position, &mut Velocity, &Mass)>()
 
 ## Version 0.4.0 - Collision & Constraints (Planned)
 
-**Target**: Q3-Q4 2025 (aspirational)
+**Target**: Q4 2025 - Q1 2026 (aspirational)
 
 **Focus**: Contact resolution and constraint systems
 
@@ -258,7 +258,7 @@ world.query::<(&Position, &mut Velocity, &Mass)>()
 
 ## Version 0.5.0 - GPU Acceleration (Planned)
 
-**Target**: Q4 2025 - Q1 2026 (aspirational)
+**Target**: Q1-Q2 2026 (aspirational)
 
 **Focus**: Massively parallel computation on GPUs
 
@@ -389,7 +389,7 @@ For each particle i (parallel):
 
 ## Version 0.6.0 - Visualization Integration (Planned)
 
-**Target**: Q1-Q2 2026 (aspirational)
+**Target**: Q2-Q3 2026 (aspirational)
 
 **Focus**: Real-time visualization and debugging tools
 

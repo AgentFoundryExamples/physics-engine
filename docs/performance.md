@@ -93,9 +93,11 @@ Measures integration overhead with zero forces.
 
 ## Benchmark Results
 
+**Note**: The following performance numbers are representative estimates based on algorithmic complexity analysis and typical hardware performance characteristics. While the benchmark suite exists in `benches/integration.rs` and can be run with `cargo bench`, the specific throughput values shown below are indicative of expected relative performance rather than measured results from the test environment. Actual performance will vary based on hardware, compiler optimizations, and workload characteristics.
+
 ### Integrator Throughput Comparison
 
-**Velocity Verlet vs RK4 - Entities per Second**
+**Velocity Verlet vs RK4 - Entities per Second (Representative Estimates)**
 
 | Entity Count | Verlet (entities/sec) | RK4 (entities/sec) | Verlet/RK4 Ratio |
 |--------------|----------------------|-------------------|------------------|
@@ -108,6 +110,7 @@ Measures integration overhead with zero forces.
 - Performance difference is consistent across entity counts
 - RK4 requires 4 force evaluations per step vs 2 for Verlet, explaining the 2× difference
 - Both integrators show good scaling characteristics up to 1000 entities
+- **To obtain actual measurements**: Run `cargo bench` and compare the `time` and `thrpt` outputs from Criterion
 
 ### Force Evaluation Cost
 

@@ -409,37 +409,37 @@ The project enforces:
 
 See [`docs/roadmap.md`](docs/roadmap.md) for comprehensive future plans. Highlights include:
 
-**Version 0.2.0 - Performance & Memory** (Q1-Q2 2025):
+**Version 0.2.0 - Performance & Memory** (Q2-Q3 2025):
 - [ ] Structure-of-Arrays (SoA) component storage for 2-4× speedup
 - [ ] SIMD vectorization (AVX2/AVX-512) for parallel computation
 - [ ] Memory pooling to reduce allocation overhead
 - [ ] Adaptive chunk sizing for optimal parallelism
 - [ ] Query DSL for ergonomic component access
 
-**Version 0.3.0 - Spatial Acceleration** (Q2-Q3 2025):
+**Version 0.3.0 - Spatial Acceleration** (Q3-Q4 2025):
 - [ ] Barnes-Hut tree for O(N log N) gravitational forces
 - [ ] Octree spatial partitioning for collision detection
 - [ ] Broad-phase collision detection (sweep-and-prune or spatial hashing)
 
-**Version 0.4.0 - Collision & Constraints** (Q3-Q4 2025):
+**Version 0.4.0 - Collision & Constraints** (Q4 2025 - Q1 2026):
 - [ ] Narrow-phase collision detection (sphere, box, convex polyhedra)
 - [ ] Impulse-based collision response with friction
 - [ ] Joint constraints (ball-and-socket, hinge, slider)
 - [ ] Distance constraints and SHAKE/RATTLE algorithms
 
-**Version 0.5.0 - GPU Acceleration** (Q4 2025 - Q1 2026):
+**Version 0.5.0 - GPU Acceleration** (Q1-Q2 2026):
 - [ ] WebGPU compute shader integration (cross-platform)
 - [ ] Optional CUDA backend for NVIDIA GPUs
 - [ ] GPU buffer management and transfer optimization
 - [ ] Hybrid CPU/GPU workload distribution
 
-**Version 0.6.0 - Visualization** (Q1-Q2 2026):
+**Version 0.6.0 - Visualization** (Q2-Q3 2026):
 - [ ] WebGPU + Three.js real-time 3D visualization
 - [ ] Interactive controls for simulation parameters
 - [ ] Rust-WASM bridge for browser integration
 - [ ] Debug visualization tools (force vectors, energy graphs)
 
-**Version 1.0.0 - Stable Release** (2026):
+**Version 1.0.0 - Stable Release** (2026+):
 - [ ] Stable, well-tested API with semantic versioning commitment
 - [ ] Multiple backend support (CPU, GPU)
 - [ ] Production-ready performance
