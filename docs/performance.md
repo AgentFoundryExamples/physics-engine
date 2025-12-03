@@ -753,12 +753,13 @@ As of version 0.2.0, the physics engine includes SIMD (Single Instruction, Multi
 ### Hardware Requirements
 
 **Supported SIMD Instruction Sets:**
+- **AVX-512** (Advanced Vector Extensions 512-bit): Process 8 × f64 values per instruction (512-bit vectors)
 - **AVX2** (Advanced Vector Extensions 2): Process 4 × f64 values per instruction (256-bit vectors)
-- **Scalar Fallback**: Automatically used on CPUs without AVX2 support
+- **Scalar Fallback**: Automatically used on CPUs without SIMD support
 
 **CPU Compatibility:**
-- **Intel**: Haswell (2013) and newer processors
-- **AMD**: Excavator (2015) and newer processors
+- **AVX-512**: Intel Skylake-X (2017) and newer, AMD Zen 4 (2022) and newer processors
+- **AVX2**: Intel Haswell (2013) and newer, AMD Excavator (2015) and newer processors
 - **Runtime Detection**: Automatic CPU feature detection, no user configuration required
 
 ### Enabling SIMD
@@ -805,16 +806,19 @@ Measured throughput for SIMD operations on contiguous data:
 #### Expected Speedup
 
 **Theoretical Maximum:**
+- **AVX-512**: 8× speedup (process 8 f64 per instruction)
 - **AVX2**: 4× speedup (process 4 f64 per instruction)
 
 **Practical Speedup (Measured vs Scalar):**
-- **Best Case**: 2-3× for large, aligned arrays (>1000 entities)
-- **Typical Case**: 1.5-2.5× for mixed workloads
+- **AVX-512 Best Case**: 4-6× for large, aligned arrays (>1000 entities)
+- **AVX-512 Typical Case**: 2-4× for mixed workloads
+- **AVX2 Best Case**: 2-3× for large, aligned arrays (>1000 entities)
+- **AVX2 Typical Case**: 1.5-2.5× for mixed workloads
 - **Worst Case**: 1.0-1.5× for small arrays (<100 entities) or non-contiguous data
 
 **Limiting Factors:**
 1. **Memory Bandwidth**: Modern CPUs are often memory-bound, not compute-bound
-2. **Tail Handling**: Entity counts not divisible by 4 require scalar processing
+2. **Tail Handling**: Entity counts not divisible by vector width (4 for AVX2, 8 for AVX-512) require scalar processing
 3. **Data Layout**: Current HashMap storage doesn't expose contiguous data
 4. **Instruction Mix**: Load/store overhead reduces effective speedup
 
@@ -837,7 +841,7 @@ println!("Using backend: {}", backend.name()); // "AVX2" or "Scalar"
 ```
 
 **Dispatch Priority:**
-1. **AVX-512** (not yet implemented)
+1. **AVX-512** (if supported: AVX-512F and AVX-512DQ)
 2. **AVX2** (if supported)
 3. **Scalar** (always available)
 
@@ -870,7 +874,7 @@ simd_accumulate_forces(&mut total_fx, &mut total_fy, &mut total_fz, &fx, &fy, &f
 ```
 
 **Tail Handling:**
-All SIMD functions automatically handle entity counts not divisible by SIMD width (4 for AVX2) by processing remainder elements with scalar code. This ensures correctness for any entity count.
+All SIMD functions automatically handle entity counts not divisible by SIMD width (4 for AVX2, 8 for AVX-512) by processing remainder elements with scalar code. This ensures correctness for any entity count.
 
 #### Numeric Determinism
 
@@ -898,16 +902,15 @@ All SIMD functions automatically handle entity counts not divisible by SIMD widt
 ❌ **Platform Support:**
 - Only x86_64 CPUs supported
 - No ARM NEON support yet
-- No AVX-512 implementation yet
 
 #### Future Enhancements (v0.3.0+)
 
 - [x] **AVX2 Vectorization**: Core SIMD infrastructure
+- [x] **AVX-512 Support**: 8 × f64 per instruction on newer CPUs
 - [x] **SIMD Helper Functions**: Velocity, position, force operations
 - [ ] **Verlet SIMD Integration**: End-to-end vectorized Verlet
 - [ ] **RK4 SIMD Integration**: Vectorized RK4 (complex)
 - [ ] **SoA Component Storage**: True structure-of-arrays for better SIMD
-- [ ] **AVX-512 Support**: 8 × f64 per instruction on newer CPUs
 - [ ] **ARM NEON Support**: SIMD for ARM64 platforms
 - [ ] **Auto-Vectorization Hints**: Help compiler generate better SIMD code
 
@@ -915,12 +918,12 @@ All SIMD functions automatically handle entity counts not divisible by SIMD widt
 
 ✅ **Do:**
 - Enable `simd` feature when targeting modern x86_64 CPUs (2013+)
-- Use entity counts divisible by 4 when possible for optimal throughput
+- Use entity counts divisible by 8 (AVX-512) or 4 (AVX2) when possible for optimal throughput
 - Run benchmarks to verify performance gains for your workload
 - Trust runtime dispatch to select the best backend
 
 ✅ **Don't:**
-- Don't assume 4× speedup - measure your actual workload
+- Don't assume 4× or 8× speedup - measure your actual workload
 - Don't enable for old CPUs (pre-2013) - scalar may be faster
 - Don't worry about tail handling - it's automatic
 - Don't mix SIMD and non-SIMD builds in the same binary

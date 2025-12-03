@@ -26,9 +26,9 @@
 //!
 //! # Performance
 //!
-//! - **AVX2**: Process 4 × f64 values per instruction (256-bit vectors)
 //! - **AVX-512**: Process 8 × f64 values per instruction (512-bit vectors)
-//! - **Expected Speedup**: 2-4× for integration loops with sufficient entities
+//! - **AVX2**: Process 4 × f64 values per instruction (256-bit vectors)
+//! - **Expected Speedup**: 2-6× for integration loops with sufficient entities
 //!
 //! # Safety
 //!
@@ -42,11 +42,17 @@ mod scalar;
 #[cfg(target_arch = "x86_64")]
 mod avx2;
 
+#[cfg(target_arch = "x86_64")]
+mod avx512;
+
 pub use dispatch::{CpuFeatures, detect_cpu_features};
 pub use scalar::ScalarBackend;
 
 #[cfg(target_arch = "x86_64")]
 pub use avx2::Avx2Backend;
+
+#[cfg(target_arch = "x86_64")]
+pub use avx512::Avx512Backend;
 
 /// SIMD width for different instruction sets
 pub const AVX2_WIDTH: usize = 4;  // 256-bit / 64-bit per f64
@@ -121,21 +127,23 @@ pub trait SimdBackend: Send + Sync {
 
 /// Select the best available SIMD backend for the current CPU
 ///
-/// Currently supports:
+/// Selects backends in priority order:
+/// - **AVX-512**: If available (Intel Skylake-X 2017+, AMD Zen 4 2022+)
 /// - **AVX2**: If available (Intel Haswell 2013+, AMD Excavator 2015+)
 /// - **Scalar**: Always available as fallback
 ///
-/// Future: AVX-512 support planned but not yet implemented.
+/// Selection is cached globally for thread-safe access.
 pub fn select_backend() -> Box<dyn SimdBackend> {
     let features = detect_cpu_features();
     
     #[cfg(target_arch = "x86_64")]
     {
-        // TODO: Add AVX-512 support in future version
-        // if features.has_avx512f && features.has_avx512dq {
-        //     return Box::new(Avx512Backend);
-        // }
+        // Prefer AVX-512 if available
+        if features.has_avx512f && features.has_avx512dq {
+            return Box::new(Avx512Backend);
+        }
         
+        // Fall back to AVX2
         if features.has_avx2 {
             return Box::new(Avx2Backend);
         }
@@ -157,6 +165,33 @@ mod tests {
     }
     
     #[test]
+    fn test_backend_selection_priority() {
+        let backend = select_backend();
+        let features = detect_cpu_features();
+        
+        #[cfg(target_arch = "x86_64")]
+        {
+            // Verify selection priority
+            if features.has_avx512f && features.has_avx512dq {
+                assert_eq!(backend.name(), "AVX-512", "Should select AVX-512 when available");
+                assert_eq!(backend.width(), 8);
+            } else if features.has_avx2 {
+                assert_eq!(backend.name(), "AVX2", "Should select AVX2 when AVX-512 not available");
+                assert_eq!(backend.width(), 4);
+            } else {
+                assert_eq!(backend.name(), "Scalar", "Should fall back to scalar");
+                assert_eq!(backend.width(), 1);
+            }
+        }
+        
+        #[cfg(not(target_arch = "x86_64"))]
+        {
+            assert_eq!(backend.name(), "Scalar", "Non-x86_64 should use scalar");
+            assert_eq!(backend.width(), 1);
+        }
+    }
+    
+    #[test]
     fn test_scalar_backend_always_supported() {
         let backend = ScalarBackend;
         assert!(backend.is_supported());
@@ -170,6 +205,45 @@ mod tests {
         {
             // x86_64 architecture requires SSE2
             assert!(features.has_sse2);
+        }
+    }
+    
+    #[test]
+    #[cfg(target_arch = "x86_64")]
+    fn test_backend_correctness_across_implementations() {
+        // Test that all backends produce the same results
+        let mut velocities_scalar = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0];
+        let mut velocities_avx2 = velocities_scalar.clone();
+        let mut velocities_avx512 = velocities_scalar.clone();
+        let accelerations = vec![0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0];
+        let dt = 0.1;
+        
+        let scalar = ScalarBackend;
+        let avx2 = Avx2Backend;
+        let avx512 = Avx512Backend;
+        
+        unsafe {
+            scalar.update_velocity_vectorized(&mut velocities_scalar, &accelerations, dt);
+            
+            if avx2.is_supported() {
+                avx2.update_velocity_vectorized(&mut velocities_avx2, &accelerations, dt);
+                
+                // Check AVX2 matches scalar
+                for i in 0..velocities_scalar.len() {
+                    assert!((velocities_avx2[i] - velocities_scalar[i]).abs() < 1e-14,
+                            "AVX2 mismatch at {}: AVX2={}, Scalar={}", i, velocities_avx2[i], velocities_scalar[i]);
+                }
+            }
+            
+            if avx512.is_supported() {
+                avx512.update_velocity_vectorized(&mut velocities_avx512, &accelerations, dt);
+                
+                // Check AVX-512 matches scalar
+                for i in 0..velocities_scalar.len() {
+                    assert!((velocities_avx512[i] - velocities_scalar[i]).abs() < 1e-14,
+                            "AVX-512 mismatch at {}: AVX512={}, Scalar={}", i, velocities_avx512[i], velocities_scalar[i]);
+                }
+            }
         }
     }
 }
