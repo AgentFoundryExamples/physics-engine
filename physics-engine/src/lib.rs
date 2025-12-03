@@ -53,4 +53,7 @@ pub mod plugins;
 #[cfg(feature = "simd")]
 pub mod simd;
 
+/// Memory pooling for reducing allocation churn
+pub mod pool;
+
 pub use ecs::{World, Entity};
