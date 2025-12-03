@@ -24,7 +24,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"  # 3.11+ is required; 3.12 is fine
-
+      - name: Install Rust Tree Sitter
+        run: |
+          pip install tree-sitter-rust 
+    
       - name: Install repository analyzer from GitHub
         run: |
           pip install "git+https://github.com/AgentFoundryExamples/repo-summarizer-v1.git@main"
@@ -54,7 +57,7 @@ jobs:
             "file_summary_config": {
               "max_file_size_kb": 1024,
               "include_patterns": [
-                "*.py"
+                "*.rs"
               ],
               "detail_level": "detailed",
               "include_legacy_summary": false
@@ -71,6 +74,26 @@ jobs:
                 "go.mod",
                 "Cargo.toml"
               ]
+            },
+            "parser_config": {
+              "enable_structured_parsers": true,
+              "enable_parser_cache": true,
+              "parsers": {
+                "tree_sitter": {
+                  "enabled": true,
+                  "graceful_degradation": true
+                },
+                "libclang": {
+                  "enabled": true,
+                  "graceful_degradation": true
+                }
+              },
+            "language_parser_preferences": {
+              "C": ["libclang", "tree_sitter", "regex"],
+              "C++": ["libclang", "tree_sitter", "regex"],
+              "Rust": ["tree_sitter", "regex"],
+              "Perl": ["tree_sitter", "regex"],
+              "ASM": ["regex"]
             }
           }
           EOF
