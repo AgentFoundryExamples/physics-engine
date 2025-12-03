@@ -280,83 +280,72 @@ The engine provides two storage implementations with different performance chara
 - ❌ No SIMD vectorization
 - **Best for**: Small entity counts (< 100), prototyping
 
-**`SoAStorage<Component>`** (Cache-Friendly, High Performance) ✨ **New in v0.2.0**
+**`SoAStorage<Component>`** (Dense Array Storage) ✨ **New in v0.2.0**
+
+**Important**: Despite the name, this is a **dense Array-of-Structures (AoS)** implementation, NOT a true Structure-of-Arrays layout.
+
 ```rust
-// Dense storage with excellent cache locality
+// Dense AoS storage with good cache locality
 struct SoAStorage<T> {
     entity_to_index: HashMap<Entity, usize>,  // Sparse mapping
-    components: Vec<T>,                        // Dense, cache-friendly array
+    components: Vec<T>,                        // Dense array of complete components
 }
 ```
 
+**Implementation Details**:
+- Stores complete component structures in a dense `Vec<T>`: `[Component{x,y,z}, Component{x,y,z}, ...]`
+- True SoA would separate fields: `x:[x0,x1,...], y:[y0,y1,...], z:[z0,z1,...]`
+- Current design maintains API compatibility with `ComponentStorage` trait
+- Dense packing still provides significant cache benefits over HashMap
+
 **Benefits**:
-- ✅ Excellent cache locality (sequential memory access)
-- ✅ SIMD vectorization opportunities (AVX2/AVX-512)
-- ✅ Reduced memory bandwidth (~40-60% less)
-- ✅ Direct array access for bulk operations
+- ✅ Good cache locality (sequential memory access)
+- ✅ Direct array iteration support
 - ✅ Swap-remove prevents fragmentation
+- ⚠️ Loads entire components even if only one field needed (AoS limitation)
+- ⚠️ True field-level SIMD requires separate field arrays (not implemented)
 
 **Benchmark Results** (see `cargo bench --bench storage`):
 
-| Operation | Entity Count | HashMap | SoA | Speedup | Cache Benefit |
-|-----------|--------------|---------|-----|---------|---------------|
-| Sequential Iteration | 1,000 | 100% | **150-200%** | 1.5-2× faster | ✓ High |
-| Sequential Iteration | 10,000 | 100% | **200-300%** | 2-3× faster | ✓ Very High |
-| Bulk Update | 1,000 | 100% | **120-150%** | 1.2-1.5× faster | ✓ Medium |
-| Random Access | 1,000 | 100% | **90-110%** | ~Same | ✗ Similar |
-| Insert | 1,000 | 100% | **110-130%** | 1.1-1.3× faster | ✓ Low |
+The benchmarks now use fair comparisons with proper setup isolation:
+
+| Operation | Entity Count | HashMap | Dense Storage | Notes |
+|-----------|--------------|---------|---------------|-------|
+| Via Entities | 1,000 | 100% | **Similar** | Both use entity lookup |
+| Direct Array | 1,000 | N/A | **150-200%** | Dense storage advantage |
+| Via Entities | 10,000 | 100% | **Similar** | Lookup overhead dominates |
+| Direct Array | 10,000 | N/A | **200-300%** | Cache benefits increase |
 
 **Cache Performance Analysis**:
 
-The performance improvements in SoA storage come primarily from better cache utilization:
+1. **Direct Array Iteration**: Maximum benefit when API allows
+   - HashMap: Must iterate via entity list with lookups
+   - Dense: Can iterate directly over `Vec<T>` with sequential access
+   - Sequential memory layout loads entire cache lines efficiently
+   - Hardware prefetcher maximally utilized
 
-1. **Sequential Iteration**: Maximum benefit
-   - HashMap: Scattered allocations cause cache misses on every component access
-   - SoA: Sequential memory layout loads entire cache lines (64 bytes = 8 f64 values)
-   - **Estimated cache miss reduction**: 70-90% fewer L1/L2 cache misses
-   - **Prefetcher efficiency**: Sequential access patterns enable hardware prefetching
-   - Speedup increases with entity count as cache effects dominate
+2. **Via Entity Lookup**: Similar performance
+   - Both require HashMap/index lookup per entity
+   - Dense array access after lookup is slightly faster than HashMap
+   - Lookup overhead dominates for small components
 
-2. **Bulk Updates**: Significant benefit
-   - HashMap: Update patterns thrash cache due to pointer chasing
-   - SoA: Updates to contiguous memory maximize cache line reuse
-   - **Estimated cache miss reduction**: 40-60% fewer cache misses
-   - Better scaling with larger entity counts
+3. **Memory Bandwidth**:
+   - Dense storage: One contiguous allocation, better for iteration
+   - HashMap: Scattered allocations, more cache line loads
+   - Benefit increases with entity count and iteration frequency
 
-3. **Random Access**: Minimal benefit
-   - Both storages require index lookup (HashMap vs entity_to_index)
-   - HashMap may have slight edge for single lookups due to optimized hash implementation
-   - Cache locality doesn't help with random access patterns
+**Profiling Evidence**:
 
-4. **Memory Bandwidth Savings**:
-   - HashMap: Each component access potentially loads scattered cache lines
-   - SoA: Sequential access loads ~64 bytes per cache line with full utilization
-   - **Measured reduction**: ~40-60% less memory bandwidth for iteration workloads
-   - Critical for memory-bound simulations with 10k+ entities
-
-**Profiling Evidence** (run with `perf stat cargo bench --bench storage`):
-```
-# HashMap Sequential Iteration (10k entities)
-  Cache-references:    ~2.5M (pointer chasing causes many references)
-  Cache-misses:        ~15-20% miss rate
-  Instructions:        ~50M
-  Cycles:             ~100M
-
-# SoA Sequential Iteration (10k entities)  
-  Cache-references:    ~1.0M (sequential access, better utilization)
-  Cache-misses:        ~2-5% miss rate (prefetcher hides most misses)
-  Instructions:        ~45M (fewer indirections)
-  Cycles:             ~30-40M (2-3× faster)
-```
-
-The dramatic reduction in cache miss rate (15-20% → 2-5%) directly correlates with
-the observed 2-3× speedup for large entity counts.
+The performance benefits are most pronounced when using direct array iteration
+(not available with HashMap). The benchmarks now properly separate:
+- Via-entities iteration: Both storages similar (lookup overhead)
+- Direct array iteration: Dense storage shows 1.5-3× improvement
 
 **Key Observations**:
-- SoA excels at sequential iteration (systems that process all components)
-- Random access is similar between implementations (HashMap overhead vs index lookup)
-- SoA shows better scaling characteristics as entity count increases
-- Memory bandwidth savings compound with larger entity counts
+- Dense storage excels when systems can use direct array iteration
+- Via-entity access shows similar performance (lookup overhead dominates)
+- Dense packing provides cache benefits but not as dramatic as true SoA would
+- True Structure-of-Arrays (separate field vectors) would need new trait design
 
 **Usage Example**:
 ```rust

@@ -71,16 +71,6 @@ fn bench_storage_random_access(c: &mut Criterion) {
     let mut group = c.benchmark_group("storage_random_access");
     
     for entity_count in [100, 1000, 10000].iter() {
-        // Setup storages
-        let mut hashmap_storage = HashMapStorage::<Position>::new();
-        let mut soa_storage = SoAStorage::<Position>::new();
-        
-        for i in 0..*entity_count {
-            let entity = Entity::new(i as u64, 0);
-            hashmap_storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
-            soa_storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
-        }
-        
         group.throughput(Throughput::Elements(*entity_count as u64));
         
         // HashMap storage
@@ -88,16 +78,27 @@ fn bench_storage_random_access(c: &mut Criterion) {
             BenchmarkId::new("HashMap", entity_count),
             entity_count,
             |b, &count| {
-                b.iter(|| {
-                    let mut sum = 0.0;
-                    for i in 0..count {
-                        let entity = Entity::new(i as u64, 0);
-                        if let Some(pos) = hashmap_storage.get(entity) {
-                            sum += pos.x() + pos.y() + pos.z();
+                b.iter_batched(
+                    || {
+                        let mut storage = HashMapStorage::<Position>::new();
+                        for i in 0..count {
+                            let entity = Entity::new(i as u64, 0);
+                            storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
                         }
-                    }
-                    black_box(sum);
-                });
+                        storage
+                    },
+                    |storage| {
+                        let mut sum = 0.0;
+                        for i in 0..count {
+                            let entity = Entity::new(i as u64, 0);
+                            if let Some(pos) = storage.get(entity) {
+                                sum += pos.x() + pos.y() + pos.z();
+                            }
+                        }
+                        black_box(sum);
+                    },
+                    criterion::BatchSize::SmallInput,
+                );
             },
         );
         
@@ -106,16 +107,27 @@ fn bench_storage_random_access(c: &mut Criterion) {
             BenchmarkId::new("SoA", entity_count),
             entity_count,
             |b, &count| {
-                b.iter(|| {
-                    let mut sum = 0.0;
-                    for i in 0..count {
-                        let entity = Entity::new(i as u64, 0);
-                        if let Some(pos) = soa_storage.get(entity) {
-                            sum += pos.x() + pos.y() + pos.z();
+                b.iter_batched(
+                    || {
+                        let mut storage = SoAStorage::<Position>::new();
+                        for i in 0..count {
+                            let entity = Entity::new(i as u64, 0);
+                            storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
                         }
-                    }
-                    black_box(sum);
-                });
+                        storage
+                    },
+                    |storage| {
+                        let mut sum = 0.0;
+                        for i in 0..count {
+                            let entity = Entity::new(i as u64, 0);
+                            if let Some(pos) = storage.get(entity) {
+                                sum += pos.x() + pos.y() + pos.z();
+                            }
+                        }
+                        black_box(sum);
+                    },
+                    criterion::BatchSize::SmallInput,
+                );
             },
         );
     }
@@ -128,49 +140,91 @@ fn bench_storage_sequential_iteration(c: &mut Criterion) {
     let mut group = c.benchmark_group("storage_sequential_iteration");
     
     for entity_count in [100, 1000, 10000].iter() {
-        // Setup storages
-        let mut hashmap_storage = HashMapStorage::<Position>::new();
-        let mut soa_storage = SoAStorage::<Position>::new();
-        let mut entities = Vec::new();
-        
-        for i in 0..*entity_count {
-            let entity = Entity::new(i as u64, 0);
-            entities.push(entity);
-            hashmap_storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
-            soa_storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
-        }
-        
         group.throughput(Throughput::Elements(*entity_count as u64));
         
-        // HashMap storage - must iterate via entities
+        // HashMap storage - iterate via entities (typical usage pattern)
         group.bench_with_input(
-            BenchmarkId::new("HashMap", entity_count),
+            BenchmarkId::new("HashMap_via_entities", entity_count),
             entity_count,
-            |b, _| {
-                b.iter(|| {
-                    let mut sum = 0.0;
-                    for entity in &entities {
-                        if let Some(pos) = hashmap_storage.get(*entity) {
-                            sum += pos.x() + pos.y() + pos.z();
+            |b, &count| {
+                b.iter_batched(
+                    || {
+                        let mut storage = HashMapStorage::<Position>::new();
+                        let mut entities = Vec::new();
+                        for i in 0..count {
+                            let entity = Entity::new(i as u64, 0);
+                            entities.push(entity);
+                            storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
                         }
-                    }
-                    black_box(sum);
-                });
+                        (storage, entities)
+                    },
+                    |(storage, entities)| {
+                        let mut sum = 0.0;
+                        for entity in &entities {
+                            if let Some(pos) = storage.get(*entity) {
+                                sum += pos.x() + pos.y() + pos.z();
+                            }
+                        }
+                        black_box(sum);
+                    },
+                    criterion::BatchSize::SmallInput,
+                );
             },
         );
         
-        // SoA storage - can iterate directly over dense array
+        // SoA storage - iterate via entities (fair comparison)
         group.bench_with_input(
-            BenchmarkId::new("SoA", entity_count),
+            BenchmarkId::new("SoA_via_entities", entity_count),
             entity_count,
-            |b, _| {
-                b.iter(|| {
-                    let mut sum = 0.0;
-                    for pos in soa_storage.components() {
-                        sum += pos.x() + pos.y() + pos.z();
-                    }
-                    black_box(sum);
-                });
+            |b, &count| {
+                b.iter_batched(
+                    || {
+                        let mut storage = SoAStorage::<Position>::new();
+                        let mut entities = Vec::new();
+                        for i in 0..count {
+                            let entity = Entity::new(i as u64, 0);
+                            entities.push(entity);
+                            storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
+                        }
+                        (storage, entities)
+                    },
+                    |(storage, entities)| {
+                        let mut sum = 0.0;
+                        for entity in &entities {
+                            if let Some(pos) = storage.get(*entity) {
+                                sum += pos.x() + pos.y() + pos.z();
+                            }
+                        }
+                        black_box(sum);
+                    },
+                    criterion::BatchSize::SmallInput,
+                );
+            },
+        );
+        
+        // SoA storage - direct array iteration (demonstrates SoA advantage)
+        group.bench_with_input(
+            BenchmarkId::new("SoA_direct_array", entity_count),
+            entity_count,
+            |b, &count| {
+                b.iter_batched(
+                    || {
+                        let mut storage = SoAStorage::<Position>::new();
+                        for i in 0..count {
+                            let entity = Entity::new(i as u64, 0);
+                            storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
+                        }
+                        storage
+                    },
+                    |storage| {
+                        let mut sum = 0.0;
+                        for pos in storage.components() {
+                            sum += pos.x() + pos.y() + pos.z();
+                        }
+                        black_box(sum);
+                    },
+                    criterion::BatchSize::SmallInput,
+                );
             },
         );
     }
@@ -183,34 +237,37 @@ fn bench_storage_bulk_update(c: &mut Criterion) {
     let mut group = c.benchmark_group("storage_bulk_update");
     
     for entity_count in [100, 1000, 10000].iter() {
-        // Setup storages
-        let mut hashmap_storage = HashMapStorage::<Position>::new();
-        let mut soa_storage = SoAStorage::<Position>::new();
-        let mut entities = Vec::new();
-        
-        for i in 0..*entity_count {
-            let entity = Entity::new(i as u64, 0);
-            entities.push(entity);
-            hashmap_storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
-            soa_storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
-        }
-        
         group.throughput(Throughput::Elements(*entity_count as u64));
         
         // HashMap storage
         group.bench_with_input(
             BenchmarkId::new("HashMap", entity_count),
             entity_count,
-            |b, _| {
-                b.iter(|| {
-                    for entity in &entities {
-                        if let Some(pos) = hashmap_storage.get_mut(*entity) {
-                            pos.set_x(pos.x() + 1.0);
-                            pos.set_y(pos.y() + 1.0);
-                            pos.set_z(pos.z() + 1.0);
+            |b, &count| {
+                // Setup inside iter_batched to avoid measuring setup time
+                b.iter_batched(
+                    || {
+                        let mut storage = HashMapStorage::<Position>::new();
+                        let mut entities = Vec::new();
+                        for i in 0..count {
+                            let entity = Entity::new(i as u64, 0);
+                            entities.push(entity);
+                            storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
                         }
-                    }
-                });
+                        (storage, entities)
+                    },
+                    |(mut storage, entities)| {
+                        for entity in &entities {
+                            if let Some(pos) = storage.get_mut(*entity) {
+                                pos.set_x(pos.x() + 1.0);
+                                pos.set_y(pos.y() + 1.0);
+                                pos.set_z(pos.z() + 1.0);
+                            }
+                        }
+                        black_box(storage);
+                    },
+                    criterion::BatchSize::SmallInput,
+                );
             },
         );
         
@@ -218,16 +275,30 @@ fn bench_storage_bulk_update(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("SoA", entity_count),
             entity_count,
-            |b, _| {
-                b.iter(|| {
-                    for entity in &entities {
-                        if let Some(pos) = soa_storage.get_mut(*entity) {
-                            pos.set_x(pos.x() + 1.0);
-                            pos.set_y(pos.y() + 1.0);
-                            pos.set_z(pos.z() + 1.0);
+            |b, &count| {
+                b.iter_batched(
+                    || {
+                        let mut storage = SoAStorage::<Position>::new();
+                        let mut entities = Vec::new();
+                        for i in 0..count {
+                            let entity = Entity::new(i as u64, 0);
+                            entities.push(entity);
+                            storage.insert(entity, Position::new(i as f64, i as f64 * 2.0, i as f64 * 3.0));
                         }
-                    }
-                });
+                        (storage, entities)
+                    },
+                    |(mut storage, entities)| {
+                        for entity in &entities {
+                            if let Some(pos) = storage.get_mut(*entity) {
+                                pos.set_x(pos.x() + 1.0);
+                                pos.set_y(pos.y() + 1.0);
+                                pos.set_z(pos.z() + 1.0);
+                            }
+                        }
+                        black_box(storage);
+                    },
+                    criterion::BatchSize::SmallInput,
+                );
             },
         );
     }

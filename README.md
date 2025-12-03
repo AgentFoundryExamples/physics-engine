@@ -19,32 +19,35 @@ This physics engine provides a flexible and efficient foundation for simulating 
 - 🔌 **Plugin Architecture**: Extensible system for custom objects, forces, and constraints
 - 🔄 **Force Accumulation**: Generic system for applying forces without hardcoded simulation logic
 - 🔢 **Advanced Integrators**: Velocity Verlet and RK4 for accurate physics simulation
-- 📊 **Cache-Friendly Storage**: Structure-of-Arrays (SoA) component storage for optimal memory access patterns
-- 🚀 **High Performance**: 1.5-3× faster iteration with SoA storage for large entity counts
+- 📊 **Dense Array Storage**: Cache-friendly dense component storage for optimal memory access patterns  
+- 🚀 **High Performance**: Direct array iteration enables efficient bulk operations
 - 🔬 **Diagnostics**: Built-in diagnostic tools for physics validation and debugging
 - 🦀 **Pure Rust**: Memory-safe implementation without runtime overhead
 
-## Version 0.2.0 - Structure-of-Arrays Storage (Current)
+## Version 0.2.0 - Dense Array Storage (Current)
 
-This release implements cache-friendly Structure-of-Arrays component storage for improved performance:
+This release implements cache-friendly dense array component storage for improved performance:
 
 ### 🚀 What's New in 0.2.0
 
-- **SoA Component Storage**: New `SoAStorage<T>` implementation for cache-friendly component access
-  - Dense, contiguous arrays for all components
-  - 1.5-3× faster sequential iteration for 1000+ entities
-  - ~40-60% reduced memory bandwidth usage
-  - Direct array access for bulk operations
-- **Comprehensive Benchmarks**: New storage benchmark suite comparing HashMap vs SoA
+- **Dense Array Component Storage**: New `SoAStorage<T>` implementation (name retained for API compatibility)
+  - **Important**: This is a dense Array-of-Structures (AoS), not true Structure-of-Arrays
+  - Dense `Vec<T>` packing for better cache locality than HashMap
+  - Direct array access for efficient bulk iteration
+  - Swap-remove prevents fragmentation
+- **Comprehensive Benchmarks**: New storage benchmark suite with fair comparisons
+  - Separate benchmarks for via-entity and direct-array iteration
   - Insert, remove, random access, sequential iteration, bulk update benchmarks
   - Run with `cargo bench --bench storage`
-- **Full API Compatibility**: SoA storage implements the same `ComponentStorage` trait as HashMap
-- **No Breaking Changes**: Existing code continues to work; opt-in to SoA for performance gains
-- **Updated Documentation**: Architecture and performance docs explain SoA design and benefits
+- **Full API Compatibility**: Dense storage implements the same `ComponentStorage` trait as HashMap
+- **No Breaking Changes**: Existing code continues to work; opt-in for performance gains
+- **Updated Documentation**: Architecture and performance docs explain design and trade-offs
 
-**When to Use SoA**: Systems iterating over many components, medium-large entity counts (>100), performance-critical paths.
+**When to Use Dense Storage**: Systems that can use direct array iteration, medium-large entity counts (>100), performance-critical paths.
 
 **When to Use HashMap**: Small entity counts (<100), sparse access patterns, prototyping.
+
+**Note**: True Structure-of-Arrays (separate field vectors) would provide additional benefits but requires different trait design. Planned for v0.3.0.
 
 See [docs/architecture.md](docs/architecture.md) and [docs/performance.md](docs/performance.md) for details.
 

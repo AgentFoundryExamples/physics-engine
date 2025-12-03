@@ -111,40 +111,45 @@ impl<T: Component> ComponentStorage for HashMapStorage<T> {
     }
 }
 
-/// Structure-of-Arrays (SoA) component storage
+/// Dense array component storage with cache-friendly layout
 ///
-/// This storage implementation organizes component data in a cache-friendly
-/// Structure-of-Arrays layout where each field is stored in a separate contiguous
-/// array. This provides:
+/// **Important**: Despite the name `SoAStorage`, this is a **dense Array-of-Structures (AoS)**
+/// implementation, NOT a true Structure-of-Arrays layout. The name is preserved for API
+/// compatibility, but the implementation stores complete component structures in a contiguous
+/// `Vec<T>`.
 ///
-/// - **Better cache locality**: Sequential field access loads cache lines efficiently
-/// - **SIMD opportunities**: Packed arrays enable vectorization
-/// - **Reduced memory bandwidth**: Load only the fields you need
+/// This storage provides cache-friendly access through:
+/// - **Dense packing**: All components stored contiguously in a single `Vec<T>`
+/// - **Sequential access**: Iteration accesses memory sequentially, maximizing cache line usage
+/// - **No pointer chasing**: Direct array indexing instead of HashMap pointer indirection
 ///
 /// The storage maintains a sparse mapping from Entity to array index, supporting
 /// efficient entity creation/destruction without leaving gaps in the dense arrays.
 ///
 /// # Memory Layout
 ///
-/// For a component with 3 f64 fields (like Position with x, y, z), instead of:
+/// Current implementation (Dense AoS):
 /// ```text
-/// AoS: [Component{x,y,z}, Component{x,y,z}, ...]  // scattered in memory
+/// components: [Component{x,y,z}, Component{x,y,z}, Component{x,y,z}, ...]
 /// ```
+/// All components are stored contiguously in a single vector. This provides good
+/// cache locality for iteration but loads entire component structures even if
+/// only one field is needed.
 ///
-/// SoA stores:
+/// A true SoA layout would be:
 /// ```text
-/// field1: [x0, x1, x2, x3, ...] // All x values contiguous in one cache-friendly array
-/// field2: [y0, y1, y2, y3, ...] // All y values contiguous
-/// field3: [z0, z1, z2, z3, ...] // All z values contiguous
+/// x_values: [x0, x1, x2, x3, ...]
+/// y_values: [y0, y1, y2, y3, ...]
+/// z_values: [z0, z1, z2, z3, ...]
 /// ```
+/// This is not implemented because the `ComponentStorage` trait requires returning
+/// references to complete components (`&T`), which is incompatible with split field arrays.
 ///
 /// # Copy Requirement
 ///
 /// Components must implement `Copy` to support the `ComponentStorage` trait's
-/// `get()` and `remove()` methods, which return references and owned values respectively.
-/// In a true SoA layout, component fields are split across multiple arrays and cannot
-/// be referenced as a single contiguous structure. The `Copy` bound allows us to
-/// efficiently reconstruct components on demand.
+/// `get()` and `remove()` methods. The Copy bound also enables efficient returns
+/// of component values.
 ///
 /// For components that cannot implement `Copy` (e.g., types with heap allocations),
 /// use `HashMapStorage` instead, or consider refactoring the component to use
@@ -152,14 +157,6 @@ impl<T: Component> ComponentStorage for HashMapStorage<T> {
 ///
 /// All physics components (Position, Velocity, Acceleration, Mass) are small,
 /// stack-allocated types that implement `Copy` naturally.
-///
-/// # Implementation Note
-///
-/// While this storage provides a SoA-like interface, it still needs to support
-/// the ComponentStorage trait which expects to return references to complete
-/// components. The actual field separation is implemented in component-specific
-/// storage backends that store `Vec<T>` where T is Copy and can be efficiently
-/// reconstructed.
 ///
 /// # Example
 ///
