@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "total_files": 32,
+  "total_files": 33,
   "files": [
     {
       "schema_version": "2.0",
@@ -1332,8 +1332,8 @@
       "role": "implementation",
       "role_justification": "general implementation file (default classification)",
       "metrics": {
-        "size_bytes": 9358,
-        "loc": 166,
+        "size_bytes": 8778,
+        "loc": 160,
         "todo_count": 0,
         "declaration_count": 15
       },
@@ -1353,6 +1353,47 @@
           "fn test_avx2_update_position",
           "fn test_avx2_accumulate_forces",
           "struct Avx2Backend",
+          "impl SimdBackend"
+        ]
+      },
+      "dependencies": {
+        "imports": [],
+        "exports": [],
+        "external": {
+          "stdlib": [],
+          "third-party": []
+        }
+      }
+    },
+    {
+      "schema_version": "2.0",
+      "path": "physics-engine/src/simd/avx512.rs",
+      "language": "Rust",
+      "role": "implementation",
+      "role_justification": "general implementation file (default classification)",
+      "metrics": {
+        "size_bytes": 11290,
+        "loc": 192,
+        "todo_count": 0,
+        "declaration_count": 16
+      },
+      "structure": {
+        "declarations": [
+          "fn name",
+          "fn width",
+          "fn is_supported",
+          "fn update_velocity_vectorized",
+          "fn update_position_vectorized",
+          "fn accumulate_forces_vectorized",
+          "fn update_velocity_vectorized",
+          "fn update_position_vectorized",
+          "fn accumulate_forces_vectorized",
+          "fn test_avx512_detection",
+          "fn test_avx512_update_velocity",
+          "fn test_avx512_update_position",
+          "fn test_avx512_accumulate_forces",
+          "fn test_avx512_correctness_vs_scalar",
+          "struct Avx512Backend",
           "impl SimdBackend"
         ]
       },
@@ -1413,10 +1454,10 @@
       "role": "module-init",
       "role_justification": "module initialization file 'mod'",
       "metrics": {
-        "size_bytes": 5794,
-        "loc": 58,
-        "todo_count": 1,
-        "declaration_count": 13
+        "size_bytes": 14574,
+        "loc": 218,
+        "todo_count": 0,
+        "declaration_count": 21
       },
       "structure": {
         "declarations": [
@@ -1428,11 +1469,19 @@
           "fn accumulate_forces_vectorized",
           "fn select_backend",
           "fn test_backend_selection",
+          "fn test_backend_selection_priority",
           "fn test_scalar_backend_always_supported",
           "fn test_cpu_feature_detection",
+          "fn test_backend_correctness_across_implementations",
+          "fn test_non_aligned_entity_counts",
+          "fn test_empty_arrays",
+          "fn test_single_element",
+          "fn test_backend_thread_safety",
+          "fn test_large_arrays",
           "trait SimdBackend",
           "const AVX2_WIDTH",
-          "const AVX512_WIDTH"
+          "const AVX512_WIDTH",
+          "const SELECTED_BACKEND"
         ]
       },
       "dependencies": {

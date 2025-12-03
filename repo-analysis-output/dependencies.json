@@ -340,6 +340,19 @@
       }
     },
     {
+      "id": "physics-engine/src/simd/avx512.rs",
+      "path": "physics-engine/src/simd/avx512.rs",
+      "type": "file",
+      "external_dependencies": {
+        "stdlib": [
+          "std::arch::x86_64::"
+        ],
+        "third-party": [
+          "tests"
+        ]
+      }
+    },
+    {
       "id": "physics-engine/src/simd/dispatch.rs",
       "path": "physics-engine/src/simd/dispatch.rs",
       "type": "file",
@@ -358,7 +371,11 @@
       "path": "physics-engine/src/simd/mod.rs",
       "type": "file",
       "external_dependencies": {
-        "stdlib": [],
+        "stdlib": [
+          "std::sync::Arc",
+          "std::sync::OnceLock",
+          "std::thread"
+        ],
         "third-party": [
           "tests"
         ]
@@ -459,6 +476,10 @@
     {
       "source": "physics-engine/src/simd/mod.rs",
       "target": "physics-engine/src/simd/avx2.rs"
+    },
+    {
+      "source": "physics-engine/src/simd/mod.rs",
+      "target": "physics-engine/src/simd/avx512.rs"
     }
   ],
   "external_dependencies_summary": {

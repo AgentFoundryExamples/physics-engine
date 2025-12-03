@@ -8,8 +8,8 @@ Includes classification of external dependencies as stdlib vs third-party.
 
 ## Statistics
 
-- **Total files**: 32
-- **Intra-repo dependencies**: 10
+- **Total files**: 33
+- **Intra-repo dependencies**: 11
 - **External stdlib dependencies**: 12
 - **External third-party dependencies**: 14
 
@@ -67,5 +67,5 @@ Total: 14 unique packages
 ## Files with Most Dependencies (Intra-Repo)
 
 - `physics-engine/src/ecs/mod.rs` (4 dependencies)
+- `physics-engine/src/simd/mod.rs` (4 dependencies)
 - `physics-engine/src/integration/mod.rs` (3 dependencies)
-- `physics-engine/src/simd/mod.rs` (3 dependencies)

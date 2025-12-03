@@ -4,7 +4,7 @@ Heuristic summaries of source files based on filenames, extensions, and paths.
 
 Schema Version: 2.0
 
-Total files: 32
+Total files: 33
 
 ## physics-engine/benches/integration.rs
 **Language:** Rust  
@@ -485,8 +485,8 @@ Total files: 32
 **Language:** Rust  
 **Role:** implementation  
 **Role Justification:** general implementation file (default classification)  
-**Size:** 9.14 KB  
-**LOC:** 166  
+**Size:** 8.57 KB  
+**LOC:** 160  
 **TODOs/FIXMEs:** 0  
 **Declarations:** 15  
 **Top-level declarations:**
@@ -501,6 +501,27 @@ Total files: 32
   - fn accumulate_forces_vectorized
   - fn test_avx2_detection
   - ... and 5 more
+
+## physics-engine/src/simd/avx512.rs
+**Language:** Rust  
+**Role:** implementation  
+**Role Justification:** general implementation file (default classification)  
+**Size:** 11.03 KB  
+**LOC:** 192  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 16  
+**Top-level declarations:**
+  - fn name
+  - fn width
+  - fn is_supported
+  - fn update_velocity_vectorized
+  - fn update_position_vectorized
+  - fn accumulate_forces_vectorized
+  - fn update_velocity_vectorized
+  - fn update_position_vectorized
+  - fn accumulate_forces_vectorized
+  - fn test_avx512_detection
+  - ... and 6 more
 
 ## physics-engine/src/simd/dispatch.rs
 **Language:** Rust  
@@ -527,10 +548,10 @@ Total files: 32
 **Language:** Rust  
 **Role:** module-init  
 **Role Justification:** module initialization file 'mod'  
-**Size:** 5.66 KB  
-**LOC:** 58  
-**TODOs/FIXMEs:** 1  
-**Declarations:** 13  
+**Size:** 14.23 KB  
+**LOC:** 218  
+**TODOs/FIXMEs:** 0  
+**Declarations:** 21  
 **Top-level declarations:**
   - fn name
   - fn width
@@ -540,9 +561,9 @@ Total files: 32
   - fn accumulate_forces_vectorized
   - fn select_backend
   - fn test_backend_selection
+  - fn test_backend_selection_priority
   - fn test_scalar_backend_always_supported
-  - fn test_cpu_feature_detection
-  - ... and 3 more
+  - ... and 11 more
 
 ## physics-engine/src/simd/scalar.rs
 **Language:** Rust  

@@ -48,6 +48,7 @@
       └── registry.rs
     ├── simd
       ├── avx2.rs
+      ├── avx512.rs
       ├── dispatch.rs
       ├── mod.rs
       └── scalar.rs

@@ -214,6 +214,10 @@
                 },
                 {
                   "type": "file",
+                  "name": "avx512.rs"
+                },
+                {
+                  "type": "file",
                   "name": "dispatch.rs"
                 },
                 {
